@@ -1,0 +1,788 @@
+/* Fixed dark palette (matches the CodeMirror "One Dark" theme used for the
+   SQL editor) instead of VS Code theme variables — keeps contrast reliable
+   and consistent regardless of the user's active VS Code color theme. */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  color: #abb2bf;
+  background: #282c34;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+#root {
+  height: 100%;
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar: top-left table ("sheets") list */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid #181a1f;
+  overflow-y: auto;
+  background: #21252b;
+}
+
+.sidebar-title {
+  padding: 8px 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7d8493;
+}
+
+.table-list .table-item {
+  padding: 4px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #abb2bf;
+}
+
+.table-list .table-item:hover {
+  background: #2c313c;
+}
+
+.table-list .empty {
+  padding: 8px 12px;
+  color: #7d8493;
+}
+
+/* Main column: SQL editor (mid-top) + results (below) */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #21252b;
+  border-bottom: 1px solid #181a1f;
+}
+
+#run-btn {
+  background: #528bff;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#run-btn:hover:not(:disabled) {
+  background: #6c9bff;
+}
+
+#run-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#run-btn.run-btn-cancel {
+  background: #e06c75;
+}
+
+#run-btn.run-btn-cancel:hover {
+  background: #e88089;
+}
+
+.status {
+  color: #7d8493;
+  font-size: 12px;
+}
+
+.toolbar-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #abb2bf;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.toolbar-check input {
+  cursor: pointer;
+}
+
+/* Safe Mode unchecked = write access is live: make that state visually loud. */
+.toolbar-check:has(#safe-mode-check:not(:checked)) {
+  color: #e06c75;
+  font-weight: 600;
+}
+
+/* :not([hidden]) is required -- an author-stylesheet display rule always
+   overrides the browser's built-in `[hidden] { display: none }` UA rule
+   regardless of selector specificity, so a bare `#unlock-options { display:
+   flex }` would silently defeat `unlockOptionsEl.hidden = true` in webview.ts. */
+#unlock-options:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(224, 108, 117, 0.12);
+}
+
+.editor {
+  flex-shrink: 0;
+  max-height: 35vh;
+  overflow: auto;
+  border-bottom: 1px solid #181a1f;
+}
+
+.editor .cm-editor {
+  height: 100%;
+}
+
+.results {
+  flex: 1;
+  overflow: auto;
+  padding: 0 0 24px 0;
+  background: #282c34;
+}
+
+.results table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+  color: #abb2bf;
+}
+
+.results th, .results td {
+  text-align: left;
+  padding: 3px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+  border-bottom: 1px solid #181a1f;
+}
+
+.results th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #21252b;
+  color: #abb2bf;
+  font-weight: 600;
+}
+
+/* `display: flex` cannot go on the <th> itself -- a table cell's computed
+   display must stay `table-cell` (the default) for the browser's table
+   column-layout algorithm to treat it as a column at all; overriding it
+   pulls the cell out of table layout entirely; every header stacks as a
+   full-width block and the whole table's columns collapse. The flex layout
+   goes on this inner wrapper instead, which has no such constraint. */
+.th-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.th-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.th-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.th-sort-btn, .th-stats-btn, .th-plot-btn {
+  background: none;
+  border: none;
+  color: #7d8493;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 3px;
+  border-radius: 2px;
+}
+
+.th-sort-btn:hover, .th-stats-btn:hover, .th-plot-btn:hover {
+  background: #3a3f4b;
+  color: #abb2bf;
+}
+
+.th-sort-btn-active {
+  color: #61afef;
+}
+
+.th-stats-btn {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* An emoji glyph is drawn by the font at its own weight, so the greying that
+   works on ≡ and ⇅ does nothing here -- dim it instead, and bring it back on
+   hover like the others. */
+.th-plot-btn {
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.th-plot-btn:hover {
+  opacity: 1;
+}
+
+/* Disables sort/stats/cell-edit affordances while a query is in flight, so a
+   click sent mid-run can't silently no-op on the host side and leave e.g. a
+   stats popover stuck on "Loading…" forever. */
+.results.busy {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.results tr.odd {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Every other column is banded too, like the rows, so a wide sheet's columns
+   can be told apart by eye. Translucent, so it layers over the row stripe. */
+.results td.col-odd {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.results tr:hover {
+  background: #2c313c;
+}
+
+/* Worksheet previews read like Excel: centred column letters across the top,
+   row numbers down the left, so a range such as B4:D9 can be found by eye. */
+.results th.sheet-letter .th-label {
+  text-align: center;
+}
+
+.results td.row-num,
+.results th.sheet-corner {
+  position: sticky;
+  left: 0;
+  width: 1%;
+  min-width: 28px;
+  background: #21252b;
+  color: #7d8493;
+  text-align: right;
+  font-weight: 400;
+  border-right: 1px solid #181a1f;
+  user-select: none;
+}
+
+.results td.row-num {
+  z-index: 1;
+}
+
+.results th.sheet-corner {
+  z-index: 3;
+}
+
+.results td.cell-null {
+  color: #7d8493;
+  font-style: italic;
+}
+
+/* A detected table stays in its original worksheet cells. Its own controls
+   sit beside the promoted header text, so side-by-side tables can be operated
+   independently without turning them into duplicate sidebar entries. */
+.results td.sheet-table-header {
+  background: rgba(82, 139, 255, 0.12);
+  color: #d7dae0;
+  font-weight: 600;
+  overflow: visible;
+}
+
+.sheet-table-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.sheet-table-label {
+  color: #61afef;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-right: 3px;
+}
+
+.sheet-table-controls button {
+  background: none;
+  border: none;
+  border-radius: 2px;
+  color: #8b93a5;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 3px;
+}
+
+.sheet-table-controls button:hover,
+.sheet-table-controls button.active {
+  background: #3a3f4b;
+  color: #61afef;
+}
+
+.sheet-table-plot {
+  opacity: 0.65;
+}
+
+.sheet-table-plot:hover {
+  opacity: 1;
+}
+
+.results td.cell-filtered-out {
+  background: rgba(33, 37, 43, 0.45);
+}
+
+/* Change highlighting, relative to the last backup — see "Check for changes". */
+.results td.cell-changed {
+  background: rgba(229, 192, 123, 0.35);
+}
+
+.results tr.row-new td {
+  background: rgba(152, 195, 121, 0.22);
+}
+
+.results th.col-renamed {
+  text-decoration: underline dotted #7d8493;
+  cursor: help;
+}
+
+.results-footer {
+  padding: 6px 10px;
+  color: #7d8493;
+  font-size: 12px;
+}
+
+.diff-skipped-note {
+  color: #7d8493;
+}
+
+.diff-anyway-btn {
+  margin-left: 6px;
+  background: #3a3f4b;
+  color: #abb2bf;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.diff-anyway-btn:hover {
+  background: #464c5a;
+}
+
+.results .empty {
+  padding: 12px;
+  color: #7d8493;
+}
+
+.results .error {
+  padding: 10px;
+  color: #e06c75;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Column statistics popover, anchored under the header's stats button. */
+.stats-popover {
+  position: fixed;
+  z-index: 20;
+  min-width: 200px;
+  max-width: 320px;
+  max-height: 340px;
+  overflow-y: auto;
+  background: #21252b;
+  border: 1px solid #181a1f;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  padding: 10px;
+  font-size: 12px;
+  color: #abb2bf;
+}
+
+.stats-scope + .stats-scope {
+  border-top: 1px solid #3a3f4b;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.filter-popover {
+  position: fixed;
+  z-index: 21;
+  width: 240px;
+  box-sizing: border-box;
+  background: #21252b;
+  border: 1px solid #181a1f;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  padding: 10px;
+  color: #abb2bf;
+}
+
+.filter-input,
+.filter-operator {
+  width: 100%;
+  box-sizing: border-box;
+  background: #1e2126;
+  color: #abb2bf;
+  border: 1px solid #3a3f4b;
+  border-radius: 3px;
+  padding: 5px 7px;
+}
+
+.filter-operator,
+.filter-input + .filter-input {
+  margin-bottom: 6px;
+}
+
+.filter-input[hidden] {
+  display: none;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.filter-actions button {
+  background: #3a3f4b;
+  color: #abb2bf;
+  border: none;
+  border-radius: 3px;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+
+.filter-actions button:last-child {
+  background: #528bff;
+  color: #fff;
+}
+
+.stats-loading, .stats-empty {
+  color: #7d8493;
+}
+
+.stats-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-summary {
+  color: #7d8493;
+  margin-bottom: 4px;
+}
+
+.stats-top-values, .stats-descriptive {
+  margin-top: 6px;
+}
+
+.stats-top-value-row, .stats-descriptive-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px solid #181a1f;
+}
+
+.stats-top-value, .stats-descriptive-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.stats-top-freq, .stats-descriptive-value {
+  flex-shrink: 0;
+  color: #7d8493;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Cell inspector: double-click a cell to view its full value; editable in
+   place of the same panel when the result is a plain single-table SELECT
+   and Safe Mode is off. */
+.cell-inspector-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-inspector-panel {
+  width: min(640px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: #282c34;
+  border: 1px solid #181a1f;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.cell-inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #21252b;
+  border-bottom: 1px solid #181a1f;
+  font-weight: 600;
+  color: #abb2bf;
+}
+
+.cell-inspector-close {
+  background: none;
+  border: none;
+  color: #7d8493;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.cell-inspector-close:hover {
+  color: #e06c75;
+}
+
+.cell-inspector-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 120px;
+  max-height: 50vh;
+}
+
+.cell-inspector-body .cm-editor {
+  height: 100%;
+}
+
+.cell-inspector-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid #181a1f;
+}
+
+.cell-inspector-footer button {
+  background: #528bff;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.cell-inspector-footer button:hover {
+  background: #6c9bff;
+}
+
+.cell-inspector-secondary {
+  background: #3a3f4b !important;
+}
+
+.cell-inspector-secondary:hover {
+  background: #464c5a !important;
+}
+
+/* Live/Static selector: pushed to the far right of the toolbar, deliberately
+   apart from Safe Mode's controls on the left — the two are mutually
+   exclusive states, not just visually but functionally (see webview.ts). */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.toolbar-radio {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: #abb2bf;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.toolbar-radio input {
+  cursor: pointer;
+}
+
+#live-options:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #abb2bf;
+}
+
+#live-interval-input {
+  width: 3.5em;
+  background: #1e2126;
+  color: #abb2bf;
+  border: 1px solid #3a3f4b;
+  border-radius: 3px;
+  padding: 2px 4px;
+}
+
+.live-status {
+  font-size: 12px;
+  color: #7d8493;
+  white-space: nowrap;
+}
+
+.live-status.live-status-active {
+  color: #98c379;
+}
+
+.live-status.live-status-stale {
+  color: #e5c07b;
+  font-weight: 600;
+}
+
+/* No companion file is being written alongside this one. Muted rather than
+   alarming -- nothing is broken, there is simply nothing to be live about --
+   but deliberately NOT the active green, which would read as healthy. */
+.live-status.live-status-nosource {
+  color: #7d8493;
+  font-style: italic;
+}
+
+.cell-inspector-status, .cell-inspector-note {
+  color: #7d8493;
+  font-size: 12px;
+}
+
+/* ---- chart tab ---------------------------------------------------------
+   The chart has its own VS Code tab (chartPanel.ts), so this styles a whole
+   page rather than a panel inside the grid's. An earlier version DID sit
+   inside the grid pane, and its `.chart-panel { display: flex }` silently
+   defeated `hidden` for exactly the reason spelled out at .th-inner /
+   #unlock-options above -- the empty panel stayed visible and squeezed the
+   table into the bottom of the pane. Exactly one thing here is toggled with
+   `hidden` (.chart-tools, the toolbar over the plot), and it carries the
+   `:not([hidden])` guard. */
+/* White whatever the editor theme is, and deliberately so: this tab is a
+   figure. It gets screenshotted, pasted into a document and printed, and a
+   dark-theme chart arrives everywhere else as a negative of itself. The
+   colours ECharts draws with are stated to match, in chartView.ts. Scoped to
+   this class, so the grid keeps following the theme. */
+.chart-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #1f1f1f;
+}
+
+.chart-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.chart-hint {
+  color: #8a8a8a;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Holds the canvas and the toolbar on top of it, so the toolbar needs a
+   positioned ancestor that is not the canvas ECharts writes into. */
+.chart-plot {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+}
+
+/* ECharts measures its container on init, so this needs a real height rather
+   than one that collapses to its (empty) content. */
+.chart-canvas {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  font-size: 12px;
+}
+
+/* `:not([hidden])` is load-bearing -- see .th-inner / #unlock-options above.
+   This toolbar IS toggled with `hidden`, and a bare `display` here would beat
+   the UA rule and pin it on screen. */
+.chart-tools:not([hidden]) {
+  display: flex;
+}
+
+.chart-tools {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  gap: 6px;
+}
+
+/* One rule for every tool, rather than per-button ones: these sit over the
+   figure, so a second button that drifted a pixel or a shade from the first
+   would be visible as exactly that. */
+.chart-tools button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #d0d0d0;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #6578ba;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.chart-tools button:hover {
+  opacity: 1;
+}
+.query-target-toolbar { display: flex; align-items: center; gap: 8px; padding: 6px 10px; flex-wrap: wrap; }
+.query-target-toolbar select { max-width: 46vw; color: var(--vscode-dropdown-foreground); background: var(--vscode-dropdown-background); border: 1px solid var(--vscode-dropdown-border); }
+.sheet-table-sql { font-size: 10px; padding: 1px 4px; }

@@ -1,0 +1,118 @@
+name: Build extension
+on: [push]
+
+# The release job below deletes the `latest` release before recreating it, so
+# two runs overlapping on the same ref could interleave those steps and leave
+# no release published at all. One run per ref at a time; superseded runs are
+# cancelled rather than queued, since only the newest push is worth publishing.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Platform-independent checks, so they run once rather than per-OS. Node 22:
+  # `node --test` only accepts a glob pattern from Node 21 on.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      # The stress corpus runs inside `npm test` (see test/stress.test.ts), so
+      # there is no separate step for it on the happy path. Tier B — the files
+      # written by polars/pyarrow/openpyxl — is deliberately NOT built here:
+      # those cases skip when their files are absent, which is what keeps CI
+      # free of a Python dependency.
+      - run: npm test
+
+      # Only when something failed. `npm run stress` runs the same cases again
+      # and writes the ranked report, which says which of them broke and how
+      # quietly — far more use than scrolling a test runner's output.
+      - name: Stress report
+        if: failure()
+        run: npm run stress || true
+      - name: Upload stress report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-report
+          path: test/stress/_work/report.md
+          if-no-files-found: ignore
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx playwright install chromium
+      - run: npm run test:browser
+      - run: npm run build
+      - run: npx vsce package
+      - name: Install pinned VS Code for macOS host checks
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          dfv_platform=darwin
+          if [ "$(uname -m)" = arm64 ]; then dfv_platform=darwin-arm64; fi
+          curl --fail --location "https://update.code.visualstudio.com/1.139.0/${dfv_platform}/stable" --output "$RUNNER_TEMP/dfv-code.zip"
+          ditto -xk "$RUNNER_TEMP/dfv-code.zip" "$RUNNER_TEMP/dfv-code"
+          echo "DFV_VSCODE_EXECUTABLE=$RUNNER_TEMP/dfv-code/Visual Studio Code.app/Contents/MacOS/Code" >> "$GITHUB_ENV"
+      - name: Install pinned VS Code for Windows host checks
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest 'https://update.code.visualstudio.com/1.139.0/win32-x64-archive/stable' -OutFile "$env:RUNNER_TEMP/dfv-code.zip"
+          Expand-Archive "$env:RUNNER_TEMP/dfv-code.zip" "$env:RUNNER_TEMP/dfv-code"
+          "DFV_VSCODE_EXECUTABLE=$env:RUNNER_TEMP/dfv-code/Code.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - run: npm run test:host
+      - name: Tag vsix filename with platform
+        shell: bash
+        # vsce package produces the same filename on every OS; the release
+        # job below merges both platforms' artifacts into one directory, so
+        # they need distinct names or one silently overwrites the other.
+        run: |
+          for f in *.vsix; do
+            mv "$f" "${f%.vsix}-${{ matrix.os }}.vsix"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix-${{ matrix.os }}
+          path: '*.vsix'
+
+  release:
+    # Also gated on `test`, so a failing suite blocks publishing rather than
+    # shipping a broken build to the one URL people install from.
+    needs: [build, test]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vsix-*
+          path: vsix
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+          gh release create latest vsix/*.vsix \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Latest build ($(date -u +%Y-%m-%d))" \
+            --notes "Auto-published from $GITHUB_SHA on every push to main. Always the newest build — no 90-day artifact expiry." \
+            --latest
