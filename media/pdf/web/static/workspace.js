@@ -243,6 +243,9 @@ function visiblePageChoice(viewport, candidates, fallback) {
     <button type="button" class="tbtn" id="next-page" aria-label="Next page">›</button>
     <select id="page-fit" aria-label="Page zoom"><option value="fit-page">Fit page</option><option value="fit-width">Fit width</option><option value="actual-size">100%</option><option value="custom">Custom</option></select>`;
   toolbar.insertBefore(controls, toolbar.querySelector('.zoom'));
+  const fitControl = controls.querySelector('#page-fit');
+  fitControl.hidden = true;
+  fitControl.disabled = true;
   const navigationError = document.createElement('span');
   navigationError.id = 'navigation-error'; navigationError.setAttribute('role', 'status');
   document.getElementById('statusbar').append(navigationError);
@@ -456,6 +459,10 @@ function visiblePageChoice(viewport, candidates, fallback) {
       if(owner.pending){toast('Copy exported; confirm its checkpoint in Export details.','warn');return;}
       toast(result.note?`${result.note} Exported to ${result.path}`:`Exported to ${result.path}`,'ok');
     } catch(e) {
+      if (e?.name === 'AbortError') {
+        globalThis.PDFPerf?.end(timing,'cancelled');
+        return;
+      }
       globalThis.PDFPerf?.end(timing,e.unanswered?'no_answer':'refused');
       owner.error=e.unanswered?'Export outcome unconfirmed; inspect the destination before exporting again.':'Export failed: '+explain(e);
       toast(owner.error,'err');
@@ -497,8 +504,8 @@ function visiblePageChoice(viewport, candidates, fallback) {
   }
   const compactExport = document.createElement('button');
   compactExport.id = 'export-compact'; compactExport.className = 'tbtn wide'; compactExport.type = 'button';
-  compactExport.textContent = 'Export smaller copy';
-  compactExport.title = 'Consolidate old PDF revisions into a separately verified copy. Keeps image quality and editable source; does not replace the standard saved checkpoint.';
+  compactExport.textContent = 'Reduce file size…';
+  compactExport.title = 'Save a separate PDF without lowering image quality. The file may stay the same size; the original is unchanged.';
   compactExport.dataset.workspace = 'all';
   document.getElementById('workspace-parking').append(compactExport);
   compactExport.onclick = () => exportDocument(true);
@@ -528,6 +535,7 @@ function visiblePageChoice(viewport, candidates, fallback) {
   new ResizeObserver(placeFinder).observe(toolbar);
   const findButton = document.createElement('button');
   findButton.id = 'find-toggle';
+  findButton.hidden = true; // Command-F still invokes this button's handler.
   findButton.className = 'tbtn wide'; findButton.textContent = 'Find';
   let outline = [], outlinePage = 0, outlineGeneration = 0, outlineDoc = null, outlineLayout = null;
   const outlineQuery = finder.querySelector('#outline-query');
@@ -992,6 +1000,8 @@ function visiblePageChoice(viewport, candidates, fallback) {
       if (next !== 'edit') {
         if (S.editOn) document.getElementById('text-toggle').click();
         formulaMode(false);
+      } else if (!S.editOn) {
+        document.getElementById('text-toggle').click();
       }
       for (const tab of tabs) tab.setAttribute('aria-pressed', String(tab.dataset.workspaceTab === next));
       toolbar.dataset.workspace = next;

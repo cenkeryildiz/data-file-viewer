@@ -105,6 +105,9 @@ function record(level: RecordedMessage['level']) {
 }
 
 export const vscodeStub = {
+  CancellationError: class CancellationError extends Error {
+    constructor() { super('Canceled'); this.name = 'Canceled'; }
+  },
   Uri: StubUri,
   Disposable: StubDisposable,
 

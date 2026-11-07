@@ -14,6 +14,26 @@ const uri = (path: string) => stub.Uri.file(path) as any;
 const bundle = resolve(__dirname, '..', '..', 'media', 'pdf', 'web', 'static'); // compiled test lives in out-test/test
 const skip = existsSync(join(bundle, 'viewer.js')) ? false : 'media/pdf bundle not built';
 
+test('cancelled PDF requests stay normal cancellation; real refusals and unknown writes remain errors', { skip }, async () => {
+  const source = readFileSync(join(bundle, 'viewer.js'), 'utf8');
+  const body = source.slice(source.indexOf('function remember('), source.indexOf('/* A read --'));
+  assert.ok(body.includes('async function send('));
+  for (const [error, expected] of [
+    [{ refused: true, status: 409, code: 'CANCELLED', message: 'Export cancelled.' }, 'AbortError'],
+    [{ refused: true, status: 409, code: 'STALE_REVISION', body: { detail: 'Source changed.' } }, 'STALE_REVISION'],
+    [{ message: 'Connection lost.' }, 'connection_lost'],
+  ] as const) {
+    const state: any = {};
+    const context = { S: state, requestId: () => 'request-1', perfRequest: () => ({}), perfAnswered: () => {},
+      opKind: () => 'change', resync: () => {}, transport: { request: async () => { throw { ...error }; } } };
+    const pending = vm.runInNewContext(body + '\nsend("export_verified", {}, null, {});', context);
+    await assert.rejects(pending, (e: any) => expected === 'AbortError'
+      ? e.name === 'AbortError' && !e.unanswered
+      : e.code === expected && (expected !== 'connection_lost' || e.unanswered === true));
+    assert.equal(state.failures?.length ?? 0, expected === 'AbortError' ? 0 : 1);
+  }
+});
+
 async function setup(staticSrc: string) {
   const dir = mkdtempSync(join(tmpdir(), 'dfv-pdf-confirm-'));
   cpSync(staticSrc, join(dir, 'media', 'pdf', 'web', 'static'), { recursive: true });

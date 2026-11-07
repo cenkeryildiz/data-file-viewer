@@ -117,7 +117,14 @@ async function main() {
     };
     const until = (what, fn, ms) => waitFor(what, async () => (await fn()) || undefined, ms);
     const tab = name => $(`[data-workspace-tab="${name}"]`).click();
-    const openFinder = async () => { if (!(await F.evaluate(() => document.getElementById('document-finder').open))) await $('#find-toggle').click(); };
+    const openFinder = async () => {
+      assert(await $('#find-toggle').isHidden(), 'Find toolbar button stays hidden');
+      if (!(await F.evaluate(() => document.getElementById('document-finder').open))) {
+        await $('#docname').click();
+        await F.locator('body').press(process.platform === 'darwin' ? 'Meta+f' : 'Control+f');
+        await until('Command-F opens Find', () => F.evaluate(() => document.getElementById('document-finder').open));
+      }
+    };
     const closeFinder = async () => { if (await F.evaluate(() => document.getElementById('document-finder').open)) await $('#document-finder form button').click(); };
     /** Search `word`; returns the pages (1-based) of the result rows once the status settles on this word. */
     const search = async word => {
@@ -182,9 +189,12 @@ async function main() {
       const w = parseFloat((await snap()).page0w); assert.ok(Math.abs(w - PW / 72 * 96 * 2) < 2, `200% page width ${w}px, expected ${PW / 72 * 96 * 2}`);
       await $('#zoomlbl').fill('5000'); await $('#zoomlbl').press('Enter');
       await until('invalid zoom rejected', async () => /10% to 800%/.test(await text('#navigation-error')));
-      await $('#page-fit').selectOption('fit-width'); await until('fit-width', async () => (await F.evaluate(() => document.getElementById('page-fit').value)) === 'fit-width');
-      await $('#page-fit').selectOption('fit-page'); await sleep(300);
-      return `${z0} -> ${z1}; typed 200% = ${w}px wide; invalid rejected; fit modes`;
+      assert(await $('#page-fit').isHidden());
+      assert(await $('#page-fit').isDisabled());
+      assert.equal(await F.evaluate(() => typeof PDFUI.fit), 'function', 'fit implementation retained');
+      await $('#zoomlbl').fill(z0); await $('#zoomlbl').press('Enter');
+      await until('manual zoom restored for subsequent selection checks', async () => (await val('#zoomlbl')) === z0);
+      return `${z0} -> ${z1}; typed 200% = ${w}px wide; invalid rejected; fit selector hidden/disabled`;
     });
 
     await run('search', async () => {

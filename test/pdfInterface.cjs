@@ -160,7 +160,9 @@ async function main() {
       // Emulate the existing panel controller's docked/drawer decision, without an engine.
       await page.evaluate(width => document.getElementById('properties').classList.toggle('panel-drawer', width <= 800), width);
       await page.waitForFunction(() => document.getElementById('toolbar').scrollWidth <= innerWidth);
-      for (const selector of ['#export', '#properties-toggle', '#zoom-in', '#page-fit', '#ipsave', '#ipcancel']) {
+      assert(await page.locator('#page-fit').isHidden());
+      assert(await page.locator('#page-fit').isDisabled());
+      for (const selector of ['#export', '#properties-toggle', '#zoom-in', '#ipsave', '#ipcancel']) {
         const box = await page.locator(selector).boundingBox();
         assert(box && box.x >= 0 && box.x + box.width <= width + 1 && box.y >= 0 && box.y + box.height <= 950, `${selector} outside ${width}px viewport`);
         await page.locator(selector).click({ trial: true });
@@ -246,7 +248,7 @@ async function main() {
         const paper = document.getElementById('reading-page'), size = Math.min(620, document.getElementById('stage').clientWidth - 48);
         paper.style.width = `${size}px`; paper.style.height = `${size * 760 / 620}px`;
       }, width);
-      for (const selector of ['#export', '#zoom-in', '#page-fit', '#notes-toggle', '#rail-toggle']) {
+      for (const selector of ['#export', '#zoom-in', '#notes-toggle', '#rail-toggle']) {
         await page.locator(selector).click({ trial: true });
       }
       assert(await page.evaluate(() => document.getElementById('toolbar').scrollWidth <= innerWidth));

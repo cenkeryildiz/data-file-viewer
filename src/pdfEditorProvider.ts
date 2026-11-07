@@ -199,7 +199,7 @@ export class PdfEditorProvider implements vscode.CustomEditorProvider<PdfDocumen
   async saveCustomDocument(doc: PdfDocument): Promise<void> {
     const target = await vscode.window.showSaveDialog({
       defaultUri: vscode.Uri.joinPath(doc.uri, '..', `edited_${doc.uri.path.replace(/^.*\//, '')}`), filters: { PDF: ['pdf'] } });
-    if (!target) throw new Error('Save cancelled; the original PDF is unchanged.');
+    if (!target) throw new vscode.CancellationError();
     await doc.host.exportTo(target);
   }
 

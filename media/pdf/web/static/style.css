@@ -884,6 +884,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 #workspace-tools-bar #markgroup, #workspace-tools-bar #stylegroup {flex-wrap:nowrap; max-width:none}
 #workspace-parking, #workspace-parking[hidden] {display:none}
 #tools-more[hidden] {display:none}
+#find-toggle[hidden], #page-fit[hidden] {display:none!important}
 #tools-more {flex:0 0 auto; border-color:var(--control-line)}
 #tools-more-list {position:fixed; z-index:45; display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-1);
   width:max-content; max-width:calc(100vw - 16px); overflow:auto; padding:var(--space-2);

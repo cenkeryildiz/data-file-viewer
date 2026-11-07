@@ -135,6 +135,16 @@ async function main() {
         await waitFor('dirty tab', async () => isDirty('a.pdf'));
         return 'tab dirty after rotate';
       });
+      await step('A1b cancel Save keeps the dirty edit without a failure notification', async () => {
+        await key(fa, `${mod}+s`);
+        const box = page().locator('.quick-input-widget input.input').first();
+        await waitFor('Save dialog before cancel', async () => (await box.count()) && await box.isVisible());
+        await page().keyboard.press('Escape');
+        await waitFor('Save dialog closed', async () => !await box.isVisible());
+        assert(await isDirty('a.pdf'));
+        assert.equal(await sha(files('a.pdf')), baseline['a.pdf']);
+        assert.doesNotMatch((await page().locator('.notifications-toasts .notification-list-item-message').allInnerTexts()).join(' | '), /failed to save|server refused/i);
+      });
       await step('A2 Ctrl+S -> save dialog -> file written', async () => {
         await key(fa, `${mod}+s`);
         await answerDialog(savedA);
@@ -218,7 +228,6 @@ async function main() {
       await step('B1 open PDF, Edit workspace, #text-toggle shows run boxes', async () => {
         fb = await openPdf('c.pdf');
         await fb.locator('[data-workspace-tab="edit"]').click();
-        await fb.locator('#text-toggle').click();
         await waitFor('edit mode on', async () => (await fb.locator('#text-toggle').getAttribute('aria-pressed')) === 'true');
         const n = await waitFor('run boxes', async () => { const c = await fb.locator('.tspan').count(); return c || undefined; });
         return `${n} run box(es)`;

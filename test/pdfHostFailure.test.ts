@@ -222,7 +222,8 @@ test('Save As cancelled in the dialog writes nothing and keeps the original', { 
     const doc = await provider.openCustomDocument(uri(fx.source));
     try {
       await rotate(doc.host);
-      await assert.rejects(provider.saveCustomDocument(doc), /cancelled|original PDF is unchanged/i);
+      await assert.rejects(provider.saveCustomDocument(doc), (e: any) => e instanceof stub.CancellationError);
+      assert.equal((await doc.host.request('get_state', {})).dirty, true, 'cancellation keeps the edit unsaved');
       assert.deepEqual(strays(fx.dir, ['ext', 'globalStorage', 'original.pdf']), []);
       assert.equal(sha(fx.source), fx.sourceSha);
     } finally { doc.dispose(); }

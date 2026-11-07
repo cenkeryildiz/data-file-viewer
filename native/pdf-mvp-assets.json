@@ -1,10 +1,28 @@
 {
   "format": 1,
-  "scope": "Retained qualified PDF MVP assets for macOS arm64; no new PDF feature or release acceptance.",
+  "scope": "Retained qualified PDF worker/fonts and versioned UI; post0.1.0 usability patch qualification recorded separately.",
   "provenance": {
     "artifact": "data-file-viewer-0.0.20-integrated-20261031-r4.vsix",
     "artifact_sha256": "281a8f573d07524db0ad8a15a911c3480a718e9cc448124adfba6e1ecb644a76",
-    "qualification": "31 October 2026 combined local MVP, PDF_VIEWER_RESEARCH.md; test/_evidence/pdf-mvp-20261031/attempt-03/source.json binds worker and runtime asset hashes."
+    "qualification": "31 October 2026 combined local MVP, PDF_VIEWER_RESEARCH.md; test/_evidence/pdf-mvp-20261031/attempt-03/source.json binds worker and runtime asset hashes.",
+    "ui_patch": {
+      "base_version": "0.1.0",
+      "reason": "Activate editing, normal cancellation, clear size-reduction label, shortcut-only Find and inactive fit selector",
+      "changed": [
+        {
+          "path": "web/static/style.css",
+          "previous_sha256": "a069d8cfc236cb456e9643d9b17bd68017a16be9ae4acea66bf5494f397c241d"
+        },
+        {
+          "path": "web/static/viewer.js",
+          "previous_sha256": "4962031686578294d4fb5a8b516169fcd160e63cf91c0c17264f11476f88639c"
+        },
+        {
+          "path": "web/static/workspace.js",
+          "previous_sha256": "88799979eb5f6f3333de1b2e86cd990a7f9208848d943b0f546c49d5cc5ec207"
+        }
+      ]
+    }
   },
   "files": [
     {
@@ -44,13 +62,13 @@
     },
     {
       "path": "web/static/style.css",
-      "bytes": 52553,
-      "sha256": "a069d8cfc236cb456e9643d9b17bd68017a16be9ae4acea66bf5494f397c241d"
+      "bytes": 52618,
+      "sha256": "d3370729d268bc305b8b193327a141611ab7e8e477b0eeb732e0c63dd10b0996"
     },
     {
       "path": "web/static/viewer.js",
-      "bytes": 242248,
-      "sha256": "4962031686578294d4fb5a8b516169fcd160e63cf91c0c17264f11476f88639c"
+      "bytes": 242347,
+      "sha256": "b79bc6de3e222d11ea398fc75c061efb1d0ebbf756ef53c8eaa736a547ce29b1"
     },
     {
       "path": "web/static/viewerDraftRecovery.js",
@@ -84,8 +102,8 @@
     },
     {
       "path": "web/static/workspace.js",
-      "bytes": 62271,
-      "sha256": "88799979eb5f6f3333de1b2e86cd990a7f9208848d943b0f546c49d5cc5ec207"
+      "bytes": 62626,
+      "sha256": "59cecd7c549d13b7e332ab1213e97e23d13db36e2962639a9b0b05ffe0feebf0"
     }
   ]
 }

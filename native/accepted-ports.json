@@ -1,8 +1,8 @@
 {
   "schema": "dfv-accepted-ports.v1",
   "accepted_at": "2026-11-07T14:16:18.638473+00:00",
-  "scope": "V20/V21/V23 full native DFV with retained PDF MVP, final macOS arm64 VSIX qualified",
-  "candidate_inventory_sha256": "6d918148080169d05bcfa14b2582afb0ae7eb7c7658a4d2b52d41e2054348e66",
+  "scope": "OriginalnativeDFVqualification inherited unchanged;0.1.1PDFUI/cancellationpatch independently qualified",
+  "candidate_inventory_sha256": "a2b6114e0d5317031c3f5315d0511e3e96315de6a595ab5d179561a9c1683fc9",
   "platforms": {
     "qualified": "darwin-arm64 on macOS 15.8.2 / Apple M4 / 16 GiB",
     "not_qualified": [
@@ -279,7 +279,17 @@
     "final_runtime_vs_candidate": "0.1.0workers/UI/dependencies identical to fully qualified0.0.21; onlyREADME/package.json/VSIXmanifest differ; fresh0.1.0disposableinstalled CSV/PDF/activation/worker smoke passed",
     "physical_trackpad": "user-reported smooth in packaged0.0.21",
     "public_mat_reader": "focused genuine MATLAB oracle test passes without user-supplied research dataset; same >1050 variable assertion",
-    "version_change": "0.1.0workers/UI/dependencies identical to fully qualified0.0.21; onlyREADME/package.json/VSIXmanifest differ; fresh0.1.0disposableinstalled CSV/PDF/activation/worker smoke passed"
+    "version_change": "0.1.0workers/UI/dependencies identical to fully qualified0.0.21; onlyREADME/package.json/VSIXmanifest differ; fresh0.1.0disposableinstalled CSV/PDF/activation/worker smoke passed",
+    "pdf_ui_0_1_1": {
+      "node_tests": 23,
+      "failed": 0,
+      "skipped": 0,
+      "browser": "interface/surfaces/theme with320px/large-font/high-contrast cases pass",
+      "installed": "Editautoon/basic/Unicode/listmarkers;quietSave+bothExportcancels/dirtyretention/retry;CmdF/Findhidden/fitretaineddisabled/manualzoom;annotation/history/pages;discard/restart/offline/worker-killrecovery",
+      "final_archive": "1326files;PKGchecks;READMEonly differs from fullytestedcandidate;freshCSV/PDFinstalledsmoke passed",
+      "workers": "allthreebyte-identical to0.1.0",
+      "not_repeated": "nativecompile/30minsoak/physicaltrackpad; unchangednativeworkers/zoomimplementation"
+    }
   },
   "limits": [
     "XLSX sheets over the 64 MiB cache cap reload on every read; sparse extent still drives memory within the 10M-cell bound",
@@ -287,14 +297,14 @@
     "PDF advanced parity remains deferred",
     "resource samples every 100 ms may miss shorter peaks; Code/Chromium excluded from native budget"
   ],
-  "rollback": "Owner requests only current0.1.0release packages/install retained. Source history, original inputs, settings and recovery/user data remain preserved; never replay an unknown write.",
+  "rollback": "Keep only current0.1.1package/release/install per owner; retain source history/settings/recovery/userdata.",
   "artifact": {
-    "version": "0.1.0",
+    "version": "0.1.1",
     "platform": "darwin-arm64",
-    "filename": "data-file-viewer-0.1.0-darwin-arm64.vsix",
-    "bytes": 32728586,
-    "sha256": "ca0048712d0a16957f3bfb3a4a288f7f75b7c0b815c12b48391e117552a00b7e",
-    "release_tag": "v0.1.0",
+    "filename": "data-file-viewer-0.1.1-darwin-arm64.vsix",
+    "bytes": 32728977,
+    "sha256": "319b99ea27113522025864d1d0e8240b52939375aa05ddc86ca19281d02199b2",
+    "release_tag": "v0.1.1",
     "repository": "cenkeryildiz/data-file-viewer"
   }
 }

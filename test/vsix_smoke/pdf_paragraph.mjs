@@ -105,7 +105,6 @@ async function main() {
       });
       await waitFor('page image', async () => f.evaluate(() => { const i = document.querySelector('#pages .page img'); return i?.complete && i.naturalWidth; }));
       await f.locator('[data-workspace-tab="edit"]').click();
-      await f.locator('#text-toggle').click();
       await waitFor('edit mode on', async () => (await f.locator('#text-toggle').getAttribute('aria-pressed')) === 'true');
       return `${await waitFor('run boxes', async () => (await f.locator('.tspan').count()) || undefined)} run box(es)`;
     });

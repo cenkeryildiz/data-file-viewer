@@ -149,7 +149,9 @@ async function send(op, params, signal, timing) {
   try {
     answer = await transport.request(op, params, { requestId: id, signal });
   } catch (e) {
+    if (e?.code === "CANCELLED") e.name = "AbortError";
     perfAnswered(rec, e);
+    if (e?.name === "AbortError") throw e;
     if (!e || !e.refused) {
       // No answer -- or answered and then cut off: for a change, it WAS
       // applied (the status said so), but what it changed is unknown. The

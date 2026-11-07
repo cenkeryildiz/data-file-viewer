@@ -9,19 +9,29 @@ DuckDB is the engine reading most of these formats under the hood; kdb+
 files are parsed directly in their own real format (see the kdb+ section
 below).
 
-### 0.1.0: native tables, MAT and PDF
+### 0.1.1: clearer PDF editing and controls
 
-Version 0.1.0 uses separate Rust workers for tables, read-only MATLAB Level-5
+Selecting **Edit** activates text editing; click outlined text, then Apply.
+Cancelling Save or Export leaves your edit intact without an error notification.
+**Reduce file size…** exports a separate copy without lowering image quality;
+its size may stay the same. Use **Command-F** on macOS (**Ctrl-F** elsewhere) for
+Find. The Find button and fit selector are hidden; fit controls remain in the
+code but are disabled in the toolbar. Zoom buttons, percentage entry and trackpad
+zoom remain available.
+
+### Native tables, MAT and PDF
+
+Version 0.1.1 uses separate Rust workers for tables, read-only MATLAB Level-5
 files and the qualified PDF editor. Installing the extension needs no Python,
 Conda, Cargo or Node DuckDB binding. The current package supports **macOS Apple
 silicon (arm64)**; Windows, Linux and Intel Mac packages are not qualified for this
 version. Earlier cross-platform release notes below apply to their named versions.
 
-Download [data-file-viewer-0.1.0-darwin-arm64.vsix](https://github.com/cenkeryildiz/data-file-viewer/releases/download/v0.1.0/data-file-viewer-0.1.0-darwin-arm64.vsix),
+Download [data-file-viewer-0.1.1-darwin-arm64.vsix](https://github.com/cenkeryildiz/data-file-viewer/releases/download/v0.1.1/data-file-viewer-0.1.1-darwin-arm64.vsix),
 then use VS Code's **Extensions: Install from VSIX…** command, or:
 
 ```sh
-code --install-extension data-file-viewer-0.1.0-darwin-arm64.vsix
+code --install-extension data-file-viewer-0.1.1-darwin-arm64.vsix
 ```
 
 If upgrading from `kemal-local.data-file-viewer`, uninstall that older copy before
@@ -43,7 +53,7 @@ MAT v7.3/HDF5 and object-value decoding remain unsupported. Large XLSX sheets
 above the 64 MiB decoded-sheet cache are reread; sparse worksheet extents can
 still be expensive. PDF support is the bounded profile described below, with
 advanced editing/math parity deferred. Physical PDF trackpad zoom was reported
-smooth by the user on the qualified runtime; 0.1.0 retains those exact worker and UI bytes.
+smooth by the user on the earlier qualified runtime. This patch keeps the zoom implementation and native workers unchanged.
 
 ### 0.0.19: Worksheet preview button removed
 
@@ -694,7 +704,7 @@ the source and discards handles belonging to the previous generation.
 
 ## PDF editor
 
-> **Version 0.1.0:** macOS Apple silicon (arm64). Uses the retained, qualified
+> **Version 0.1.1:** macOS Apple silicon (arm64). Uses the retained, qualified
 > PDF MVP worker and UI; other platforms and full PDF parity are not qualified.
 
 **Supported (qualified profile):**
@@ -818,7 +828,7 @@ in `native/duckdb-third-party-licenses.txt`, runs vsce, then inspects the archiv
 
 ```sh
 scripts/stage-vsix.sh build-workers           # release workers, default features, path-remapped (heavy lock)
-scripts/stage-vsix.sh package /absolute/out/data-file-viewer-0.1.0-darwin-arm64.vsix
+scripts/stage-vsix.sh package /absolute/out/data-file-viewer-0.1.1-darwin-arm64.vsix
 ```
 
 `test/package.cjs` (run by the recipe) requires both workers to be executable Mach-O arm64
@@ -846,7 +856,7 @@ npm run test:package   # the same checks and more, on the newest VSIX
 
 The newest qualified package is published as a versioned GitHub release, with its
 VSIX SHA-256 and the exact source commit. [Releases](https://github.com/cenkeryildiz/data-file-viewer/releases)
-contain the current package. Version 0.1.0 ships only the qualified macOS arm64
+contain the current package. Version 0.1.1 ships only the qualified macOS arm64
 artifact; older release packages, including Windows artifacts, are removed.
 
 `.github/workflows/build.yml` is the retained legacy Node-backed pipeline. It runs

@@ -126,6 +126,23 @@ async function main() {
       return `page image ${first.w}x${first.h} -> ${rotated.w}x${rotated.h}`;
     });
 
+    await step('cancel Export is quiet and retains the edit', async () => {
+      const before = await frame.evaluate(() => ({ revision: S.revision, dirty: UNDO.state.dirty, failures: S.failures?.length ?? 0 }));
+      assert.equal(await frame.locator('#export-compact').textContent(), 'Reduce file size…');
+      for (const selector of ['#export', '#export-compact']) {
+        if (!await frame.locator(selector).isVisible()) await frame.locator('#tools-more').click();
+        await frame.locator(selector).click();
+        const box = page().locator('.quick-input-widget input.input').first();
+        await waitFor('save dialog before cancel', async () => (await box.count()) && await box.isVisible());
+        await page().keyboard.press('Escape');
+        await waitFor('export available after cancel', async () => frame.locator('#export').isEnabled());
+        assert.deepEqual(await frame.evaluate(() => ({ revision: S.revision, dirty: UNDO.state.dirty, failures: S.failures?.length ?? 0 })), before);
+        assert.doesNotMatch(await frame.locator('#toast').innerText(), /server refused|export failed/i);
+      }
+      assert.equal(await sha(pdf), shaBefore);
+      assert.equal(await fs.stat(out).catch(() => null), null);
+    });
+
     await step('export via Export button + save dialog', async () => {
       await frame.locator('#export').click();
       const box = page().locator('.quick-input-widget input.input').first();

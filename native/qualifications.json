@@ -72,13 +72,19 @@
     "package": {
       "cwd": ".",
       "command": "DFV_NATIVE_DIR=\"$PWD/native\" DFV_WORKER_DIR=\"$DFV_DEFAULT_WORKERS\" scripts/stage-vsix.sh package \"$DFV_VSIX\"",
-      "state": "verified: final0.1.0/darwin-arm64,1326files,32728586bytes, exact runtime pins/notices/target/archive checks"
+      "state": "verified:0.1.1darwin-arm64,1326files,32728977bytes,PDFUIpin/currentworkers/licences/archive checks"
     },
     "packaged_workflows": {
       "cwd": ".",
       "command": "DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostRefusals.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostRange.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostPlot.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostLifecycle.cjs && DFV_MAT_ISOLATION=1 DFV_VSIX=\"$DFV_VSIX\" node test/host/matViewer.cjs; table format and PDF installed scripts additionally required",
       "state": "verified: full installed0.0.21campaign;0.1.0allruntimeentriesidentical, fresh0.1.0installedsmoke; physicalcheckinheritedunchangedruntime",
       "note": "MAT host runner accepts DFV_VSIX, clears development/backend/worker overrides, installs only in disposable profile and asserts installed worker paths; remaining table/PDF installed workflows run separately before credit"
+    },
+    "pdf_ui_0_1_1": {
+      "cwd": ".",
+      "command": "node --test out-test/test/pdfConfirmModal.test.js out-test/test/pdfHost.test.js out-test/test/pdfHostBounds.test.js out-test/test/pdfHostFailure.test.js out-test/test/pdfBackup.test.js; node test/pdfInterface.cjs media/pdf/web/static; node test/pdfSurfaces.cjs media/pdf/web/static; node test/pdfTheme.cjs media/pdf/web/static; installed pdf_workflow/pdf_save_text/pdf_paragraph/pdf_features/pdf_discard/pdf_restart/pdf_failure",
+      "state": "verified:23Node/0fail/0skip, browser and installedPDF gates pass; genuine originalPDFs remainbyte-identical",
+      "note": "inheritsunchangednativeworker qualification; no30minsoak/Rustrebuild/physicalinput rerun"
     }
   },
   "qualifications": [
@@ -348,7 +354,7 @@
     }
   ],
   "manual_pending": [],
-  "completion": "User now explicitly authorizes installing final0.1.0in realVSCode aftermatchingGitHubsource/assetverification",
+  "completion": "0.1.1source/release/actualinstalledreadback recorded externally after immutable source commit",
   "manual_verified": [
     "2026-11-07 Europe/Madrid: user reports PDF trackpad zoom smooth in packaged0.0.21 darwin-arm64 VSIX"
   ]
