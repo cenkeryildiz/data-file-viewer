@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DuckDBDocument, DuckDBEditorProvider } from '../src/duckdbEditorProvider';
-import { ViewerFile } from '../src/viewerFile';
+import { referenceBackend } from '../src/backend/reference';
 import { xlsxFile } from './stress/generators/_write';
 
 // REL-13–20, SEC-14/16 (replay), SEC-21–23 (sinks) and SEC-24–26 (trust) of
@@ -16,7 +16,7 @@ const SECRET = 'SYNTHETIC_SECRET_4c1e';
 type Posted = Record<string, unknown>;
 
 async function openHost(path: string) {
-  const file = await ViewerFile.open(path);
+  const file = await referenceBackend.open(path);
   const document = new DuckDBDocument(vscodeStub.Uri.file(path) as any, file);
   const provider = new DuckDBEditorProvider({ extensionUri: vscodeStub.Uri.file(process.cwd()) } as any);
   const posted: Posted[] = [];

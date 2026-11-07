@@ -1,0 +1,18 @@
+# D3.13 Safe Mode backup + diff-against-backup. Standalone; workspace picks it up via crates/*.
+[package]
+name = "dfv-table-backup-diff"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+dfv-table-publication = { path = "../publication" }
+libc = "=0.2.189"
+
+[dev-dependencies]
+serde_json = "=1.0.151"

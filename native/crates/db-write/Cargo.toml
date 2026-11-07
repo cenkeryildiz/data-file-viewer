@@ -1,0 +1,40 @@
+# D3.14 SQLite transactions and verified, snapshot-based DuckDB cell writes.
+[package]
+name = "dfv-table-db-write"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+# Pause hooks and the probe binary for real-process kill tests; never a default, absent from production builds.
+test-mutations = ["dfv-table-publication/test-mutations"]
+
+[dependencies]
+dfv-table-sqlite = { path = "../sqlite" }
+rusqlite = { version = "=0.40.2", features = ["bundled"] }
+duckdb = { version = "=1.10505.0", features = ["bundled", "parquet", "json"] }
+dfv-table-duckdb = { path = "../duckdb-query" }
+dfv-table-policy = { path = "../policy" }
+dfv-table-publication = { path = "../publication" }
+tempfile = "=3.27.0"
+libc = "=0.2.189"
+
+[[bin]]
+name = "dbw_probe"
+path = "src/bin/dbw_probe.rs"
+required-features = ["test-mutations"]
+
+[[bin]]
+name = "duckdbw_probe"
+path = "src/bin/duckdbw_probe.rs"
+required-features = ["test-mutations"]
+
+[[test]]
+name = "db_write"
+path = "tests/db_write.rs"
+required-features = ["test-mutations"]

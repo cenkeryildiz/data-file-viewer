@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DuckDbFile } from '../src/duckdbConnection';
 import { DuckDBDocument, DuckDBEditorProvider } from '../src/duckdbEditorProvider';
-import { initialState, reduce, type ExtensionMessage } from '../src/webviewState';
+import { chooseWorksheet, initialState, reduce, type ExtensionMessage } from '../src/webviewState';
 import { plottableColumns } from '../src/chartSpec';
 import { duckdbFile, xlsxFile } from './stress/generators/_write';
 
@@ -32,11 +32,14 @@ async function harness(file: DuckDbFile, path: string) {
   };
   async function query(table: string, preview = true) {
     messages.length = 0;
+    // As the webview does it (EX-02): a sidebar preview is an explicit choice
+    // first, and only the choice's own preview carries worksheet coordinates.
+    const chosen = preview ? chooseWorksheet(initialState(), table, 0, 0).state : initialState();
     await receive({ command: 'runQuery', sql: `SELECT * FROM "${table.replace(/"/g, '""')}" LIMIT 100;`,
-      ...(preview ? { sheetPreview: table } : {}) });
+      ...(preview ? { sheetPreview: table, selectionSeq: chosen.selection.seq } : {}) });
     const result = messages.find(m => m.command === 'queryResult');
     assert.ok(result, JSON.stringify(messages));
-    const state = reduce(initialState(), result as ExtensionMessage).state;
+    const state = reduce(chosen, result as ExtensionMessage).state;
     assert.ok(state.lastResult);
     return state.lastResult;
   }

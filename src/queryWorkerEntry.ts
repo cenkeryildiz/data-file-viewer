@@ -22,6 +22,8 @@ async function metadata() {
     hasPendingSheets: file.hasPendingSheets(),
     worksheets: tables.filter(t => file!.isWorksheet(t)),
     detectedTables: tables.flatMap(t => file!.getDetectedSheetTables(t)),
+    sheetPreparation: file.listSheetPreparation(),
+    preparationMetrics: file.getPreparationMetrics(),
     openWarnings: queryNotices(file.openWarnings),
     numberLocale: file.numberLocale,
     stamp,
@@ -45,12 +47,15 @@ process.on('message', (message: unknown) => {
         const info = await stat(approvedPath);
         stamp = { size: info.size, mtimeMs: info.mtimeMs };
         let openedSha256: string | undefined;
+        let workbookPreflightMs: number | undefined;
         if (/\.xlsx$/i.test(approvedPath)) {
           // The hash of the very bytes the preflight judged; see locateXlsxEdit.
+          const started = performance.now();
           openedSha256 = await preflightWorkbook(approvedPath);
+          workbookPreflightMs = performance.now() - started;
         }
         file = await DuckDbFile.open(approvedPath, args[1] as FileKind | undefined, {
-          ...(args[2] as DuckDbFileOpenOptions), restrictedReads: true, forceReadOnly: true, openedSha256,
+          ...(args[2] as DuckDbFileOpenOptions), restrictedReads: true, forceReadOnly: true, openedSha256, workbookPreflightMs,
         });
       } else {
         if (!file || !approvedPath || !stamp) throw new QueryPolicyError('Open the document before running a query.');

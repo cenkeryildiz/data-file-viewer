@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/envelope.v1.schema.json",
+  "title": "Transport envelope",
+  "$comment": "One JSON object per NDJSON line. id is a uint64 decimal string chosen by the host. args are named (keys = argument names in test/migration/table-operations.json); host-only callbacks (serializable:false) never cross. cancel carries the target id and gets no reply; the target replies once, with code cancelled.",
+  "x-dfv-version": 1,
+  "$defs": {
+    "request": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "$ref": "common.v1.schema.json#/$defs/protocol"
+        },
+        "version": {
+          "$ref": "common.v1.schema.json#/$defs/version"
+        },
+        "kind": {
+          "const": "request"
+        },
+        "id": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "method": {
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9]*$"
+        },
+        "args": {
+          "type": "object"
+        },
+        "deadline_ms": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        }
+      },
+      "required": [
+        "protocol",
+        "version",
+        "kind",
+        "id",
+        "method",
+        "args"
+      ],
+      "additionalProperties": false
+    },
+    "cancel": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "$ref": "common.v1.schema.json#/$defs/protocol"
+        },
+        "version": {
+          "$ref": "common.v1.schema.json#/$defs/version"
+        },
+        "kind": {
+          "const": "cancel"
+        },
+        "id": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        }
+      },
+      "required": [
+        "protocol",
+        "version",
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "success": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "$ref": "common.v1.schema.json#/$defs/protocol"
+        },
+        "version": {
+          "$ref": "common.v1.schema.json#/$defs/version"
+        },
+        "kind": {
+          "const": "response"
+        },
+        "id": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "ok": {
+          "const": true
+        },
+        "result": {},
+        "metadata": {
+          "$ref": "read-metadata.v1.schema.json"
+        }
+      },
+      "required": [
+        "protocol",
+        "version",
+        "kind",
+        "id",
+        "ok",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "$ref": "common.v1.schema.json#/$defs/protocol"
+        },
+        "version": {
+          "$ref": "common.v1.schema.json#/$defs/version"
+        },
+        "kind": {
+          "const": "response"
+        },
+        "id": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "ok": {
+          "const": false
+        },
+        "error": {
+          "$ref": "error.v1.schema.json"
+        },
+        "metadata": {
+          "$ref": "read-metadata.v1.schema.json"
+        }
+      },
+      "required": [
+        "protocol",
+        "version",
+        "kind",
+        "id",
+        "ok",
+        "error"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/cancel"
+    },
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ]
+}

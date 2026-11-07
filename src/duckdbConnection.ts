@@ -1,3 +1,6 @@
+import { FNV_OFFSET_BASIS, fnv1aFold } from './contentSignature';
+export { FNV_OFFSET_BASIS, fnv1aFold } from './contentSignature';
+export { baseTableOfSelect, hasTrailingLimit } from './backend/sql';
 import {
   DuckDBAppender,
   DuckDBConnection,
@@ -22,13 +25,13 @@ import { parseKdbFile, type KdbColumn, type KdbTable } from './kdbParser';
 import { KNOWN_FREQUENCIES, type SeriesFrequency } from './chartSpec';
 import { bothReadings, csvLocaleOptions, decideFile, type NumberLocale } from './numericLocale';
 import { listSheets, readSheetDimensionsChecked, type SheetDimension } from './xlsxSheets';
-import {
-  columnLetters as tableColumnLetters,
-  detectTables,
-  isBlank,
-  type Cell,
-  type SheetTable,
-} from './sheetTables';
+import { columnLetters as tableColumnLetters, type TableCorrections } from './sheetTables';
+import { quoteIdent, quoteLiteral, replaceWithTable, baseTableOfSelect, hasTrailingLimit, TRAILING_LIMIT_RE, EDITABLE_SELECT_RE, FORBIDDEN_KEYWORDS_RE } from './backend/sql';
+import { cacheSheetAsTable, readGrid, trimTrailingBlanks, CACHE_MAX_CELLS, DETECTION_MAX_CELLS, isInterruption } from './backend/excel/prepare';
+import { PreparationRecorder, decodedGridBytes } from './backend/excel/metrics';
+import { xlsxTableExpr, xlsxVerbatimExpr, type SheetTableInfo } from './backend/excel/sourceMap';
+import { detectSheetGrid, planDetectedTable, uniqueName } from './backend/excel/detect';
+import { gridRowOfSlot, type RowSpan } from './sheetRowMap';
 import {
   EXCEL_ERROR_TOKENS,
   type PromotionTarget,
@@ -50,169 +53,31 @@ import {
   type SqlitePlan,
 } from './sqliteTypes';
 
-export type StatsKind = 'numeric' | 'datetime' | 'other';
+import type { PreparationMetrics, SheetPreparationState, SheetPreparationStatus, StatsKind, QueryResult, DetectedSheetTable, DetectedTableFilterOperator, DetectedTableFilter, DetectedTableSort, DetectedTableQueryResult, QueryDiff, EditabilityInfo, TopValuesStats, DescriptiveStats, FileKind, DuckDbFileOpenOptions, SheetTableMode, NumberLocaleReport, TextDecisionCache } from './backend/types';
+export type { PreparationMetrics, PreparationPhase, SheetPreparationState, SheetPreparationStatus, StatsKind, QueryResult, DetectedSheetTable, DetectedTableFilterOperator, DetectedTableFilter, DetectedTableSort, DetectedTableQueryResult, QueryDiff, EditabilityInfo, TopValuesStats, DescriptiveStats, FileKind, DuckDbFileOpenOptions, SheetTableMode, NumberLocaleReport, TextDecisionCache } from './backend/types';
 
-export interface QueryResult {
-  columns: string[];
-  rows: unknown[][];
-  columnStatsKind: StatsKind[];
-  /** Set when a maxRows cap actually cut the result short (see runQuery). */
-  truncated?: boolean;
+/** Corrections exactly as the detector takes them; anything malformed is dropped, not guessed at. */
+function sanitizeCorrections(value: unknown): Map<string, TableCorrections> {
+  const out = new Map<string, TableCorrections>();
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return out;
+  const rows = (list: unknown): number[] | undefined =>
+    Array.isArray(list) && list.length <= 100_000 && list.every((r) => Number.isSafeInteger(r) && r >= 0)
+      ? [...(list as number[])]
+      : undefined;
+  for (const [sheet, c] of Object.entries(value as Record<string, unknown>)) {
+    if (!c || typeof c !== 'object' || Array.isArray(c)) continue;
+    const split = rows((c as TableCorrections).split);
+    const merge = rows((c as TableCorrections).merge);
+    if (split || merge) out.set(sheet, { split, merge });
+  }
+  return out;
 }
-
-/** A detected table's coordinates in the verbatim worksheet grid. */
-export interface DetectedSheetTable {
-  name: string;
-  sheet: string;
-  /** 0-based, inclusive/exclusive grid coordinates. */
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-  /** 0-based worksheet-grid row, or null when the table has no promoted header. */
-  headerRow: number | null;
-  columns: string[];
-  /** Kinds inferred from the worksheet grid already in memory; used only to gate inline controls. */
-  columnStatsKind: StatsKind[];
-  rowCount: number;
-}
-
-export type DetectedTableFilterOperator =
-  | 'contains'
-  | 'equals'
-  | 'notEquals'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'between'
-  | 'isBlank'
-  | 'isNotBlank';
-
-export interface DetectedTableFilter {
-  column: string;
-  operator: DetectedTableFilterOperator;
-  value?: string;
-  valueTo?: string;
-}
-
-export interface DetectedTableSort {
-  column: string;
-  direction: 'asc' | 'desc';
-}
-
-export interface DetectedTableQueryResult extends QueryResult {
-  /** The exact SQL represented by rows, reused by stats and chart actions. */
-  sql: string;
-  /** Rows matching the filters before the display LIMIT. */
-  totalRows: number;
-}
-
-export interface QueryDiff {
-  cellChanged: boolean[][];
-  rowIsNew: boolean[];
-  renamedColumns: Record<string, string>;
-}
-
-export interface EditabilityInfo {
-  editable: boolean;
-  table?: string;
-  columns?: string[];
-}
-
-export interface TopValuesStats {
-  totalRows: number;
-  nonNullRows: number;
-  nullCount: number;
-  distinctCount: number;
-  topValues: { value: unknown; frequency: number }[];
-}
-
-export interface DescriptiveStats {
-  totalRows: number;
-  nonNullRows: number;
-  nullCount: number;
-  min: unknown;
-  max: unknown;
-  mean: unknown;
-  p5: unknown;
-  p95: unknown;
-}
-
-export type FileKind = 'duckdb' | 'parquet' | 'sqlite' | 'csv' | 'dta' | 'arrow' | 'feather' | 'xlsx' | 'kdb';
-
-export interface DuckDbFileOpenOptions {
-  /** Internal read-worker mode. Never populated from a webview message. */
-  restrictedReads?: boolean;
-  /** Internal: an existing backup created by this document's trusted save path. */
-  backupPath?: string;
-  /**
-   * Internal: this instance is a one-shot writer that is disposed right after
-   * its write (ViewerFile's trusted save path). Its in-memory tables are then
-   * never read again, so an xlsx edit skips re-reading the edited sheet's
-   * tables from the workbook -- measured at 1.3 s on a 21 MB workbook, spent
-   * on state nobody looks at. The reader reopens from the file regardless.
-   */
-  discardAfterWrite?: boolean;
-  /** Internal: SHA-256 of the workbook bytes the read worker opened (see locateXlsxEdit). */
-  openedSha256?: string;
-  /**
-   * Internal: text-column decisions an earlier reader recorded, held in the
-   * host's memory for the tab's life. Used only when `sha256` equals
-   * `openedSha256`, and each one only for a table of the same shape.
-   */
-  textDecisions?: TextDecisionCache;
-  /** Request read-only up front (live-refresh reconnects) instead of trying read-write first. */
-  forceReadOnly?: boolean;
-  /** Absolute path to the other half of a hot/cold pair, if one was found — see duckdbEditorProvider.ts's sibling detection. */
-  siblingPath?: string;
-  /**
-   * Decimal convention for CSV. `"auto"` (the default) samples the file and
-   * decides, refusing when the file carries no evidence. `"en"`/`"eu"` state
-   * it outright, which is how a user resolves a column we declined to guess.
-   * Mirrors ETL's NUMBER_LOCALE escape hatch.
-   */
-  numberLocale?: 'auto' | NumberLocale;
-  /**
-   * Cell values read as "no value here" — Excel's error markers. Defaults to
-   * EXCEL_ERROR_TOKENS; an empty array turns the whole interpretation off and
-   * shows the file's literal text, which is what makes it reversible.
-   */
-  nullText?: readonly string[];
-  /**
-   * Whether to look for tables INSIDE each sheet, and how.
-   *
-   * The sheet itself is always offered verbatim -- every declared row and
-   * column, nothing promoted, nothing excluded, footnotes where the file puts
-   * them. This only decides what is offered BESIDE it.
-   *
-   * `"grid"` (the default) splits a sheet on blank rows AND blank columns, so
-   * two tables sitting side by side are two tables. `"rows"` splits on blank
-   * rows only, which is what the ETL pipeline does. `"off"` offers the sheets
-   * alone.
-   */
-  sheetTables?: SheetTableMode;
-}
-
-export type SheetTableMode = 'grid' | 'rows' | 'off';
 
 /** A sheet whose tables have not been looked for yet. */
 interface PendingSheet {
   /** The sheet name as a SQL string literal, for read_xlsx's `sheet =`. */
   literal: string;
   dim: SheetDimension | undefined;
-}
-
-/** What the locale sniff concluded, for the notice the viewer shows. */
-export interface NumberLocaleReport {
-  /** Applied convention, or null when the file needed no options. */
-  locale: NumberLocale | null;
-  /** `true` when the user stated it rather than us sniffing it. */
-  forced: boolean;
-  /** Columns left as text because nothing in them could break the tie. */
-  undecidable: { column: string; samples: string[] }[];
-  /** Set when different columns wanted different conventions. */
-  conflicting: boolean;
 }
 
 /** How many rows to sample when sniffing a CSV's decimal convention. */
@@ -255,115 +120,6 @@ async function sniffCsvLocale(
   }
 }
 
-/**
- * One detected table, as the Excel addresses `read_xlsx`'s `range` speaks.
- *
- * `sheetTables.detectTables` works in 0-based indices into the grid it was
- * given; because that grid is always read from `A1`, an index i is Excel row
- * i+1 and column index j is column letter j. This is the same thing in the only
- * form DuckDB accepts.
- */
-interface SheetTableInfo {
-  /** 1-based Excel rows, inclusive at both ends. */
-  startRow: number;
-  endRow: number;
-  firstCol: string;
-  lastCol: string;
-  /** `header = true` when the table's first row names its columns. */
-  hasHeader: boolean;
-  /** What this object is called after the sheet's name: `· Table 2`. */
-  suffix: string;
-}
-
-/**
- * The sheet, verbatim: every declared row and column, as text, columns named
- * after their Excel letters.
- *
- * This is what the sheet's own object shows, and it is the whole point of the
- * design. A viewer is asked "what is in this file"; anything it hides, moves or
- * retypes is an answer to a different question. So:
- *
- *   - **Anchored at A1**, not at the dimension's first cell. Grid row N is then
- *     Excel row N and grid column J is Excel column J, exactly, which is what
- *     makes "the footnote is where it was" true rather than approximately true
- *     -- and what lets a cell edit address the right cell by arithmetic instead
- *     of by matching header text down the sheet.
- *   - **`header = false`**, so nothing on the sheet is promoted out of the data
- *     into a name. `read_xlsx` gives the columns their Excel letters for free.
- *   - **`all_varchar`**, so a footnote under a numeric column cannot retype the
- *     column, and nothing has to be excluded to protect a type.
- *
- * The dimension routinely OVER-declares (see the project's xlsx geometry
- * notes), which would otherwise pad the sheet with phantom trailing rows. The
- * caller trims trailing blank rows and columns after the read; interior blanks
- * are kept, because those are structure -- they are what separates one table
- * from the next.
- */
-function xlsxVerbatimExpr(
-  filePathLiteral: string,
-  sheetLiteral: string,
-  dim: SheetDimension | undefined
-): string {
-  const range = dim ? `, range = 'A1:${dim.lastCol}${dim.lastRow}'` : '';
-  return (
-    `read_xlsx('${filePathLiteral}', sheet = '${sheetLiteral}'${range}, ` +
-    `header = false, all_varchar = true, ignore_errors = true)`
-  );
-}
-
-/**
- * The read for one detected table.
- *
- * Typed, unlike the verbatim sheet: this is the object the grid sorts, the
- * stats panel summarises and the chart plots, so its columns need to be numbers
- * where the file holds numbers.
- *
- * `ignore_errors`: a ranged read types each column from the range, and one
- * uncomputable cell in a 16,000-row sheet would otherwise refuse the lot.
- */
-function xlsxTableExpr(
-  filePathLiteral: string,
-  sheetLiteral: string,
-  table: SheetTableInfo
-): string {
-  const range = `${table.firstCol}${table.startRow}:${table.lastCol}${table.endRow}`;
-  const shape = table.hasHeader ? 'header = true' : 'header = false, all_varchar = true';
-  return (
-    `read_xlsx('${filePathLiteral}', sheet = '${sheetLiteral}', ` +
-    `range = '${range}', ${shape}, ignore_errors = true)`
-  );
-}
-
-/**
- * Trailing blank rows and columns of a verbatim read, as a row/column count to
- * keep.
- *
- * Only TRAILING ones. A blank row in the middle of a sheet separates two
- * tables and is load-bearing; a blank row after the last cell is the sheet's
- * declared rectangle being larger than its contents, which is routine
- * (`efektif_kur` declares 3 columns for 2 columns of data; `chain_gdp` declares
- * 12 for 10). Keeping those would report a 200-row sheet as 16,809 rows.
- */
-function trimTrailingBlanks(rows: readonly Cell[][]): { rows: number; cols: number; firstRow: number; firstCol: number } {
-  let lastRow = -1;
-  let lastCol = -1;
-  // The first used cell too, which the same pass gets for free: together they
-  // are the sheet's used range, outlined when the raw worksheet is selected.
-  let firstRow = -1;
-  let firstCol = Number.POSITIVE_INFINITY;
-  for (let r = 0; r < rows.length; r++) {
-    const row = rows[r];
-    for (let c = 0; c < row.length; c++) {
-      if (isBlank(row[c])) continue;
-      if (firstRow < 0) firstRow = r;
-      if (c < firstCol) firstCol = c;
-      if (r > lastRow) lastRow = r;
-      if (c > lastCol) lastCol = c;
-    }
-  }
-  return { rows: lastRow + 1, cols: lastCol + 1, firstRow, firstCol: firstRow < 0 ? -1 : firstCol };
-}
-
 const NUMERIC_SQL_TYPE = /^(?:u?(?:tiny|small|big|huge)?int|integer|decimal|numeric|double|float|real)/i;
 const TEMPORAL_SQL_TYPE = /^(?:date$|timestamp|time$)/i;
 
@@ -401,28 +157,6 @@ function filterValueForType(value: string, sqlType: string, columnName: string):
     throw new Error(`"${value}" is not a date, so ${columnName} cannot be compared to it.`);
   }
   return value;
-}
-
-/**
- * Infer enough type information to hide impossible inline plot buttons without
- * loading a detected table. The worksheet grid has already been read for
- * detection, so this is CPU-only and keeps detected tables lazy.
- */
-function inferDetectedTableKinds(
-  grid: readonly Cell[][],
-  table: SheetTable,
-  nullText: readonly string[]
-): StatsKind[] {
-  const firstDataRow = table.headerRow === null ? table.region.top : table.headerRow + 1;
-  return table.columns.map((_, offset) => {
-    const values: (string | null)[] = [];
-    const column = table.region.left + offset;
-    for (let row = firstDataRow; row < table.region.bottom; row++) {
-      const value = grid[row]?.[column];
-      values.push(isBlank(value) ? null : String(value));
-    }
-    return classifyTextColumn(values, nullText).kind === 'numeric' ? 'numeric' : 'other';
-  });
 }
 
 /**
@@ -483,26 +217,35 @@ interface ViewSource {
    */
   verbatimSheet?: boolean;
   /**
+   * PERF-X1: the trailing-blank trim applied when the sheet was materialised,
+   * so an evicted sheet becomes a view of exactly the same shape.
+   */
+  trim?: { columns: string[]; rows: number };
+  /** PERF-X1: true while a materialised object has been evicted back to a view. */
+  evicted?: boolean;
+  /**
    * For a detected table, where it sits on its sheet -- so an edit made through
    * it can be turned into a worksheet cell address by arithmetic.
    */
-  tableOrigin?: { sheet: string; startRow: number; firstCol: number; hasHeader: boolean };
+  tableOrigin?: {
+    sheet: string;
+    startRow: number;
+    firstCol: number;
+    hasHeader: boolean;
+    /** The source-row map: table row k is grid row gridRowOfSlot(dataRows, k). */
+    dataRows: RowSpan[];
+    /** Column count, and per column the values a typed read must keep (expectedValueCounts). */
+    width: number;
+    expectedValues: number[];
+    /** The ranged read's description, so a lossy column can be re-read as text. */
+    info: SheetTableInfo;
+  };
 }
 
 function viewBodySql(source: ViewSource, filePath: string, tolerateErrors: boolean): string {
   const select = source.projection ? source.projection.join(', ') : '*';
   return `select ${select} from ${source.readExpr(filePath, tolerateErrors)}`;
 }
-
-/**
- * Above this, a sheet is left as a view and re-read per query.
- *
- * 10 million cells is roughly 80 MB held as doubles — a ceiling a viewer can
- * justify, against a workbook whose every query would otherwise inflate and
- * XML-parse the whole package. Raw_Data, the sheet this was measured on, is
- * 1.68 million.
- */
-const MAX_CACHED_CELLS = 10_000_000;
 
 /** Above this, a read worker's CSV stays a view (see the restricted open path). */
 const CSV_CACHE_MAX_BYTES = 128 * 1024 * 1024;
@@ -516,93 +259,6 @@ function declaredCellCount(dim: {
   const rows = Math.max(0, dim.lastRow - dim.firstRow + 1);
   const cols = Math.max(0, columnIndexOf(dim.lastCol) - columnIndexOf(dim.firstCol) + 1);
   return rows * cols;
-}
-
-/**
- * `name`, or the first suffixed variant of it nothing else has claimed.
- *
- * A workbook may hold a sheet literally called `Data (rows 4-9)` beside a sheet
- * called `Data`, and two objects cannot share a name. The sheet keeps the name
- * it has in Excel; the derived block is the one that moves -- which is why
- * `isTaken` has to know every sheet name in the workbook up front, not just the
- * ones opened so far. Without that, a block of the FIRST sheet claimed the
- * name, `create view` for the real sheet failed, and the sheet was reported
- * unreadable: a whole sheet lost to a naming collision.
- */
-function uniqueName(name: string, isTaken: (candidate: string) => boolean): string {
-  if (!isTaken(name)) return name;
-  for (let n = 2; ; n++) {
-    const candidate = `${name}_${n}`;
-    if (!isTaken(candidate)) return candidate;
-  }
-}
-
-let nextLoadId = 0;
-
-/**
- * Replace whatever object stands behind `name` with a real table holding
- * `body`'s result.
- *
- * Built under a temporary name and renamed into place rather than dropped
- * first: a failure part-way through then leaves the existing object standing,
- * instead of leaving the workbook with a sheet that no longer exists.
- *
- * `create or replace table x as select ... from x` is not an option — it is
- * the object being read, and DuckDB has no promise that the read completes
- * before the replace begins.
- */
-async function replaceWithTable(
-  connection: DuckDBConnection,
-  name: string,
-  body: string,
-  currentlyCached: boolean
-): Promise<void> {
-  const target = quoteIdent(name);
-  const tmp = quoteIdent(`__dfv_load_${nextLoadId++}`);
-  await connection.run(`create table ${tmp} as ${body}`);
-  try {
-    await connection.run(currentlyCached ? `drop table ${target}` : `drop view ${target}`);
-  } catch (err) {
-    await connection.run(`drop table if exists ${tmp}`);
-    throw err;
-  }
-  await connection.run(`alter table ${tmp} rename to ${target}`);
-}
-
-/**
- * Read a sheet once, into memory, instead of once per query.
- *
- * Measured on YieldCurve_Data.xlsx (21 MB, two sheets). Opening it inflated
- * and XML-parsed the package SIX times — a 200-row shape sample, a sampling
- * scan and a verification scan, per sheet — and then once more for every
- * query the user made:
- *
- *              as a view     as a table
- *   limit 100      545 ms          8 ms
- *   count(*)       801 ms          0 ms
- *   sort           1369 ms         7 ms
- *
- * The cost is the package, not the row count: reading 200 rows of Raw_Data
- * takes 601 ms, the same as reading all 16,803. So a workbook is the one kind
- * here where re-reading per query is not a reasonable default, and the table
- * costs 646 ms once.
- *
- * Returns whether the swap happened; a failure leaves the view in place and
- * the file simply stays slower.
- */
-async function cacheSheetAsTable(
-  connection: DuckDBConnection,
-  name: string,
-  source: ViewSource
-): Promise<boolean> {
-  if (source.cellCount === undefined || source.cellCount > MAX_CACHED_CELLS) return false;
-  try {
-    await replaceWithTable(connection, name, `select * from ${quoteIdent(name)}`, false);
-    source.cached = true;
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /**
@@ -661,27 +317,6 @@ async function csvColumnsADoubleWouldChange(
   }
 }
 
-/**
- * A whole table as rows of JS values, for table detection.
- *
- * The verbatim sheet is all text, and turning 1.7 M cells into JS strings one
- * DuckDB value at a time cost 575 ms on YieldCurve's Raw_Data. Encoding each
- * row as a JSON array in DuckDB and parsing it with V8's JSON parser gives the
- * identical rows (strings and nulls) in ~105 ms. Any non-text column, where
- * JSON would change the value's JS type, takes the ordinary path.
- */
-async function readGrid(connection: DuckDBConnection, name: string): Promise<{ grid: Cell[][]; columnNames: string[] }> {
-  const table = quoteIdent(name);
-  const head = await connection.runAndReadAll(`select * from ${table} limit 0`);
-  const columnNames = head.columnNames();
-  if (columnNames.length > 0 && head.columnTypes().every((t) => t.typeId === DuckDBTypeId.VARCHAR)) {
-    const reader = await connection.runAndReadAll(`select to_json([${columnNames.map(quoteIdent).join(', ')}]) from ${table}`);
-    return { grid: reader.getRows().map((row) => JSON.parse(String(row[0])) as Cell[]), columnNames };
-  }
-  const reader = await connection.runAndReadAll(`select * from ${table}`);
-  return { grid: reader.getRows() as Cell[][], columnNames: reader.columnNames() };
-}
-
 /** How many rows to sample when deciding what a text column holds. */
 const TEXT_COLUMN_SAMPLE_ROWS = 2000;
 
@@ -704,7 +339,7 @@ type SideQueries = (queries: readonly string[], probeTable: string) => Promise<u
 function sideQueries(instance: DuckDBInstance, active: Set<DuckDBConnection>, main: DuckDBConnection): SideQueries {
   return async (queries, probeTable) => {
     const where = async (c: DuckDBConnection) =>
-      JSON.stringify((await c.runAndReadAll('select current_database(), current_schema()')).getRows());
+      JSON.stringify((await c.runAndReadAll('select system.main.current_database(), system.main.current_schema()')).getRows());
     const connections: DuckDBConnection[] = [];
     try {
       const expected = await where(main);
@@ -763,16 +398,6 @@ const DECLARES_COLUMN_TYPES: ReadonlySet<FileKind> = new Set<FileKind>([
   'duckdb',
   'sqlite',
 ]);
-
-/**
- * What interpretTextColumns decided for one table, without any cell values:
- * enough for a reader restarted on the same bytes (Cancel, a refresh with no
- * change, the reopen after a backup or a refused edit) to apply the same
- * reading without sampling and probing the whole table again -- 0.6 s on
- * YieldCurve's Raw_Data. Held in the host's memory only, for the life of the
- * tab (ViewerFile), and applied only to a table of exactly the same shape.
- */
-export interface TextDecisionCache { sha256: string; tables: Record<string, unknown> }
 
 /** The decisions a reader has recorded, tagged with the bytes they are about; see TextDecision. */
 export function textDecisionsOf(file: DuckDbFile): TextDecisionCache | undefined {
@@ -1432,10 +1057,6 @@ async function streamFeatherToArrowStream(from: string, to: string): Promise<voi
   }
 }
 
-function quoteIdent(name: string): string {
-  return `"${name.replace(/"/g, '""')}"`;
-}
-
 /**
  * Where a SQLite file is really attached, given the name it is known by. The
  * suffix keeps it clear of the view catalog that carries the file's own name,
@@ -1467,10 +1088,6 @@ function sqliteRetypeNotices(plan: SqlitePlan): string[] {
   return notices;
 }
 
-function quoteLiteral(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
-}
-
 function formatTimestamp(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(
@@ -1496,16 +1113,6 @@ function groupColumnsByTable(rows: unknown[][]): Map<string, string[]> {
     else map.set(String(tableName), [key]);
   }
   return map;
-}
-
-export const FNV_OFFSET_BASIS = 0x811c9dc5;
-
-export function fnv1aFold(hash: number, str: string): number {
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return hash;
 }
 
 /** Cheap per-column content signature used to narrow rename-match candidates
@@ -1563,18 +1170,19 @@ function wrapAsSubquery(sql: string): string {
   return `(\n${sql}\n)`;
 }
 
-// $-anchored so only the outermost/final LIMIT is matched -- a LIMIT nested
-// inside an inner subquery (part of the query's own logic) is left alone.
-const TRAILING_LIMIT_RE = /\s+limit\s+\d+(?:\s+offset\s+\d+)?\s*;?\s*$/i;
-
-export function hasTrailingLimit(sql: string): boolean {
-  return TRAILING_LIMIT_RE.test(sql);
-}
-
 // How many non-null values runChartQuery samples before deciding whether a
 // text column can be a time axis, and how many of them have to parse.
 const TEXT_AXIS_PROBE_ROWS = 5000;
 const TEXT_AXIS_MIN_PARSE_RATE = 0.95;
+
+/**
+ * A year label read as 1 January of that year, or NULL outside 1000-3000: `Year`
+ * holding 1, 2, 3 is a count, and make_date(1, 1, 1) would draw it in antiquity.
+ * Shared by the automatic Year axis and the explicit date axis.
+ */
+const yearAxisExpr = (x: string): string =>
+  `case when try_cast(${x} as bigint) between 1000 and 3000 ` +
+  `then make_date(cast(${x} as bigint), 1, 1) end`;
 
 function extractTrailingLimit(sql: string): { withoutLimit: string; limitClause: string } | null {
   const match = sql.match(TRAILING_LIMIT_RE);
@@ -1729,38 +1337,6 @@ function classifyForStats(typeId: DuckDBTypeId): StatsKind {
   }
 }
 
-// Structural gate for "is this SELECT * FROM <one table> [WHERE][ORDER BY]
-// [LIMIT]". Intentionally conservative: a false negative just disables the
-// edit affordance for that query, never misclassifies something dangerous
-// as safe. The real security boundary is the extractStatements()/
-// statementType check in checkEditableSelect, run before this regex.
-const EDITABLE_SELECT_RE = new RegExp(
-  '^select\\s+\\*\\s+from\\s+' +
-    '("(?:[^"]|"")+"|[a-zA-Z_][a-zA-Z0-9_]*)' +
-    '(?:\\s+where\\s+[\\s\\S]+?)?' +
-    '(?:\\s+order\\s+by\\s+[\\s\\S]+?)?' +
-    '(?:\\s+limit\\s+\\d+(?:\\s+offset\\s+\\d+)?)?' +
-    '\\s*;?\\s*$',
-  'i'
-);
-const FORBIDDEN_KEYWORDS_RE = /\b(join|group\s+by|distinct|union|intersect|except|using|window)\b/i;
-
-/**
- * The one table a plain `select * from X` reads, or undefined for anything else.
- *
- * Deliberately not checkEditableSelect: that answers "may this be written to",
- * which is false for a read-only file and for a block of a sheet, and the
- * caller here only wants to know WHICH table is on screen. Used to give each
- * table its own chart tab.
- */
-export function baseTableOfSelect(sql: string | undefined): string | undefined {
-  if (!sql) return undefined;
-  const match = EDITABLE_SELECT_RE.exec(sql.trim());
-  if (!match || FORBIDDEN_KEYWORDS_RE.test(sql)) return undefined;
-  const raw = match[1];
-  return raw.startsWith('"') ? raw.slice(1, -1).replace(/""/g, '"') : raw;
-}
-
 export class DuckDbFile {
   private readPolicy?: ReadSqlPolicy;
   private discardAfterWrite = false;
@@ -1768,6 +1344,14 @@ export class DuckDbFile {
   private workbookBytesChanged = false;
   /** Sheets whose preparation failed outright, with the reason. */
   private readonly unreadableSheets = new Map<string, unknown>();
+  /** PERF-X1: phase timings and counters for this document only. */
+  private readonly prep = new PreparationRecorder();
+  /** PERF-X1: materialised workbook objects and their cell counts, least recently used first. */
+  private readonly cacheUse = new Map<string, number>();
+  /** SAFE-X1: the outcome of each worksheet's table discovery, once it has run. */
+  private readonly sheetPreparation = new Map<string, SheetPreparationStatus>();
+  /** Descriptors of sheets whose preparation may be explicitly retried. */
+  private readonly retryableSheets = new Map<string, PendingSheet>();
   private instance?: DuckDBInstance;
   /** Decisions recorded here, and ones handed in by an earlier reader of the same bytes. */
   private readonly textDecisions = new Map<string, TextDecision>();
@@ -1791,6 +1375,8 @@ export class DuckDbFile {
   private readonly lateWarnings: string[] = [];
   /** Sheet -> tables found in its untouched grid, populated on first preview. */
   private readonly detectedSheetTables = new Map<string, DetectedSheetTable[]>();
+  /** Explicit split/merge answers per sheet; see DuckDbFileOpenOptions.sheetTableCorrections. */
+  private sheetTableCorrections = new Map<string, TableCorrections>();
   /** Sheet -> first-to-last used cell of its grid, in DetectedSheetTable's coordinates. */
   private readonly sheetUsedRanges = new Map<string, SheetBounds>();
 
@@ -1880,6 +1466,7 @@ export class DuckDbFile {
   }
 
   static async open(path: string, forceKind?: FileKind, options?: DuckDbFileOpenOptions): Promise<DuckDbFile> {
+    let sheetCatalogMs: number | undefined;
     // kdb+ files are extensionless (see kdbParser.ts) so they can't be
     // sniffed by suffix like every other kind below -- the caller (the
     // dedicated kdb+ explorer-context command, see duckdbEditorProvider.ts)
@@ -2004,7 +1591,7 @@ export class DuckDbFile {
     // Captured before any ATTACH/USE below moves the current database — a
     // catalog can't DETACH itself, so refreshInPlace() needs somewhere to
     // stand while it swaps the SQLite attachment.
-    const rootReader = await connection.runAndReadAll('select current_database()');
+    const rootReader = await connection.runAndReadAll('select system.main.current_database()');
     const rootCatalogName = String(rootReader.getRows()[0][0]);
 
     const mainObjectRawName = basename(path, extname(path));
@@ -2156,6 +1743,7 @@ export class DuckDbFile {
           `Could not load DuckDB's excel extension — this requires an internet connection the first time it's used on this machine. (${message})`
         );
       }
+      const catalogStarted = performance.now();
       const sheets = await listSheets(path);
       if (sheets.length === 0) {
         throw new Error(`"${basename(path)}" declares no readable sheets.`);
@@ -2173,6 +1761,7 @@ export class DuckDbFile {
       if (damaged) {
         throw new Error(`"${basename(path)}" is not a complete .xlsx package: ${damaged}`);
       }
+      sheetCatalogMs = performance.now() - catalogStarted;
       if (options?.restrictedReads && [...sheetDims.values()].some(dim => declaredCellCount(dim) > WORKBOOK_LIMITS.cellsPerSheet)) {
         throw new QueryPolicyError('Workbook contains a worksheet exceeding the 10 million cell parsing limit.');
       }
@@ -2310,7 +1899,7 @@ export class DuckDbFile {
       }
     }
 
-    const catalogReader = await connection.runAndReadAll('select current_database()');
+    const catalogReader = await connection.runAndReadAll('select system.main.current_database()');
     const catalogName = String(catalogReader.getRows()[0][0]);
 
     // Combined hot+cold view support: a sibling file (the other half of a
@@ -2377,7 +1966,10 @@ export class DuckDbFile {
     file.instance = instance;
     file.probeConnections = probeConnections;
     file.discardAfterWrite = options?.discardAfterWrite === true;
+    file.sheetTableCorrections = sanitizeCorrections(options?.sheetTableCorrections);
     file.openedSha256 = options?.openedSha256;
+    if (options?.workbookPreflightMs !== undefined && Number.isFinite(options.workbookPreflightMs)) file.prep.record('workbookPreflight', options.workbookPreflightMs);
+    if (sheetCatalogMs !== undefined) file.prep.record('sheetCatalog', sheetCatalogMs);
     if (options?.openedSha256 && options.textDecisions?.sha256 === options.openedSha256 &&
         options.textDecisions.tables && typeof options.textDecisions.tables === 'object') {
       file.reusableDecisions = options.textDecisions.tables;
@@ -2408,7 +2000,7 @@ export class DuckDbFile {
       select t.table_catalog, t.table_schema, t.table_name, v.view_definition
       from information_schema.tables t left join information_schema.views v
         on t.table_catalog=v.table_catalog and t.table_schema=v.table_schema and t.table_name=v.table_name
-      where t.table_catalog=current_database()${includeSibling && this.siblingCatalogName ? ` or t.table_catalog=${quoteLiteral(this.siblingCatalogName)}` : ''}`);
+      where t.table_catalog=system.main.current_database()${includeSibling && this.siblingCatalogName ? ` or t.table_catalog=${quoteLiteral(this.siblingCatalogName)}` : ''}`);
     return reader.getRows().map(row => ({
       catalog: String(row[0]), schema: String(row[1]), name: String(row[2]),
       viewSql: row[3] == null ? undefined : String(row[3]),
@@ -2491,7 +2083,7 @@ export class DuckDbFile {
     const mainObjectName = basename(path, extname(path)).replace(/"/g, '""');
     await loadKdbTableIntoConnection(connection, mainObjectName, table.columns);
 
-    const catalogReader = await connection.runAndReadAll('select current_database()');
+    const catalogReader = await connection.runAndReadAll('select system.main.current_database()');
     const catalogName = String(catalogReader.getRows()[0][0]);
 
     const file = new DuckDbFile(connection, path, 'kdb', catalogName, mainObjectName, false, undefined);
@@ -2503,7 +2095,7 @@ export class DuckDbFile {
     // Scoped to the current database: once a SQLite file is ATTACHed and
     // USEd, information_schema.tables spans multiple catalogs otherwise.
     const reader = await this.connection.runAndReadAll(
-      `select table_name from information_schema.tables where table_catalog = current_database() order by table_name`
+      `select table_name from information_schema.tables where table_catalog = system.main.current_database() order by table_name`
     );
     return reader.getRows().map((row) => String(row[0]));
   }
@@ -2521,9 +2113,13 @@ export class DuckDbFile {
 
   async getQueryCatalog(offset = 0): Promise<QueryCatalogRelation[]> {
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1_000_000) throw new Error('Invalid catalog page.');
+    return this.prep.time('catalog', () => this.queryCatalogPage(offset));
+  }
+
+  private async queryCatalogPage(offset: number): Promise<QueryCatalogRelation[]> {
     const reader = await this.connection.runAndReadAll(`
       select table_catalog, table_schema, table_name from information_schema.tables
-      where table_catalog=current_database()
+      where table_catalog=system.main.current_database()
       order by table_schema, table_name limit 100 offset ${offset}`);
     return reader.getRows().map(row => {
       const [catalog, schema, name] = row.map(String);
@@ -2564,6 +2160,8 @@ export class DuckDbFile {
       ...table,
       columns: [...table.columns],
       columnStatsKind: [...table.columnStatsKind],
+      dataRows: table.dataRows.map((s) => ({ ...s })),
+      excludedRows: table.excludedRows.map((r) => ({ ...r })),
     }));
   }
 
@@ -2879,6 +2477,127 @@ export class DuckDbFile {
     return this.pendingSheets.size > 0;
   }
 
+  /** SAFE-X1: what table discovery concluded for one worksheet. */
+  getSheetPreparation(sheet: string): SheetPreparationStatus | undefined {
+    if (!this.isWorksheet(sheet)) return undefined;
+    const known = this.sheetPreparation.get(sheet);
+    if (this.pendingSheets.has(sheet)) {
+      return { sheet, state: 'pending', generation: known?.generation ?? 0, tables: 0, skipped: 0, retryable: false };
+    }
+    return known ? { ...known } : undefined;
+  }
+
+  /** Every worksheet's status, for the read worker's metadata. */
+  listSheetPreparation(): SheetPreparationStatus[] {
+    return [...this.xlsxSheetPaths.keys()]
+      .map((sheet) => this.getSheetPreparation(sheet))
+      .filter((s): s is SheetPreparationStatus => s !== undefined);
+  }
+
+  /** PERF-X1: this document's preparation timings and cache counters. */
+  getPreparationMetrics(): PreparationMetrics {
+    let cells = 0;
+    for (const n of this.cacheUse.values()) cells += n;
+    return this.prep.snapshot({ cells, objects: this.cacheUse.size, maxCells: CACHE_MAX_CELLS });
+  }
+
+  /** Record a newly materialised workbook object as most recently used, then keep the cache under budget. */
+  private noteCached(name: string, cells: number): void {
+    this.cacheUse.delete(name);
+    this.cacheUse.set(name, cells);
+  }
+
+  /**
+   * PERF-X1: the objects this SQL reads become most recently used; any of them
+   * that were evicted are materialised again (verified against the opened
+   * bytes, like any cold read), and then least recently used objects NOT read
+   * by this SQL are evicted until the cache is under CACHE_MAX_CELLS. The
+   * active objects are never evicted, so one oversized sheet stays cached.
+   */
+  private async useCached(references: ReadonlySet<string>): Promise<void> {
+    for (const name of references) {
+      const source = this.viewSources.get(name);
+      if (!source) continue;
+      if (source.evicted) {
+        await this.verifyWorkbookBytes();
+        const restored = await this.prep.time('cacheRestore', () => cacheSheetAsTable(this.connection, name, source));
+        await this.verifyWorkbookBytes();
+        if (restored) {
+          source.evicted = false;
+          this.prep.cacheRestores++;
+          this.noteCached(name, source.trim ? source.trim.rows * source.trim.columns.length : source.cellCount ?? 0);
+        }
+      } else if (this.cacheUse.has(name)) {
+        this.noteCached(name, this.cacheUse.get(name)!);
+      }
+    }
+    await this.evictOverBudget(references);
+  }
+
+  private async evictOverBudget(keep: ReadonlySet<string>): Promise<void> {
+    let total = 0;
+    for (const n of this.cacheUse.values()) total += n;
+    for (const [name, cells] of [...this.cacheUse]) {
+      if (total <= CACHE_MAX_CELLS) return;
+      if (keep.has(name)) continue;
+      const source = this.viewSources.get(name);
+      if (!source?.cached) { this.cacheUse.delete(name); continue; }
+      const body = viewBodySql(source, source.sourcePath, this.xlsxErrorsTolerated);
+      const shaped = source.trim
+        ? `select ${source.trim.columns.map(quoteIdent).join(', ')} from (${body}) limit ${source.trim.rows}`
+        : body;
+      const temp = quoteIdent(`__dfv_evict_${name.length}_${this.prep.cacheEvictions}`);
+      try {
+        // One transaction: a failure rolls back to the cached table standing,
+        // which costs only memory, never a missing or wrong object.
+        await this.connection.run('begin transaction');
+        try {
+          await this.connection.run(`create view ${temp} as ${shaped}`);
+          await this.connection.run(`drop table ${quoteIdent(name)}`);
+          await this.connection.run(`alter view ${temp} rename to ${quoteIdent(name)}`);
+          await this.connection.run('commit');
+        } catch (error) {
+          await this.connection.run('rollback').catch(() => undefined);
+          throw error;
+        }
+      } catch {
+        continue;
+      }
+      source.cached = false;
+      source.evicted = true;
+      this.cacheUse.delete(name);
+      this.prep.cacheEvictions++;
+      total -= cells;
+    }
+  }
+
+  /**
+   * SAFE-X1: retry a failed, cancelled or incomplete sheet. Removes whatever the
+   * previous attempt bound for that sheet, then prepares it again in a fresh
+   * generation. Anything else (ready, none, disabled, bounded, pending) is
+   * returned unchanged: there is nothing a retry could change.
+   */
+  async retrySheetPreparation(sheet: string): Promise<SheetPreparationStatus | undefined> {
+    const current = this.sheetPreparation.get(sheet);
+    const pending = this.retryableSheets.get(sheet);
+    if (!current?.retryable || !pending || this.pendingSheets.has(sheet)) return this.getSheetPreparation(sheet);
+    await this.verifyWorkbookBytes();
+    for (const table of this.detectedSheetTables.get(sheet) ?? []) {
+      const derived = this.viewSources.get(table.name);
+      try {
+        await this.connection.run(`drop ${derived?.cached ? 'table' : 'view'} if exists ${quoteIdent(table.name)}`);
+      } catch { /* a leftover object only keeps its name taken; uniqueName steps around it */ }
+      this.viewSources.delete(table.name);
+      this.cacheUse.delete(table.name);
+    }
+    this.detectedSheetTables.delete(sheet);
+    this.unreadableSheets.delete(sheet);
+    this.sheetPreparation.set(sheet, { ...current, generation: current.generation + 1 });
+    this.pendingSheets.set(sheet, pending);
+    await this.ensureSheetPrepared(sheet);
+    return this.getSheetPreparation(sheet);
+  }
+
   /**
    * Do the reading one sheet needs, the first time anything asks for it.
    *
@@ -2897,28 +2616,57 @@ export class DuckDbFile {
    *
    * Failure is not fatal at any step: the sheet is already open and readable,
    * and a sheet whose tables could not be worked out is a sheet with no extra
-   * objects beside it, not a sheet the user cannot see.
+   * objects beside it, not a sheet the user cannot see. It is not SILENT
+   * either (SAFE-X1): every outcome is recorded as a typed per-sheet status, so
+   * a failure is never presented as "no tables", and the descriptor is kept for
+   * an explicit retry instead of being thrown away.
    */
   private async ensureSheetPrepared(name: string): Promise<void> {
     const pending = this.pendingSheets.get(name);
     if (!pending) return;
     await this.verifyWorkbookBytes();
     // Removed FIRST: a failure below must not leave the sheet queued to be
-    // retried on every query it serves.
+    // retried on every query it serves. retrySheetPreparation() re-queues it
+    // explicitly, in a fresh generation.
     this.pendingSheets.delete(name);
+    this.retryableSheets.set(name, pending);
+    const generation = this.sheetPreparation.get(name)?.generation ?? 0;
+    const settle = (state: SheetPreparationState, extra: Partial<SheetPreparationStatus> = {}): void => {
+      const tables = this.detectedSheetTables.get(name)?.length ?? 0;
+      const retryable = state === 'failed' || state === 'cancelled' || state === 'incomplete';
+      if (!retryable) this.retryableSheets.delete(name);
+      this.sheetPreparation.set(name, { sheet: name, state, generation, tables, skipped: 0, retryable, ...extra });
+    };
 
     const source = this.viewSources.get(name);
-    if (!source) return;
+    if (!source) {
+      settle('failed', { message: 'The sheet has no readable object.', retryable: false });
+      this.retryableSheets.delete(name);
+      return;
+    }
+    if (source.cellCount !== undefined && source.cellCount > DETECTION_MAX_CELLS) {
+      settle('bounded', {
+        message: `The sheet declares ${source.cellCount.toLocaleString('en-US')} cells, above the ` +
+          `${DETECTION_MAX_CELLS.toLocaleString('en-US')}-cell detection limit, so its tables were not looked for. ` +
+          'The whole sheet is still readable with SQL.',
+      });
+      return;
+    }
 
     // Set once the grid has actually been read; binding the view is lazy.
     let materialised = false;
+    let skipped = 0;
     try {
-      await cacheSheetAsTable(this.connection, name, source);
+      await this.prep.time('sheetParse', () => cacheSheetAsTable(this.connection, name, source));
+      if (source.cached) source.evicted = false;
 
       // The grid, exactly as the sheet's own object shows it. Read back from
       // the materialised table where there is one, so detection costs no
       // further file reads.
-      const { grid, columnNames } = await readGrid(this.connection, name);
+      const { grid, columnNames } = await this.prep.time('readGrid', () => readGrid(this.connection, name));
+      const decoded = decodedGridBytes(grid);
+      this.prep.gridCells += decoded.cells;
+      this.prep.gridDecodedBytes += decoded.bytes;
       await this.verifyWorkbookBytes();
       materialised = true;
 
@@ -2933,13 +2681,18 @@ export class DuckDbFile {
         used.rows > 0 &&
         (used.rows < grid.length || used.cols < columnNames.length)
       ) {
-        const keep = columnNames.slice(0, Math.max(used.cols, 1)).map(quoteIdent).join(', ');
+        const kept = columnNames.slice(0, Math.max(used.cols, 1));
+        const keep = kept.map(quoteIdent).join(', ');
         await replaceWithTable(
           this.connection,
           name,
           `select ${keep} from ${quoteIdent(name)} limit ${used.rows}`,
           true
         );
+        source.trim = { columns: kept, rows: used.rows };
+      }
+      if (source.cached) {
+        this.noteCached(name, source.trim ? source.trim.rows * source.trim.columns.length : grid.length * columnNames.length);
       }
 
       // Cells Excel could not compute, said once per sheet.
@@ -2960,82 +2713,74 @@ export class DuckDbFile {
         );
       }
 
-      if (this.tableMode === 'off') return;
-      const tables = detectTables(grid.slice(0, used.rows), {
-        splitColumns: this.tableMode === 'grid',
-      });
-      this.detectedSheetTables.set(name, []);
-      if (tables.length === 0) return;
+      if (this.tableMode === 'off') { settle('disabled'); return; }
+      const detectionStarted = performance.now();
+      this.prep.detectorCalls++;
+      try {
+        const tables = detectSheetGrid(grid, used.rows, this.tableMode, this.sheetTableCorrections.get(name));
+        this.detectedSheetTables.set(name, []);
+        if (tables.length === 0) { settle('none'); return; }
 
-      const taken = (candidate: string): boolean =>
-        this.viewSources.has(candidate) || this.xlsxSheetPaths.has(candidate);
+        const taken = (candidate: string): boolean =>
+          this.viewSources.has(candidate) || this.xlsxSheetPaths.has(candidate);
 
-      let index = 0;
-      for (const table of tables) {
-        index++;
-        // Grid row i is Excel row i+1, and grid column j is column letter j,
-        // because the verbatim read is anchored at A1. That is the whole reason
-        // it is anchored there.
-        const info: SheetTableInfo = {
-          startRow: table.region.top + 1,
-          endRow: table.region.bottom,
-          firstCol: tableColumnLetters(table.region.left),
-          lastCol: tableColumnLetters(table.region.right - 1),
-          hasHeader: table.headerRow !== null,
-          suffix: `\u00b7 Table ${index}`,
-        };
-        const tableName = uniqueName(`${name} ${info.suffix}`, taken);
-        const cells =
-          (table.region.bottom - table.region.top) * (table.region.right - table.region.left);
-        const tableSource: ViewSource = {
-          sourcePath: source.sourcePath,
-          readExpr: (p) => xlsxTableExpr(p.replace(/'/g, "''"), pending.literal, info),
-          cellCount: cells,
-          derived: true,
-          prepared: false,
-          tableOrigin: {
-            sheet: name,
-            startRow: info.startRow,
-            firstCol: table.region.left,
-            hasHeader: info.hasHeader,
-          },
-        };
-        try {
-          await this.connection.run(
-            `create view ${quoteIdent(tableName)} as ${viewBodySql(
-              tableSource,
-              source.sourcePath,
-              this.xlsxErrorsTolerated
-            )}`
-          );
-          this.viewSources.set(tableName, tableSource);
-          this.detectedSheetTables.get(name)!.push({
-            name: tableName,
-            sheet: name,
-            top: table.region.top,
-            bottom: table.region.bottom,
-            left: table.region.left,
-            right: table.region.right,
-            headerRow: table.headerRow,
-            columns: [...table.columns],
-            columnStatsKind: inferDetectedTableKinds(grid, table, this.nullText),
-            rowCount: table.rowCount,
-          });
-          // Do not read this range yet. A ranged read_xlsx() still inflates and
-          // parses the whole workbook package, even for a two-row table. Paying
-          // that once per detected table made opening the raw sheet scale with
-          // the number of tables it happened to contain. The first query that
-          // actually uses this object materialises and interprets it through
-          // ensureDerivedPrepared() below; binding the view itself is cheap.
-        } catch {
-          // A table we cannot address must not cost the sheet it sits on.
+        let index = 0;
+        for (const table of tables) {
+          index++;
+          const plan = planDetectedTable(name, table, index, grid, this.nullText);
+          if (!plan) { skipped++; continue; }
+          const tableName = uniqueName(`${name} ${plan.suffix}`, taken);
+          const tableSource: ViewSource = {
+            sourcePath: source.sourcePath,
+            readExpr: (p) => xlsxTableExpr(p.replace(/'/g, "''"), pending.literal, plan.info),
+            cellCount: plan.cellCount,
+            derived: true,
+            prepared: false,
+            tableOrigin: plan.origin,
+          };
+          try {
+            await this.connection.run(
+              `create view ${quoteIdent(tableName)} as ${viewBodySql(
+                tableSource,
+                source.sourcePath,
+                this.xlsxErrorsTolerated
+              )}`
+            );
+            this.viewSources.set(tableName, tableSource);
+            this.detectedSheetTables.get(name)!.push(plan.describe(tableName));
+            // Do not read this range yet. A ranged read_xlsx() still inflates and
+            // parses the whole workbook package, even for a two-row table. Paying
+            // that once per detected table made opening the raw sheet scale with
+            // the number of tables it happened to contain. The first query that
+            // actually uses this object materialises and interprets it through
+            // ensureDerivedPrepared() below; binding the view itself is cheap.
+          } catch {
+            // A table we cannot address must not cost the sheet it sits on --
+            // but it is counted, so the sheet does not claim to be complete.
+            skipped++;
+          }
         }
+      } finally {
+        this.prep.record('detection', performance.now() - detectionStarted);
       }
+      if (skipped > 0) {
+        settle('incomplete', {
+          skipped,
+          message: `${skipped} detected table${skipped === 1 ? '' : 's'} on this sheet could not be offered. ` +
+            'The whole sheet is still readable; retry detection or use the raw worksheet.',
+        });
+      } else settle('ready');
     } catch (error) {
       // Usually the sheet is readable and only the extras are missing. If it
       // never materialised, remember why: a later query naming one of its
       // detected tables should hear the real reason, not "unknown table".
       if (!materialised) this.unreadableSheets.set(name, error);
+      const reason = error instanceof Error ? error.message : String(error);
+      if (isInterruption(error)) {
+        settle('cancelled', { skipped, message: 'The whole sheet is still readable; retry detection to look for its tables.' });
+      } else {
+        settle('failed', { skipped, message: `${reason}. The whole sheet is still readable; the workbook was not changed.` });
+      }
     }
   }
 
@@ -3091,12 +2836,18 @@ export class DuckDbFile {
   private async ensureDerivedPrepared(name: string): Promise<void> {
     const source = this.viewSources.get(name);
     if (!source?.derived || source.prepared === true) return;
+    await this.prep.time('derivedPreparation', () => this.prepareDerived(name, source));
+    if (source.cached) this.noteCached(name, source.cellCount ?? 0);
+  }
+
+  private async prepareDerived(name: string, source: ViewSource): Promise<void> {
     await this.verifyWorkbookBytes();
 
     // DuckDbFile operations are serialized by the document provider, so there
-    // is no concurrent first-use race here. Mark it only after both best-effort
-    // stages have run; neither helper throws for an unreadable optional view.
+    // is no concurrent first-use race here. Mark it only after preservation
+    // checks pass; failure leaves preparation retryable.
     await cacheSheetAsTable(this.connection, name, source);
+    await this.keepLostValuesAsText(name, source);
     this.lateWarnings.push(
       ...(await interpretTextColumns(this.connection, name, `"${name}"`, source, this.nullText, this.kind, {
         side: this.instance ? sideQueries(this.instance, this.probeConnections, this.connection) : undefined,
@@ -3106,6 +2857,92 @@ export class DuckDbFile {
     );
     await this.verifyWorkbookBytes();
     source.prepared = true;
+  }
+
+  /**
+   * A typed ranged read decides each column's type and then, with
+   * `ignore_errors`, reads any cell that does not fit it as NULL: `not numeric`
+   * in a column of numbers became an empty cell with no notice (EX-05). The
+   * grid detection read already counted, per column, the data cells that hold
+   * a value; a typed column holding fewer non-NULL values lost some. Such a
+   * column is re-read from an all-text read of the same range so every cell
+   * keeps its exact text, and the change is said out loud with the cells that
+   * caused it. If validation or that re-read fails, refuse the derived query;
+   * a warning does not make a lossy typed projection safe to use.
+   */
+  private async keepLostValuesAsText(name: string, source: ViewSource): Promise<void> {
+    const origin = source.tableOrigin;
+    if (!origin) return;
+    let names: string[];
+    let types: string[];
+    let counts: number[];
+    try {
+      const head = await this.connection.runAndReadAll(`select * from ${quoteIdent(name)} limit 0`);
+      names = head.columnNames();
+      types = head.columnTypes().map((t) => String(t));
+      if (names.length !== origin.width) throw new Error('column count changed');
+      const reader = await this.connection.runAndReadAll(
+        `select ${names.map((c) => `count(${quoteIdent(c)})`).join(', ')} from ${quoteIdent(name)}`
+      );
+      counts = (reader.getRows()[0] as unknown[]).map(Number);
+    } catch {
+      throw new Error(`Cannot verify values in "${name}". The derived table was refused; use the raw worksheet or retry. The workbook was not changed.`);
+    }
+    const lost = names
+      .map((column, i) => ({ column, type: types[i], lost: (origin.expectedValues[i] ?? 0) - (counts[i] ?? 0) }))
+      .filter((c) => c.lost > 0 && c.type !== 'VARCHAR');
+    if (lost.length === 0) return;
+
+    const label = `"${name}"`;
+    const previous = { textColumns: origin.info.textColumns, columnNames: origin.info.columnNames };
+    origin.info.textColumns = new Set(lost.map((c) => c.column));
+    origin.info.columnNames = names;
+    try {
+      const body = viewBodySql(source, source.sourcePath, this.xlsxErrorsTolerated);
+      if (source.cached) await replaceWithTable(this.connection, name, body, true);
+      else await this.connection.run(`create or replace view ${quoteIdent(name)} as ${body}`);
+      const after = await this.connection.runAndReadAll(`select * from ${quoteIdent(name)} limit 0`);
+      if (after.columnNames().join('\u0000') !== names.join('\u0000')) throw new Error('column names changed');
+    } catch {
+      origin.info.textColumns = previous.textColumns;
+      origin.info.columnNames = previous.columnNames;
+      try {
+        const body = viewBodySql(source, source.sourcePath, this.xlsxErrorsTolerated);
+        if (source.cached) await replaceWithTable(this.connection, name, body, true);
+        else await this.connection.run(`create or replace view ${quoteIdent(name)} as ${body}`);
+      } catch { /* the object stays as the typed read made it */ }
+      throw new Error(`${label}: values in ${lost.map((c) => `"${c.column}"`).join(', ')} could not be kept as text. ` +
+        'The derived table was refused; use the raw worksheet or retry. The workbook was not changed.');
+    }
+
+    for (const c of lost) {
+      // Which cells, so the notice can be checked against the sheet: values of
+      // the now-text column that the original type cannot hold.
+      let examples: string[] = [];
+      try {
+        const column = quoteIdent(c.column);
+        const markers = this.nullText.length > 0
+          ? ` and trim(v) not in (${this.nullText.map(quoteLiteral).join(', ')})`
+          : '';
+        const reader = await this.connection.runAndReadAll(
+          `select rn, v from (select row_number() over () as rn, ${column} as v from ${quoteIdent(name)}) ` +
+            `where v is not null and trim(v) <> ''${markers} and try_cast(v as ${c.type}) is null order by rn limit 3`
+        );
+        examples = reader.getRows().map((r) => {
+          const row = gridRowOfSlot(origin.dataRows, Number(r[0]) - 1);
+          const at = row === undefined ? '' : `${columnLettersOf(origin.firstCol + names.indexOf(c.column))}${row + 1} `;
+          return `${at}"${String(r[1])}"`;
+        });
+      } catch {
+        // The notice below still names the column and the count.
+      }
+      this.lateWarnings.push(
+        `${label}: column "${c.column}" holds ${c.lost} value${c.lost === 1 ? '' : 's'} that ${c.lost === 1 ? 'is' : 'are'} not ` +
+          `${c.type}${examples.length ? ` (${examples.join(', ')}${c.lost > examples.length ? ', …' : ''})` : ''}, so the ` +
+          `column is shown as text, exactly as the sheet holds it, instead of turning ${c.lost === 1 ? 'that value' : 'those values'} ` +
+          `into empty cells. The file is unchanged.`
+      );
+    }
   }
 
   /** A size/mtime match alone cannot tag newly cached rows with the opening
@@ -3138,6 +2975,7 @@ export class DuckDbFile {
       for (const name of this.pendingDerivedTablesFor(references)) {
         await this.ensureDerivedPrepared(name);
       }
+      await this.useCached(references);
     }
     await this.assertReadSql(sql);
   }
@@ -3445,8 +3283,10 @@ export class DuckDbFile {
     yColumns: string[],
     xIsText = false,
     maxPoints = 0,
-    xIsCategory = false
-  ): Promise<QueryResult & { xAxisMode: 'time' | 'category' }> {
+    xIsCategory = false,
+    xIsRow = false,
+    xAsDate = false
+  ): Promise<QueryResult & { xAxisMode: 'time' | 'category'; note?: string }> {
     // Charting may be the first action taken on a detected table (the inline
     // sheet UI does not require a separate preview first). Prepare it before
     // the text-axis probe, or that probe and the chart query would each
@@ -3467,8 +3307,26 @@ export class DuckDbFile {
     // limit 100` would plot the earliest hundred rows of the whole table --
     // the same count, a different hundred, and not the ones on screen.
     const inner = extracted ? `${extracted.withoutLimit} ${extracted.limitClause}` : stripped;
-    const x = quoteIdent(xColumn);
     const ys = yColumns.map(quoteIdent).join(', ');
+
+    // Row numbers (PLOT-02): position in the query as it stands, LIMIT/ORDER BY
+    // included, so the axis counts the rows the grid shows. Null y values keep
+    // their row and every row is kept (no is-not-null filter). The generated
+    // name steps aside for a real column of that name, compared the way
+    // DuckDB resolves identifiers (case-insensitively).
+    if (xIsRow) {
+      const taken = new Set(yColumns.map((c) => c.toLowerCase()));
+      let name = xColumn;
+      for (let n = 2; taken.has(name.toLowerCase()); n += 1) name = `${xColumn} (${n})`;
+      const sql =
+        `select cast(row_number() over () as integer) as ${quoteIdent(name)}, ${ys} ` +
+        `from ${wrapAsSubquery(inner)} as _chart`;
+      return { ...(await this.runQuery(this.derivedQuery(baseSql, sql), maxPoints)), xAxisMode: 'category' };
+    }
+
+    if (xAsDate) return this.runExplicitDateChart(baseSql, inner, xColumn, yColumns, maxPoints);
+
+    const x = quoteIdent(xColumn);
 
     // A handful of junk rows in an otherwise real date column must not
     // downgrade the whole axis, so this is a high bar rather than a perfect
@@ -3489,9 +3347,7 @@ export class DuckDbFile {
     // in antiquity. Values outside the range are NULL, so the same parse-rate
     // bar the text axis uses decides this: mostly years -> a real time axis,
     // anything else -> the category axis it would have been anyway.
-    const yearExpr =
-      `case when try_cast(${x} as bigint) between 1000 and 3000 ` +
-      `then make_date(cast(${x} as bigint), 1, 1) end`;
+    const yearExpr = yearAxisExpr(x);
     const asYear =
       xIsCategory &&
       (await this.textAxisParseRate(inner, xColumn, yearExpr)) >= TEXT_AXIS_MIN_PARSE_RATE;
@@ -3512,6 +3368,104 @@ export class DuckDbFile {
     const sql =
       `select ${x}, ${ys} from ${wrapAsSubquery(inner)} as _chart where ${x} is not null`;
     return { ...(await this.runQuery(this.derivedQuery(baseSql, sql), maxPoints)), xAxisMode: 'category' };
+  }
+
+  /**
+   * PLOT-03: the user named `xColumn` as the dates, whatever it is called.
+   *
+   * The automatic path tolerates up to 5% unparseable text and drops those rows
+   * silently; this one is an explicit statement, so it is exact instead. Every
+   * non-null value is checked (not a sample) and the chart is refused, with the
+   * count and one example, unless all of them read as dates:
+   *
+   *   - DATE / TIMESTAMP columns are used as they are;
+   *   - VARCHAR must parse with try_cast as a timestamp (ISO text; DuckDB does
+   *     not read 03/04/2024, so day/month text is refused rather than guessed)
+   *     with a year inside 1000-3000, because "1/2/24" otherwise parses as
+   *     year 1. Values carrying different UTC offsets are refused as mixed;
+   *     one shared offset is plotted as written and the note says so;
+   *   - a column of whole numbers, or VARCHAR digits, is read as years through
+   *     the same bounded rule as the Year axis. Other integers are never epoch
+   *     seconds, and 2024.5 is not a year.
+   *
+   * Rows with no date are left out (they have no place on an axis) and counted
+   * in `note`. Nothing is written: the choice only shapes this one query.
+   */
+  private async runExplicitDateChart(
+    baseSql: string,
+    inner: string,
+    xColumn: string,
+    yColumns: string[],
+    maxPoints: number
+  ): Promise<QueryResult & { xAxisMode: 'time'; note?: string }> {
+    // QueryPolicyError, because queryDiagnostic forwards only those verbatim --
+    // and only counts and the column label, never a cell value from the file.
+    const label = `"${xColumn.length > 60 ? xColumn.slice(0, 57) + '...' : xColumn}"`;
+    if (yColumns.includes(xColumn)) {
+      throw new QueryPolicyError(`${label} is the date axis, so it cannot also be the plotted series.`);
+    }
+    const x = quoteIdent(xColumn);
+    const source = wrapAsSubquery(inner);
+    // describe, not a data read: it also fails by name when the column is absent.
+    const described = await this.connection.runAndReadAll(`describe select ${x} from ${source} as _t`);
+    const type = String(described.getRows()[0]?.[1] ?? '').toUpperCase();
+    const native = /^(DATE|TIMESTAMP.*)$/.test(type);
+    const numeric = /^(U?(TINYINT|SMALLINT|INTEGER|BIGINT|HUGEINT)|FLOAT|DOUBLE|DECIMAL.*)$/.test(type);
+    if (!native && !numeric && type !== 'VARCHAR') {
+      throw new QueryPolicyError(`${label} (${type}) cannot be read as dates.`);
+    }
+
+    const ts = `case when year(try_cast(${x} as timestamp)) between 1000 and 3000 then try_cast(${x} as timestamp) end`;
+    // The integrality test keeps 2024.5 from rounding to the year 2025.
+    const year = `case when try_cast(${x} as double) = try_cast(${x} as bigint) then ${yearAxisExpr(x)} end`;
+    const offset =
+      `regexp_extract(cast(${x} as varchar), ` +
+      `'[0-9]:[0-9]{2}(?::[0-9]{2}(?:\\.[0-9]+)?)?\\s*(Z|[+-][0-9]{2}(?::?[0-9]{2})?)$', 1)`;
+    const tsOk = type === 'VARCHAR' ? ts : 'null';
+    const yearOk = native ? 'null' : year;
+    const stats = (
+      await this.connection.runAndReadAll(
+        `select count(${x}), count(*), count(${tsOk}), count(${yearOk}), ` +
+          `count(distinct case when ${tsOk} is not null then ${offset} end), ` +
+          `min(case when ${tsOk} is not null then ${offset} end) from ${source} as _t`
+      )
+    ).getRowsJson()[0] as unknown[];
+    const [nonNull, total, tsParsed, yearParsed, offsets] = stats.slice(0, 5).map(Number);
+    const offsetSeen = String(stats[5] ?? '');
+
+    if (nonNull === 0) throw new QueryPolicyError(`${label} has no dates to plot.`);
+    let xExpr: string;
+    let note = '';
+    if (native) {
+      xExpr = x;
+    } else if (tsParsed === nonNull) {
+      if (offsets > 1) {
+        throw new QueryPolicyError(`${label} mixes UTC offsets (or some values have none), so its times cannot be placed on one axis.`);
+      }
+      xExpr = ts;
+      if (offsetSeen !== '') note = `times plotted as written; UTC offset ${offsetSeen} not applied`;
+    } else if (yearParsed === nonNull) {
+      xExpr = year;
+    } else {
+      const bad = nonNull - Math.max(tsParsed, yearParsed);
+      throw new QueryPolicyError(
+        `${bad.toLocaleString()} of ${nonNull.toLocaleString()} values in ${label} are not recognised dates. ` +
+          'Dates are read as ISO yyyy-mm-dd[ hh:mm:ss] or four-digit years; day/month text is ambiguous ' +
+          'and plain numbers are not epoch times, so nothing was guessed.'
+      );
+    }
+    const missing = total - nonNull;
+    if (missing > 0) note = `${missing.toLocaleString()} row${missing === 1 ? '' : 's'} with no date left out${note ? '; ' + note : ''}`;
+
+    const ys = yColumns.map(quoteIdent).join(', ');
+    const sql =
+      `select ${xExpr} as ${x}, ${ys} from ${source} as _chart ` +
+      `where ${xExpr} is not null order by 1 asc`;
+    return {
+      ...(await this.runQuery(this.derivedQuery(baseSql, sql), maxPoints)),
+      xAxisMode: 'time',
+      ...(note ? { note } : {}),
+    };
   }
 
   async runSortedQuery(
@@ -3983,7 +3937,7 @@ export class DuckDbFile {
     // Column list for the UPDATE is re-derived from the live table, not
     // parsed out of the SELECT text.
     const colsReader = await this.connection.runAndReadAll(
-      `select column_name from information_schema.columns where table_catalog = current_database() and table_name = ${quoteLiteral(
+      `select column_name from information_schema.columns where table_catalog = system.main.current_database() and table_name = ${quoteLiteral(
         found
       )} order by ordinal_position`
     );
@@ -4318,17 +4272,29 @@ export class DuckDbFile {
           `is no way to tell which one you edited. The workbook was not changed.`
       );
     }
+    if (!origin) {
+      return { sheetName, patch: { sheetPath, columnNames: whereCols, rowOrdinal: Number(matches[0][0]), columnName: column } };
+    }
+    // A detected table's row k is the k-th row of its source-row map, never
+    // "k rows below the header": blank and repeated-header rows are not rows of
+    // the table. Column by the table's own column order, not by the order the
+    // caller happened to list the row's values in.
+    const gridRow = gridRowOfSlot(origin.dataRows, Number(matches[0][0]) - 1);
+    const tableColumns = await this.getColumnNames(table, this.catalogName);
+    const offset = tableColumns.indexOf(column);
+    if (gridRow === undefined || offset < 0 || offset >= origin.width || tableColumns.length !== origin.width) {
+      throw new Error(
+        `That row of "${table}" has no exact cell on sheet "${sheetName}" to write to, so the edit was refused. ` +
+          `The workbook was not changed.`
+      );
+    }
     return {
       sheetName,
       patch: {
         sheetPath,
         columnNames: whereCols,
-        rowOrdinal: origin
-          ? origin.startRow + (origin.hasHeader ? 1 : 0) + Number(matches[0][0]) - 1
-          : Number(matches[0][0]),
-        columnName: origin
-          ? columnLettersOf(origin.firstCol + whereCols.indexOf(column))
-          : column,
+        rowOrdinal: gridRow + 1,
+        columnName: columnLettersOf(origin.firstCol + offset),
       },
     };
   }

@@ -1,0 +1,142 @@
+{
+  "task": [
+    "D1.8"
+  ],
+  "purpose": "Generator run against main e13541e (committed inventory) and against the D1.7 tip 488b124 exported read-only via git archive (d1-7 worktree not modified).",
+  "generator_commit_note": "generator from branch d1-8-9-contracts with contract-member caller resolution",
+  "main": {
+    "commit": "e13541eb14b74a8a6eb39b0a62f0ff76c0161d54",
+    "operations": 35
+  },
+  "d1_7": {
+    "commit": "488b124",
+    "worktree": "Rust/.dfv-worktrees/d1-7",
+    "operations": 35,
+    "generation_exit_code": 0
+  },
+  "operation_set_diff": {
+    "missing": [],
+    "extra": []
+  },
+  "field_diffs": [
+    {
+      "operation": "host.open",
+      "field": "callers",
+      "main": [
+        {
+          "caller": "src/duckdbEditorProvider.ts::DuckDBEditorProvider.openDocumentInternal"
+        },
+        {
+          "caller": "src/duckdbEditorProvider.ts::reconnectDocument"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('message')"
+        }
+      ],
+      "d1_7": [
+        {
+          "caller": "src/backend/reference.ts::rawReferenceBackend.open"
+        },
+        {
+          "caller": "src/backend/reference.ts::referenceBackend.open"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('message')"
+        }
+      ]
+    },
+    {
+      "operation": "host.close",
+      "field": "callers",
+      "main": [
+        {
+          "caller": "src/duckdbEditorProvider.ts::DuckDBDocument.dispose"
+        },
+        {
+          "caller": "src/duckdbEditorProvider.ts::reconnectDocument"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('disconnect')"
+        }
+      ],
+      "d1_7": [
+        {
+          "caller": "src/backend/session.ts::DatasetSession.close"
+        },
+        {
+          "caller": "src/backend/session.ts::DatasetSession.reopen"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('disconnect')"
+        }
+      ]
+    },
+    {
+      "operation": "host.refreshInPlace",
+      "field": "callers",
+      "main": [
+        {
+          "caller": "src/duckdbEditorProvider.ts::reconnectDocument"
+        }
+      ],
+      "d1_7": [
+        {
+          "caller": "src/backend/session.ts::DatasetSession.reopen"
+        }
+      ]
+    },
+    {
+      "operation": "host.cancel",
+      "field": "callers",
+      "main": [
+        {
+          "caller": "src/duckdbEditorProvider.ts::DuckDBDocument.dispose"
+        },
+        {
+          "caller": "src/duckdbEditorProvider.ts::DuckDBEditorProvider.resolveCustomEditor",
+          "webview_command": "cancelQuery"
+        },
+        {
+          "caller": "src/duckdbEditorProvider.ts::startLiveRefresh"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('message')"
+        }
+      ],
+      "d1_7": [
+        {
+          "caller": "src/backend/session.ts::DatasetSession.close"
+        },
+        {
+          "caller": "src/duckdbEditorProvider.ts::DuckDBEditorProvider.resolveCustomEditor",
+          "webview_command": "cancelQuery"
+        },
+        {
+          "caller": "src/duckdbEditorProvider.ts::startLiveRefresh"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('message')"
+        }
+      ]
+    }
+  ],
+  "top_level_diffs": [],
+  "drift_test_outcome_if_d1_7_merged": "set-equality PASSES (same 35 ids); content-equality FAILS on callers only until table-operations.json is regenerated, as intended.",
+  "drift_test_against_d1_7_tip": {
+    "command": "cd <export of 488b124 src> && node --test out-test/test/migrationTableOperations.test.js (committed main inventory copied in)",
+    "exit_code": 1,
+    "pass": 8,
+    "fail": 1,
+    "failed": [
+      "D1.8: committed inventory content equals the generator output (callers only)"
+    ],
+    "log": "docs/migration/d1-8-9-20261025/d1-7-tip-drift-test.log"
+  },
+  "drift_test_against_main": {
+    "command": "node --test out-test/test/migrationTableOperations.test.js",
+    "exit_code": 0,
+    "pass": 9,
+    "fail": 0
+  },
+  "d0_4_inventory_note": "gridcraft-reuse.json changed during this task (sha 24fd2324... -> 4b5ee87e..., D0.4 commit b4b2e04 added proof_progress); per-method reuse records unchanged. Test now treats its hash as provenance only."
+}

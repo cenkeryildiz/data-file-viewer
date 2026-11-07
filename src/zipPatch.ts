@@ -215,7 +215,8 @@ export function readMember(index: ZipIndex, name: string): Uint8Array | undefine
 }
 
 let crcTable: Int32Array | undefined;
-function crc32(data: Uint8Array): number {
+/** CRC-32 (ZIP): zlib.crc32 where Node has it (20.15+/22.2+), this table otherwise. Unsigned. */
+export function crc32(data: Uint8Array): number {
   const native = (zlib as unknown as { crc32?: (d: Uint8Array) => number }).crc32;
   if (typeof native === 'function') return native(data) >>> 0;
   if (!crcTable) {

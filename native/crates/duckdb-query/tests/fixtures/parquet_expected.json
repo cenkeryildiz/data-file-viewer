@@ -1,0 +1,2605 @@
+{
+ "generated_by": "tools/make_parquet_corpus.py",
+ "pyarrow": "26.0.0",
+ "duckdb_python": "2.0.0",
+ "polars": "2.0.0",
+ "cases": {
+  "ints": {
+   "file": "ints.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "i8",
+      "path": "i8",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=8, isSigned=true)",
+      "converted": "INT_8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "i16",
+      "path": "i16",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=16, isSigned=true)",
+      "converted": "INT_16",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "i32",
+      "path": "i32",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "i64",
+      "path": "i64",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "u8",
+      "path": "u8",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=8, isSigned=false)",
+      "converted": "UINT_8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "u16",
+      "path": "u16",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=16, isSigned=false)",
+      "converted": "UINT_16",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "u32",
+      "path": "u32",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=32, isSigned=false)",
+      "converted": "UINT_32",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "u64",
+      "path": "u64",
+      "physical": "INT64",
+      "logical": "Int(bitWidth=64, isSigned=false)",
+      "converted": "UINT_64",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "past_2_53",
+      "path": "past_2_53",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "i8",
+     "type": "TINYINT"
+    },
+    {
+     "name": "i16",
+     "type": "SMALLINT"
+    },
+    {
+     "name": "i32",
+     "type": "INTEGER"
+    },
+    {
+     "name": "i64",
+     "type": "BIGINT"
+    },
+    {
+     "name": "u8",
+     "type": "UTINYINT"
+    },
+    {
+     "name": "u16",
+     "type": "USMALLINT"
+    },
+    {
+     "name": "u32",
+     "type": "UINTEGER"
+    },
+    {
+     "name": "u64",
+     "type": "UBIGINT"
+    },
+    {
+     "name": "past_2_53",
+     "type": "BIGINT"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "-128",
+     "-32768",
+     "-2147483648",
+     "-9223372036854775808",
+     "0",
+     "0",
+     "0",
+     "0",
+     "9007199254740993"
+    ],
+    [
+     "127",
+     "32767",
+     "2147483647",
+     "9223372036854775807",
+     "255",
+     "65535",
+     "4294967295",
+     "18446744073709551615",
+     "-9007199254740993"
+    ],
+    [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     "9007199254740992"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "floats": {
+   "file": "floats.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "f32",
+      "path": "f32",
+      "physical": "FLOAT",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "f64",
+      "path": "f64",
+      "physical": "DOUBLE",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "special",
+      "path": "special",
+      "physical": "DOUBLE",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "half",
+      "path": "half",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Float16",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "f32",
+     "type": "FLOAT"
+    },
+    {
+     "name": "f64",
+     "type": "DOUBLE"
+    },
+    {
+     "name": "special",
+     "type": "DOUBLE"
+    },
+    {
+     "name": "half",
+     "type": "FLOAT"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "0.1",
+     "0.1",
+     "nan",
+     "1.5"
+    ],
+    [
+     "-0.0",
+     "1e+300",
+     "inf",
+     "-2.0"
+    ],
+    [
+     null,
+     null,
+     "-inf",
+     null
+    ]
+   ],
+   "polars_checked": true,
+   "cross_checked_against": [
+    "pyarrow",
+    "polars"
+   ]
+  },
+  "decimals_flba": {
+   "file": "decimals_flba.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "p5s2",
+      "path": "p5s2",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=5, scale=2)",
+      "converted": "DECIMAL",
+      "precision": 5,
+      "scale": 2
+     },
+     {
+      "name": "p10s2",
+      "path": "p10s2",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=10, scale=2)",
+      "converted": "DECIMAL",
+      "precision": 10,
+      "scale": 2
+     },
+     {
+      "name": "p18s4",
+      "path": "p18s4",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=18, scale=4)",
+      "converted": "DECIMAL",
+      "precision": 18,
+      "scale": 4
+     },
+     {
+      "name": "p38s10",
+      "path": "p38s10",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=38, scale=10)",
+      "converted": "DECIMAL",
+      "precision": 38,
+      "scale": 10
+     },
+     {
+      "name": "p38s38",
+      "path": "p38s38",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=38, scale=38)",
+      "converted": "DECIMAL",
+      "precision": 38,
+      "scale": 38
+     },
+     {
+      "name": "p9s0",
+      "path": "p9s0",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=9, scale=0)",
+      "converted": "DECIMAL",
+      "precision": 9,
+      "scale": 0
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "p5s2",
+     "type": "DECIMAL(5,2)"
+    },
+    {
+     "name": "p10s2",
+     "type": "DECIMAL(10,2)"
+    },
+    {
+     "name": "p18s4",
+     "type": "DECIMAL(18,4)"
+    },
+    {
+     "name": "p38s10",
+     "type": "DECIMAL(38,10)"
+    },
+    {
+     "name": "p38s38",
+     "type": "DECIMAL(38,38)"
+    },
+    {
+     "name": "p9s0",
+     "type": "DECIMAL(9,0)"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "123.45",
+     "12345678.90",
+     "12345678901234.5678",
+     "1234567890123456789012345678.1234567890",
+     ".11111111111111111111111111111111111111",
+     "123456789"
+    ],
+    [
+     "-0.05",
+     "0.00",
+     "-1.0000",
+     "0.0000000000",
+     "-.99999999999999999999999999999999999999",
+     "-1"
+    ],
+    [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   ],
+   "polars_checked": true,
+   "cross_checked_against": [
+    "pyarrow",
+    "polars"
+   ]
+  },
+  "decimals_integer_storage": {
+   "file": "decimals_integer_storage.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "p5s2",
+      "path": "p5s2",
+      "physical": "INT32",
+      "logical": "Decimal(precision=5, scale=2)",
+      "converted": "DECIMAL",
+      "precision": 5,
+      "scale": 2
+     },
+     {
+      "name": "p15s3",
+      "path": "p15s3",
+      "physical": "INT64",
+      "logical": "Decimal(precision=15, scale=3)",
+      "converted": "DECIMAL",
+      "precision": 15,
+      "scale": 3
+     },
+     {
+      "name": "p30s5",
+      "path": "p30s5",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=30, scale=5)",
+      "converted": "DECIMAL",
+      "precision": 30,
+      "scale": 5
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "p5s2",
+     "type": "DECIMAL(5,2)"
+    },
+    {
+     "name": "p15s3",
+     "type": "DECIMAL(15,3)"
+    },
+    {
+     "name": "p30s5",
+     "type": "DECIMAL(30,5)"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "123.45",
+     "123456789012.345",
+     "1234567890123456789012345.12345"
+    ],
+    [
+     "-0.05",
+     "-0.001",
+     "0.00001"
+    ],
+    [
+     null,
+     null,
+     null
+    ]
+   ],
+   "polars_checked": true,
+   "cross_checked_against": [
+    "pyarrow",
+    "polars"
+   ]
+  },
+  "decimal_beyond_38": {
+   "file": "decimal_beyond_38.parquet",
+   "footer": {
+    "num_rows": 2,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "wide",
+      "path": "wide",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=50, scale=5)",
+      "converted": "DECIMAL",
+      "precision": 50,
+      "scale": 5
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "wide",
+     "type": "DOUBLE"
+    }
+   ],
+   "count": 2,
+   "rows": [
+    [
+     "1.111111111111111e+39"
+    ],
+    [
+     null
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "precision must be between 1 and 38",
+   "duckdb_lossy_columns": {
+    "wide": "DECIMAL(50,5) is wider than DuckDB's 38-digit exact type; it reads it as DOUBLE"
+   },
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "temporal": {
+   "file": "temporal.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "d32",
+      "path": "d32",
+      "physical": "INT32",
+      "logical": "Date",
+      "converted": "DATE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "d64",
+      "path": "d64",
+      "physical": "INT32",
+      "logical": "Date",
+      "converted": "DATE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "t32ms",
+      "path": "t32ms",
+      "physical": "INT32",
+      "logical": "Time(isAdjustedToUTC=false, timeUnit=milliseconds)",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "t64us",
+      "path": "t64us",
+      "physical": "INT64",
+      "logical": "Time(isAdjustedToUTC=false, timeUnit=microseconds)",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "ts_s",
+      "path": "ts_s",
+      "physical": "INT64",
+      "logical": "Timestamp(isAdjustedToUTC=false, timeUnit=milliseconds, is_from_converted_type=false, force_set_converted_type=false)",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "ts_ms",
+      "path": "ts_ms",
+      "physical": "INT64",
+      "logical": "Timestamp(isAdjustedToUTC=false, timeUnit=milliseconds, is_from_converted_type=false, force_set_converted_type=false)",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "ts_us",
+      "path": "ts_us",
+      "physical": "INT64",
+      "logical": "Timestamp(isAdjustedToUTC=false, timeUnit=microseconds, is_from_converted_type=false, force_set_converted_type=false)",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "ts_ns",
+      "path": "ts_ns",
+      "physical": "INT64",
+      "logical": "Timestamp(isAdjustedToUTC=false, timeUnit=nanoseconds, is_from_converted_type=false, force_set_converted_type=false)",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "tstz",
+      "path": "tstz",
+      "physical": "INT64",
+      "logical": "Timestamp(isAdjustedToUTC=true, timeUnit=microseconds, is_from_converted_type=false, force_set_converted_type=false)",
+      "converted": "TIMESTAMP_MICROS",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "tstz_offset",
+      "path": "tstz_offset",
+      "physical": "INT64",
+      "logical": "Timestamp(isAdjustedToUTC=true, timeUnit=microseconds, is_from_converted_type=false, force_set_converted_type=false)",
+      "converted": "TIMESTAMP_MICROS",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "d32",
+     "type": "DATE"
+    },
+    {
+     "name": "d64",
+     "type": "DATE"
+    },
+    {
+     "name": "t32ms",
+     "type": "TIME"
+    },
+    {
+     "name": "t64us",
+     "type": "TIME"
+    },
+    {
+     "name": "ts_s",
+     "type": "TIMESTAMP"
+    },
+    {
+     "name": "ts_ms",
+     "type": "TIMESTAMP"
+    },
+    {
+     "name": "ts_us",
+     "type": "TIMESTAMP"
+    },
+    {
+     "name": "ts_ns",
+     "type": "TIMESTAMP_NS"
+    },
+    {
+     "name": "tstz",
+     "type": "TIMESTAMP WITH TIME ZONE"
+    },
+    {
+     "name": "tstz_offset",
+     "type": "TIMESTAMP WITH TIME ZONE"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "2024-01-31",
+     "2024-01-31",
+     "01:02:03.004",
+     "01:02:03.000004",
+     "2024-01-31 12:34:56",
+     "2024-01-31 12:34:56.789",
+     "2024-01-31 12:34:56.789012",
+     "2024-01-31 12:34:56.789012345",
+     "2024-01-31 12:34:56.789012+00",
+     "2024-01-31 09:00:00+00"
+    ],
+    [
+     "1969-12-31",
+     "1900-01-01",
+     "23:59:59",
+     "00:00:00",
+     "1969-12-31 23:59:59",
+     "1970-01-01 00:00:00",
+     "1999-12-31 23:59:59",
+     "1969-12-31 23:59:59.999999999",
+     null,
+     null
+    ],
+    [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   ],
+   "polars_checked": true,
+   "cross_checked_against": [
+    "pyarrow",
+    "polars"
+   ]
+  },
+  "duration_and_interval_like": {
+   "file": "duration_and_interval_like.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "dur",
+      "path": "dur",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "dur",
+     "type": "BIGINT"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "86402000003"
+    ],
+    [
+     null
+    ],
+    [
+     "0"
+    ]
+   ],
+   "polars_checked": true,
+   "cross_checked_against": [
+    "pyarrow",
+    "polars"
+   ]
+  },
+  "text_and_binary": {
+   "file": "text_and_binary.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "s",
+      "path": "s",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "ls",
+      "path": "ls",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "empty",
+      "path": "empty",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "nul",
+      "path": "nul",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "bin",
+      "path": "bin",
+      "physical": "BYTE_ARRAY",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "lbin",
+      "path": "lbin",
+      "physical": "BYTE_ARRAY",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "fsb",
+      "path": "fsb",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "dict",
+      "path": "dict",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "numeric_text",
+      "path": "numeric_text",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "marker_text",
+      "path": "marker_text",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "s",
+     "type": "VARCHAR"
+    },
+    {
+     "name": "ls",
+     "type": "VARCHAR"
+    },
+    {
+     "name": "empty",
+     "type": "VARCHAR"
+    },
+    {
+     "name": "nul",
+     "type": "VARCHAR"
+    },
+    {
+     "name": "bin",
+     "type": "BLOB"
+    },
+    {
+     "name": "lbin",
+     "type": "BLOB"
+    },
+    {
+     "name": "fsb",
+     "type": "BLOB"
+    },
+    {
+     "name": "dict",
+     "type": "VARCHAR"
+    },
+    {
+     "name": "numeric_text",
+     "type": "VARCHAR"
+    },
+    {
+     "name": "marker_text",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "İstanbul σ 😀",
+     "a",
+     "",
+     "a\u0000b",
+     "\\x00\\xFF\\x27\\x5C",
+     "ab",
+     "abcd",
+     "a",
+     "9007199254740993",
+     "NA"
+    ],
+    [
+     "it's \"quoted\"",
+     "",
+     "",
+     "",
+     "",
+     null,
+     null,
+     "b",
+     "007",
+     "#N/A"
+    ],
+    [
+     null,
+     null,
+     "",
+     null,
+     null,
+     "\\x01",
+     "\\x00\\x01\\x02\\x03",
+     "a",
+     "1,5",
+     "1"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "nested": {
+   "file": "nested.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "element",
+      "path": "lst.list.element",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "element",
+      "path": "lst_null_item.list.element",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "element",
+      "path": "lst2.list.element.list.element",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "a",
+      "path": "st.a",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "b",
+      "path": "st.b",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "q",
+      "path": "st2.p.q",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "element",
+      "path": "st2.r.list.element",
+      "physical": "DOUBLE",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "key",
+      "path": "mp.key_value.key",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "value",
+      "path": "mp.key_value.value",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "x",
+      "path": "ls_st.list.element.x",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "y",
+      "path": "ls_st.list.element.y",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "element",
+      "path": "fsl.list.element",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "element",
+      "path": "ld.list.element",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=5, scale=2)",
+      "converted": "DECIMAL",
+      "precision": 5,
+      "scale": 2
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "lst",
+     "type": "INTEGER[]"
+    },
+    {
+     "name": "lst_null_item",
+     "type": "BIGINT[]"
+    },
+    {
+     "name": "lst2",
+     "type": "INTEGER[][]"
+    },
+    {
+     "name": "st",
+     "type": "STRUCT(a BIGINT, b VARCHAR)"
+    },
+    {
+     "name": "st2",
+     "type": "STRUCT(p STRUCT(q VARCHAR), r DOUBLE[])"
+    },
+    {
+     "name": "mp",
+     "type": "MAP(VARCHAR, INTEGER)"
+    },
+    {
+     "name": "ls_st",
+     "type": "STRUCT(x INTEGER, y VARCHAR)[]"
+    },
+    {
+     "name": "fsl",
+     "type": "INTEGER[]"
+    },
+    {
+     "name": "ld",
+     "type": "DECIMAL(5,2)[]"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "[1, 2, 3]",
+     "[1, NULL]",
+     "[[1], [2, 3]]",
+     "{'a': 1, 'b': x}",
+     "{'p': {'q': deep}, 'r': [1.5]}",
+     "{k=1}",
+     "[{'x': 1, 'y': a}, {'x': NULL, 'y': b}]",
+     "[1, 2]",
+     "[1.50, NULL]"
+    ],
+    [
+     "[]",
+     null,
+     "[[]]",
+     "{'a': NULL, 'b': NULL}",
+     null,
+     "{}",
+     "[]",
+     null,
+     null
+    ],
+    [
+     null,
+     "[NULL]",
+     null,
+     null,
+     "{'p': NULL, 'r': NULL}",
+     null,
+     null,
+     "[3, 4]",
+     "[]"
+    ]
+   ],
+   "polars_checked": true,
+   "cross_checked_against": [
+    "pyarrow",
+    "polars"
+   ]
+  },
+  "nested_legacy_list_names": {
+   "file": "nested_legacy_list_names.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "item",
+      "path": "lst.list.item",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "lst",
+     "type": "INTEGER[]"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "[1, 2]"
+    ],
+    [
+     null
+    ],
+    [
+     "[]"
+    ]
+   ],
+   "polars_checked": true,
+   "cross_checked_against": [
+    "pyarrow",
+    "polars"
+   ]
+  },
+  "nulls": {
+   "file": "nulls.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "all_null_int",
+      "path": "all_null_int",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "null_type",
+      "path": "null_type",
+      "physical": "INT32",
+      "logical": "Null",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "all_null_str",
+      "path": "all_null_str",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "all_null_int",
+     "type": "BIGINT"
+    },
+    {
+     "name": "null_type",
+     "type": "\"NULL\""
+    },
+    {
+     "name": "all_null_str",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     null,
+     null,
+     null
+    ],
+    [
+     null,
+     null,
+     null
+    ],
+    [
+     null,
+     null,
+     null
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "empty_table": {
+   "file": "empty_table.parquet",
+   "footer": {
+    "num_rows": 0,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "a",
+      "path": "a",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "b",
+      "path": "b",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "c",
+      "path": "c",
+      "physical": "FIXED_LEN_BYTE_ARRAY",
+      "logical": "Decimal(precision=10, scale=2)",
+      "converted": "DECIMAL",
+      "precision": 10,
+      "scale": 2
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "a",
+     "type": "BIGINT"
+    },
+    {
+     "name": "b",
+     "type": "VARCHAR"
+    },
+    {
+     "name": "c",
+     "type": "DECIMAL(10,2)"
+    }
+   ],
+   "count": 0,
+   "rows": [],
+   "polars_checked": false,
+   "polars_error": "index 0 is out of bounds for DataFrame of height 0",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "no_columns": {
+   "file": "no_columns.parquet",
+   "footer": {
+    "num_rows": 0,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": []
+   },
+   "refused": "Invalid Input Error: Failed to read Parquet file '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/no_columns.parquet': Need at least one non-root column in the file"
+  },
+  "row_groups_and_pages": {
+   "file": "row_groups_and_pages.parquet",
+   "footer": {
+    "num_rows": 10,
+    "row_groups": 4,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "n",
+      "path": "n",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "s",
+      "path": "s",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "n",
+     "type": "BIGINT"
+    },
+    {
+     "name": "s",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 10,
+   "rows": [
+    [
+     "0",
+     "row 0"
+    ],
+    [
+     "1",
+     "row 1"
+    ],
+    [
+     "2",
+     "row 2"
+    ],
+    [
+     "3",
+     "row 3"
+    ],
+    [
+     "4",
+     "row 4"
+    ],
+    [
+     "5",
+     "row 5"
+    ],
+    [
+     "6",
+     "row 6"
+    ],
+    [
+     "7",
+     "row 7"
+    ],
+    [
+     "8",
+     "row 8"
+    ],
+    [
+     "9",
+     "row 9"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "codec_snappy": {
+   "file": "codec_snappy.parquet",
+   "footer": {
+    "num_rows": 20,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "n",
+      "path": "n",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "s",
+      "path": "s",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "n",
+     "type": "BIGINT"
+    },
+    {
+     "name": "s",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 20,
+   "rows": [
+    [
+     "0",
+     "v0"
+    ],
+    [
+     "1",
+     "v1"
+    ],
+    [
+     "2",
+     "v2"
+    ],
+    [
+     "3",
+     "v0"
+    ],
+    [
+     "4",
+     "v1"
+    ],
+    [
+     "5",
+     "v2"
+    ],
+    [
+     "6",
+     "v0"
+    ],
+    [
+     "7",
+     "v1"
+    ],
+    [
+     "8",
+     "v2"
+    ],
+    [
+     "9",
+     "v0"
+    ],
+    [
+     "10",
+     "v1"
+    ],
+    [
+     "11",
+     "v2"
+    ],
+    [
+     "12",
+     "v0"
+    ],
+    [
+     "13",
+     "v1"
+    ],
+    [
+     "14",
+     "v2"
+    ],
+    [
+     "15",
+     "v0"
+    ],
+    [
+     "16",
+     "v1"
+    ],
+    [
+     "17",
+     "v2"
+    ],
+    [
+     "18",
+     "v0"
+    ],
+    [
+     "19",
+     "v1"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "codec_gzip": {
+   "file": "codec_gzip.parquet",
+   "footer": {
+    "num_rows": 20,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "n",
+      "path": "n",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "s",
+      "path": "s",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "n",
+     "type": "BIGINT"
+    },
+    {
+     "name": "s",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 20,
+   "rows": [
+    [
+     "0",
+     "v0"
+    ],
+    [
+     "1",
+     "v1"
+    ],
+    [
+     "2",
+     "v2"
+    ],
+    [
+     "3",
+     "v0"
+    ],
+    [
+     "4",
+     "v1"
+    ],
+    [
+     "5",
+     "v2"
+    ],
+    [
+     "6",
+     "v0"
+    ],
+    [
+     "7",
+     "v1"
+    ],
+    [
+     "8",
+     "v2"
+    ],
+    [
+     "9",
+     "v0"
+    ],
+    [
+     "10",
+     "v1"
+    ],
+    [
+     "11",
+     "v2"
+    ],
+    [
+     "12",
+     "v0"
+    ],
+    [
+     "13",
+     "v1"
+    ],
+    [
+     "14",
+     "v2"
+    ],
+    [
+     "15",
+     "v0"
+    ],
+    [
+     "16",
+     "v1"
+    ],
+    [
+     "17",
+     "v2"
+    ],
+    [
+     "18",
+     "v0"
+    ],
+    [
+     "19",
+     "v1"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "codec_zstd": {
+   "file": "codec_zstd.parquet",
+   "footer": {
+    "num_rows": 20,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "n",
+      "path": "n",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "s",
+      "path": "s",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "n",
+     "type": "BIGINT"
+    },
+    {
+     "name": "s",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 20,
+   "rows": [
+    [
+     "0",
+     "v0"
+    ],
+    [
+     "1",
+     "v1"
+    ],
+    [
+     "2",
+     "v2"
+    ],
+    [
+     "3",
+     "v0"
+    ],
+    [
+     "4",
+     "v1"
+    ],
+    [
+     "5",
+     "v2"
+    ],
+    [
+     "6",
+     "v0"
+    ],
+    [
+     "7",
+     "v1"
+    ],
+    [
+     "8",
+     "v2"
+    ],
+    [
+     "9",
+     "v0"
+    ],
+    [
+     "10",
+     "v1"
+    ],
+    [
+     "11",
+     "v2"
+    ],
+    [
+     "12",
+     "v0"
+    ],
+    [
+     "13",
+     "v1"
+    ],
+    [
+     "14",
+     "v2"
+    ],
+    [
+     "15",
+     "v0"
+    ],
+    [
+     "16",
+     "v1"
+    ],
+    [
+     "17",
+     "v2"
+    ],
+    [
+     "18",
+     "v0"
+    ],
+    [
+     "19",
+     "v1"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "codec_brotli": {
+   "file": "codec_brotli.parquet",
+   "footer": {
+    "num_rows": 20,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "n",
+      "path": "n",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "s",
+      "path": "s",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "n",
+     "type": "BIGINT"
+    },
+    {
+     "name": "s",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 20,
+   "rows": [
+    [
+     "0",
+     "v0"
+    ],
+    [
+     "1",
+     "v1"
+    ],
+    [
+     "2",
+     "v2"
+    ],
+    [
+     "3",
+     "v0"
+    ],
+    [
+     "4",
+     "v1"
+    ],
+    [
+     "5",
+     "v2"
+    ],
+    [
+     "6",
+     "v0"
+    ],
+    [
+     "7",
+     "v1"
+    ],
+    [
+     "8",
+     "v2"
+    ],
+    [
+     "9",
+     "v0"
+    ],
+    [
+     "10",
+     "v1"
+    ],
+    [
+     "11",
+     "v2"
+    ],
+    [
+     "12",
+     "v0"
+    ],
+    [
+     "13",
+     "v1"
+    ],
+    [
+     "14",
+     "v2"
+    ],
+    [
+     "15",
+     "v0"
+    ],
+    [
+     "16",
+     "v1"
+    ],
+    [
+     "17",
+     "v2"
+    ],
+    [
+     "18",
+     "v0"
+    ],
+    [
+     "19",
+     "v1"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "codec_lz4": {
+   "file": "codec_lz4.parquet",
+   "footer": {
+    "num_rows": 20,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "n",
+      "path": "n",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "s",
+      "path": "s",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "n",
+     "type": "BIGINT"
+    },
+    {
+     "name": "s",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 20,
+   "rows": [
+    [
+     "0",
+     "v0"
+    ],
+    [
+     "1",
+     "v1"
+    ],
+    [
+     "2",
+     "v2"
+    ],
+    [
+     "3",
+     "v0"
+    ],
+    [
+     "4",
+     "v1"
+    ],
+    [
+     "5",
+     "v2"
+    ],
+    [
+     "6",
+     "v0"
+    ],
+    [
+     "7",
+     "v1"
+    ],
+    [
+     "8",
+     "v2"
+    ],
+    [
+     "9",
+     "v0"
+    ],
+    [
+     "10",
+     "v1"
+    ],
+    [
+     "11",
+     "v2"
+    ],
+    [
+     "12",
+     "v0"
+    ],
+    [
+     "13",
+     "v1"
+    ],
+    [
+     "14",
+     "v2"
+    ],
+    [
+     "15",
+     "v0"
+    ],
+    [
+     "16",
+     "v1"
+    ],
+    [
+     "17",
+     "v2"
+    ],
+    [
+     "18",
+     "v0"
+    ],
+    [
+     "19",
+     "v1"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "odd_column_names": {
+   "file": "odd_column_names.parquet",
+   "footer": {
+    "num_rows": 2,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "a \"quoted\" name",
+      "path": "a \"quoted\" name",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "İstanbul σ",
+      "path": "İstanbul σ",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "with space",
+      "path": "with space",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "dotted.name",
+      "path": "dotted.name",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "A",
+      "path": "A",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "a",
+      "path": "a",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "a \"quoted\" name",
+     "type": "BIGINT"
+    },
+    {
+     "name": "İstanbul σ",
+     "type": "BIGINT"
+    },
+    {
+     "name": "with space",
+     "type": "BIGINT"
+    },
+    {
+     "name": "dotted.name",
+     "type": "BIGINT"
+    },
+    {
+     "name": "A",
+     "type": "BIGINT"
+    },
+    {
+     "name": "a_1",
+     "type": "BIGINT"
+    }
+   ],
+   "count": 2,
+   "rows": [
+    [
+     "1",
+     "3",
+     "5",
+     "7",
+     "9",
+     "11"
+    ],
+    [
+     "2",
+     "4",
+     "6",
+     "8",
+     "10",
+     "12"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "key_value_metadata": {
+   "file": "key_value_metadata.parquet",
+   "footer": {
+    "num_rows": 2,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema",
+     "owner",
+     "pandas",
+     "unicode"
+    ],
+    "leaves": [
+     {
+      "name": "a",
+      "path": "a",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "a",
+     "type": "BIGINT"
+    }
+   ],
+   "count": 2,
+   "rows": [
+    [
+     "1"
+    ],
+    [
+     "2"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "dictionary_pages_disabled": {
+   "file": "dictionary_pages_disabled.parquet",
+   "footer": {
+    "num_rows": 4,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "s",
+      "path": "s",
+      "physical": "BYTE_ARRAY",
+      "logical": "String",
+      "converted": "UTF8",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "s",
+     "type": "VARCHAR"
+    }
+   ],
+   "count": 4,
+   "rows": [
+    [
+     "x"
+    ],
+    [
+     "y"
+    ],
+    [
+     "x"
+    ],
+    [
+     "z"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "statistics_off_v2_pages": {
+   "file": "statistics_off_v2_pages.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "n",
+      "path": "n",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "n",
+     "type": "INTEGER"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "3"
+    ],
+    [
+     "1"
+    ],
+    [
+     "2"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ]
+  },
+  "dictionary_of_wide_values": {
+   "file": "dictionary_of_wide_values.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "big",
+      "path": "big",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "big",
+     "type": "BIGINT"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "9007199254740993"
+    ],
+    [
+     "9007199254740993"
+    ],
+    [
+     "5"
+    ]
+   ],
+   "polars_checked": true,
+   "cross_checked_against": [
+    "pyarrow",
+    "polars"
+   ]
+  },
+  "damaged_empty": {
+   "file": "damaged_empty.parquet",
+   "refused": "Invalid Input Error: File '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_empty.parquet' too small to be a Parquet file",
+   "pyarrow_refused": true
+  },
+  "damaged_magic_only": {
+   "file": "damaged_magic_only.parquet",
+   "refused": "Invalid Input Error: File '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_magic_only.parquet' too small to be a Parquet file",
+   "pyarrow_refused": true
+  },
+  "damaged_truncated": {
+   "file": "damaged_truncated.parquet",
+   "refused": "Invalid Input Error: No magic bytes found at end of file '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_truncated.parquet'",
+   "pyarrow_refused": true
+  },
+  "damaged_no_footer": {
+   "file": "damaged_no_footer.parquet",
+   "refused": "Invalid Input Error: No magic bytes found at end of file '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_no_footer.parquet'",
+   "pyarrow_refused": true
+  },
+  "damaged_bad_tail_magic": {
+   "file": "damaged_bad_tail_magic.parquet",
+   "refused": "Invalid Input Error: No magic bytes found at end of file '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_bad_tail_magic.parquet'",
+   "pyarrow_refused": true
+  },
+  "damaged_footer_length_lies": {
+   "file": "damaged_footer_length_lies.parquet",
+   "refused": "Invalid Input Error: Footer length error in file '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_footer_length_lies.parquet'",
+   "pyarrow_refused": true
+  },
+  "damaged_footer_length_zero": {
+   "file": "damaged_footer_length_zero.parquet",
+   "refused": "Invalid Input Error: Footer length error in file '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_footer_length_zero.parquet'",
+   "pyarrow_refused": true
+  },
+  "damaged_garbage": {
+   "file": "damaged_garbage.parquet",
+   "refused": "Invalid Input Error: No magic bytes found at end of file '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_garbage.parquet'",
+   "pyarrow_refused": true
+  },
+  "damaged_csv_text": {
+   "file": "damaged_csv_text.parquet",
+   "refused": "Invalid Input Error: File '/Users/macc/Desktop/Kod/.codex-work/dfv-d36-20261031/native/crates/duckdb-query/tests/fixtures/parquet/damaged_csv_text.parquet' too small to be a Parquet file",
+   "pyarrow_refused": true
+  },
+  "head_magic_ignored": {
+   "file": "head_magic_ignored.parquet",
+   "footer": {
+    "num_rows": 3,
+    "row_groups": 1,
+    "created_by": "parquet-cpp-arrow version 26.0.0",
+    "kv_keys": [
+     "ARROW:schema"
+    ],
+    "leaves": [
+     {
+      "name": "i8",
+      "path": "i8",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=8, isSigned=true)",
+      "converted": "INT_8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "i16",
+      "path": "i16",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=16, isSigned=true)",
+      "converted": "INT_16",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "i32",
+      "path": "i32",
+      "physical": "INT32",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "i64",
+      "path": "i64",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "u8",
+      "path": "u8",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=8, isSigned=false)",
+      "converted": "UINT_8",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "u16",
+      "path": "u16",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=16, isSigned=false)",
+      "converted": "UINT_16",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "u32",
+      "path": "u32",
+      "physical": "INT32",
+      "logical": "Int(bitWidth=32, isSigned=false)",
+      "converted": "UINT_32",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "u64",
+      "path": "u64",
+      "physical": "INT64",
+      "logical": "Int(bitWidth=64, isSigned=false)",
+      "converted": "UINT_64",
+      "precision": -1,
+      "scale": -1
+     },
+     {
+      "name": "past_2_53",
+      "path": "past_2_53",
+      "physical": "INT64",
+      "logical": "None",
+      "converted": "NONE",
+      "precision": -1,
+      "scale": -1
+     }
+    ]
+   },
+   "columns": [
+    {
+     "name": "i8",
+     "type": "TINYINT"
+    },
+    {
+     "name": "i16",
+     "type": "SMALLINT"
+    },
+    {
+     "name": "i32",
+     "type": "INTEGER"
+    },
+    {
+     "name": "i64",
+     "type": "BIGINT"
+    },
+    {
+     "name": "u8",
+     "type": "UTINYINT"
+    },
+    {
+     "name": "u16",
+     "type": "USMALLINT"
+    },
+    {
+     "name": "u32",
+     "type": "UINTEGER"
+    },
+    {
+     "name": "u64",
+     "type": "UBIGINT"
+    },
+    {
+     "name": "past_2_53",
+     "type": "BIGINT"
+    }
+   ],
+   "count": 3,
+   "rows": [
+    [
+     "-128",
+     "-32768",
+     "-2147483648",
+     "-9223372036854775808",
+     "0",
+     "0",
+     "0",
+     "0",
+     "9007199254740993"
+    ],
+    [
+     "127",
+     "32767",
+     "2147483647",
+     "9223372036854775807",
+     "255",
+     "65535",
+     "4294967295",
+     "18446744073709551615",
+     "-9007199254740993"
+    ],
+    [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     "9007199254740992"
+    ]
+   ],
+   "polars_checked": false,
+   "polars_error": "'DataFrame' object has no attribute 'to_list'",
+   "cross_checked_against": [
+    "pyarrow"
+   ],
+   "tolerated_by": [
+    "duckdb",
+    "pyarrow"
+   ]
+  }
+ }
+}

@@ -1,17 +1,15 @@
 import { EditorView, basicSetup } from 'codemirror';
-import { keymap } from '@codemirror/view';
+import { keymap, ViewUpdate } from '@codemirror/view';
 import { Compartment } from '@codemirror/state';
 import { sql, type SQLNamespace } from '@codemirror/lang-sql';
-import type { QueryTarget, QueryColumn } from './queryCatalog';
 import { json } from '@codemirror/lang-json';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { pickXAxis, plottableColumns } from './chartSpec';
+import { pickPlotAxis, plottableColumns, type AxisChoice, type XAxis } from './chartSpec';
 import { fmtCount, formatStat, formatValue } from './gridFormat';
 import { DisplayOrderCache } from './gridOrder';
 import { liveStatusText } from './liveStatus';
 import { computeVirtualWindow } from './virtualWindow';
 import { tableEdges } from './sheetHighlight';
-import { groupQueryTargets } from './queryTargetList';
 import type { SheetBounds } from './queryCatalog';
 import {
   type ColumnStatsFields,
@@ -20,10 +18,11 @@ import {
   type LastResult,
   type QueryResultFields,
   type TableStatus,
-  initialState,
-  reduce,
-} from './webviewState';
-import type { DetectedSheetTable, DetectedTableFilter, DetectedTableSort } from './duckdbConnection';
+  createDataController,
+} from './features/data';
+import type { DetectedSheetTable, DetectedTableFilter, DetectedTableSort, SheetPreparationStatus } from './backend/types';
+import { slotOfGridRow, slotsBefore, tableDataRows } from './sheetRowMap';
+import type { ResultRangeContext, selectResultRange } from './queryRange';
 // Note what is NOT imported here: ECharts. The chart draws in its own VS Code
 // tab (see chartPanel.ts / chartView.ts), so the ~530 KB library loads the
 // first time somebody plots something rather than every time a file is opened.
@@ -37,17 +36,14 @@ type StatsKind = 'numeric' | 'datetime' | 'other';
 
 
 
-const hostApi = acquireVsCodeApi();
-let transportSequence = 0;
-let queryGeneration = 0;
-let targetRequestId = 0;
-let catalogRequestId = 0;
+// This document's data-view controller: transport ids, reducer state,
+// worksheet selection and the query picker (features/data, MOD-02).
+const data = createDataController(acquireVsCodeApi());
+const picker = data.picker;
 const vscode = {
-  postMessage(message: Record<string, unknown>): void {
-    const requestId = ++transportSequence;
-    if (['queryTarget', 'queryTargetSql', 'sheetTableSql'].includes(String(message.command))) targetRequestId = requestId;
-    if (message.command === 'queryCatalog') catalogRequestId = requestId;
-    hostApi.postMessage({ ...message, requestId, generation: queryGeneration });
+  /** Returns the transport id, which the host echoes on its replies. */
+  postMessage(message: Record<string, unknown>): number {
+    return data.post(message);
   },
 };
 
@@ -94,8 +90,17 @@ root.innerHTML = `
         <button id="query-use" disabled>Use in SQL</button>
         <button id="query-more" hidden>More tables</button>
         <button id="query-restore" hidden>Restore draft</button>
+        <label for="plot-axis" title="Only changes how a plot is drawn; the data and the query are untouched">Plot axis</label>
+        <select id="plot-axis"></select>
       </div>
       <div id="editor" class="editor"></div>
+      <form id="range-form" class="query-target-toolbar">
+        <label for="range-input">Result range</label>
+        <input id="range-input" placeholder="A1:D929" maxlength="40" aria-describedby="range-target" />
+        <button id="range-apply" disabled>Preview range</button>
+        <span id="range-target">Run a query or open a worksheet first.</span>
+      </form>
+      <section id="range-preview" hidden aria-label="Read-only range preview"></section>
       <div id="results" class="results"></div>
     </div>
   </div>
@@ -119,20 +124,91 @@ const queryTargetEl = document.getElementById('query-target') as HTMLSelectEleme
 const queryUseEl = document.getElementById('query-use') as HTMLButtonElement;
 const queryMoreEl = document.getElementById('query-more') as HTMLButtonElement;
 const queryRestoreEl = document.getElementById('query-restore') as HTMLButtonElement;
-let nextCatalogCursor: number | undefined;
-const queryTargets = new Map<string, QueryTarget>();
-const queryColumns = new Map<string, QueryColumn[]>();
-const drafts: string[] = [];
-let selectedQueryTarget: QueryTarget | undefined;
-/** The worksheet last opened as a preview; kept while a hand-written query's result is on screen. */
-let openSheet: string | undefined;
+const plotAxisEl = document.getElementById('plot-axis') as HTMLSelectElement;
+const rangeForm = document.getElementById('range-form') as HTMLFormElement;
+const rangeInput = document.getElementById('range-input') as HTMLInputElement;
+const rangeApply = document.getElementById('range-apply') as HTMLButtonElement;
+const rangeTarget = document.getElementById('range-target')!;
+const rangePreview = document.getElementById('range-preview')!;
+let rangeContext: ResultRangeContext | undefined;
+let rangeRequestId = 0;
+let manualRangeRequestId = 0;
+type RangePage = ReturnType<typeof selectResultRange>;
+
+function clearRange(): void {
+  rangeContext = undefined;
+  rangeApply.disabled = true;
+  rangePreview.hidden = true;
+  rangePreview.replaceChildren();
+  rangeTarget.textContent = 'Run a query or open a worksheet first.';
+}
+
+function requestRange(offset = 0): void {
+  if (!rangeContext || running) return;
+  rangeApply.disabled = true;
+  rangeRequestId = vscode.postMessage({ command: 'queryRange', range: rangeInput.value, token: rangeContext.token, offset });
+}
+
+rangeForm.addEventListener('submit', event => { event.preventDefault(); requestRange(); });
+
+function showRangePage(page: RangePage): void {
+  rangePreview.replaceChildren();
+  rangePreview.hidden = false;
+  const label = document.createElement('p');
+  label.textContent = `${page.target} · ${page.range} · rows ${page.firstRow}–${page.firstRow + page.rows.length - 1} (${page.totalRows} selected). Read-only; captured order.`;
+  const sqlLabel = document.createElement('label');
+  sqlLabel.textContent = 'Corresponding SQL (a new run reads the source again)';
+  const sqlText = document.createElement('textarea');
+  sqlText.readOnly = true; sqlText.rows = 5; sqlText.value = page.sql;
+  sqlLabel.append(sqlText);
+  const scroll = document.createElement('div'); scroll.className = 'range-scroll';
+  const table = document.createElement('table');
+  const head = table.createTHead().insertRow();
+  for (const name of ['Row', ...page.columns]) { const th = document.createElement('th'); th.textContent = name; head.append(th); }
+  const body = table.createTBody();
+  page.rows.forEach((values, index) => {
+    const row = body.insertRow();
+    row.insertCell().textContent = String(page.firstRow + index);
+    values.forEach(value => { row.insertCell().textContent = formatValue(value); });
+  });
+  scroll.append(table);
+  const previous = document.createElement('button'); previous.type = 'button'; previous.textContent = 'Previous range page';
+  previous.disabled = page.offset === 0;
+  previous.addEventListener('click', () => requestRange(Math.max(0, page.offset - page.pageSize)));
+  const next = document.createElement('button'); next.type = 'button'; next.textContent = 'Next range page';
+  next.disabled = page.nextOffset === undefined;
+  next.addEventListener('click', () => { if (page.nextOffset !== undefined) requestRange(page.nextOffset); });
+  rangePreview.append(label, sqlLabel, scroll, previous, next);
+  if (page.worksheet) {
+    const headerLabel = document.createElement('label');
+    headerLabel.textContent = 'Header row (blank for none)';
+    const header = document.createElement('input');
+    header.type = 'number'; header.min = '1'; header.max = '1048576';
+    header.value = page.range.match(/^[A-Z]+([0-9]+):/)?.[1] ?? '';
+    headerLabel.append(header);
+    const useTable = document.createElement('button');
+    useTable.dataset.useTable = 'true';
+    useTable.type = 'button'; useTable.textContent = 'Use as table';
+    useTable.addEventListener('click', () => {
+      if (!rangeContext || running || rangeContext.token !== page.token) return;
+      if (!header.reportValidity()) return;
+      useTable.disabled = true;
+      manualRangeRequestId = vscode.postMessage({ command: 'useRangeAsTable', token: page.token, range: page.range,
+        headerRow: header.value === '' ? null : Number(header.value) });
+    });
+    rangePreview.append(headerLabel, useTable);
+  }
+}
+/**
+ * The SQL text navigation itself last put in the editor. Anything else in the
+ * editor is the user's own draft, which navigation never replaces.
+ */
+let navigationSql: string | undefined;
 
 let running = false;
 
-// Every data-carrying global the message handler used to mutate, in one place.
-// The transitions live in webviewState.ts; this is the single instance they
-// are applied to.
-let state = initialState();
+// Every data-carrying value the message handler mutates lives in data.state;
+// the transitions are in features/data/state.ts.
 /** The query whose row total is still in flight; see runQuery and the 'rowTotal' case. */
 let combinedTableNames = new Set<string>();
 let liveStatusTicker: number | undefined;
@@ -142,6 +218,7 @@ let liveStatusTicker: number | undefined;
 // back down to the newest row.
 
 function setRunning(value: boolean): void {
+  if (value) clearRange();
   running = value;
   // Stays enabled and turns into a Cancel button while running, rather than
   // being disabled — a runaway query otherwise has no escape hatch short of
@@ -161,6 +238,8 @@ const selectionColor = EditorView.theme({
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
     backgroundColor: '#3390ff !important',
   },
+  // V22 contrast: One Dark's gutter grey is 3.9:1, below WCAG AA 4.5:1. (Its syntax token colours, >=4.0:1, are left as is.)
+  '.cm-gutters': { color: '#9199a8 !important' },
 });
 
 const runKeymap = keymap.of([
@@ -173,10 +252,39 @@ const runKeymap = keymap.of([
   },
 ]);
 
+// The user's SQL draft is kept by the host per document, so it survives the
+// editor being closed and reopened. Sent on every change, not after a pause:
+// a tab closed right after typing destroys this page, and the host ignores
+// anything that arrives after its document is disposed, so a delayed or
+// unload-time save would be lost (EX-02 attempt-05, installed host). The host
+// batches the persistence itself.
+const DRAFT_MAX_BYTES = 256 * 1024;
+let savedDraft = '';
+function userDraft(): string {
+  const text = editor.state.doc.toString();
+  return text === navigationSql ? '' : text;
+}
+function saveDraftNow(): void {
+  const draft = userDraft();
+  if (draft === savedDraft) return;
+  if (new TextEncoder().encode(draft).length > DRAFT_MAX_BYTES) {
+    statusEl.textContent = 'This SQL is too large to keep after the editor closes.';
+    return;
+  }
+  savedDraft = draft;
+  vscode.postMessage({ command: 'saveSqlDraft', sql: draft });
+}
+const draftListener = EditorView.updateListener.of((update: ViewUpdate) => {
+  if (update.docChanged) {
+    if (rangeContext) { clearRange(); vscode.postMessage({ command: 'invalidateRange' }); }
+    saveDraftNow();
+  }
+});
+
 const sqlLanguage = new Compartment();
 const editor = new EditorView({
   doc: '',
-  extensions: [basicSetup, sqlLanguage.of(sql()), runKeymap, oneDark, selectionColor],
+  extensions: [basicSetup, sqlLanguage.of(sql()), runKeymap, oneDark, selectionColor, draftListener],
   parent: document.getElementById('editor') as HTMLDivElement,
 });
 
@@ -186,46 +294,54 @@ function setEditorText(text: string): void {
   });
 }
 
+/**
+ * Show navigation's own SQL, but only in an editor that holds no draft: empty,
+ * or still exactly what navigation last put there. A draft is left untouched.
+ */
+function showNavigationSql(text: string): void {
+  const current = editor.state.doc.toString();
+  if (current !== '' && current !== navigationSql) return;
+  navigationSql = text;
+  setEditorText(text);
+}
+
 function refreshQueryTargets(): void {
-  const selected = selectedQueryTarget?.id ?? '';
+  const selected = picker.selected?.id ?? '';
   queryTargetEl.replaceChildren(new Option('Choose a table…', ''));
-  for (const { label, options } of groupQueryTargets(queryTargets.values(), openSheet)) {
+  for (const { label, options } of picker.groups(data.state.selection.sheet)) {
     const group = document.createElement('optgroup');
     group.label = label;
     for (const option of options) group.append(new Option(option.label, option.id));
     queryTargetEl.append(group);
   }
   queryTargetEl.value = selected;
-  queryUseEl.disabled = !selectedQueryTarget;
-  queryMoreEl.hidden = nextCatalogCursor === undefined;
+  queryUseEl.disabled = !picker.selected;
+  queryMoreEl.hidden = picker.nextCursor === undefined;
 }
 
 function refreshSqlCompletion(): void {
-  const schema: Record<string, any> = Object.create(null);
-  for (const target of queryTargets.values()) {
-    const catalog = schema[target.catalog] ??= Object.create(null);
-    const namespace = catalog[target.schema] ??= Object.create(null);
-    namespace[target.name] = (queryColumns.get(target.id) ?? []).map(column => ({ label: column.name, type: 'property', detail: column.type }));
-  }
+  const schema = picker.completionSchema();
   editor.dispatch({ effects: sqlLanguage.reconfigure(sql({ schema: schema as SQLNamespace })) });
 }
 
 queryTargetEl.addEventListener('change', () => {
-  selectedQueryTarget = queryTargets.get(queryTargetEl.value);
+  clearRange();
+  const chosen = picker.select(queryTargetEl.value);
   refreshQueryTargets();
   refreshTableHighlight();
-  if (selectedQueryTarget) vscode.postMessage({ command: 'queryTarget', targetId: selectedQueryTarget.id, generation: queryGeneration });
+  if (chosen) vscode.postMessage({ command: 'queryTarget', targetId: chosen.id, generation: picker.generation });
 });
 queryUseEl.addEventListener('click', () => {
-  if (selectedQueryTarget) vscode.postMessage({ command: 'queryTargetSql', targetId: selectedQueryTarget.id, generation: queryGeneration });
+  clearRange();
+  if (picker.selected) vscode.postMessage({ command: 'queryTargetSql', targetId: picker.selected.id, generation: picker.generation });
 });
 queryMoreEl.addEventListener('click', () => {
-  if (nextCatalogCursor !== undefined) vscode.postMessage({ command: 'queryCatalog', cursor: nextCatalogCursor });
+  if (picker.nextCursor !== undefined) vscode.postMessage({ command: 'queryCatalog', cursor: picker.nextCursor });
 });
 queryRestoreEl.addEventListener('click', () => {
-  const draft = drafts.pop();
+  const draft = picker.restoreDraft();
   if (draft !== undefined) setEditorText(draft);
-  queryRestoreEl.hidden = drafts.length === 0;
+  queryRestoreEl.hidden = !picker.hasDrafts;
 });
 
 function runQuery(sqlText: string): void {
@@ -237,16 +353,15 @@ function runQuery(sqlText: string): void {
   // Remembered so a 'rowTotal' arriving late can be matched to the query it
   // counted -- it is computed after the rows are already on screen, and by
   // then the user may have run something else.
-  state.awaitingTotalForSql = trimmed;
+  data.state.awaitingTotalForSql = trimmed;
   vscode.postMessage({ command: 'runQuery', sql: trimmed });
 }
 
-function runCombinedQuery(baseTable: string): void {
-  if (running) return;
+function runCombinedQuery(baseTable: string): number {
   setRunning(true);
   statusEl.textContent = 'Running…';
-  setEditorText(`-- combined hot+cold view of "${baseTable}" (synthesized, read-only)`);
-  vscode.postMessage({ command: 'runCombinedQuery', table: baseTable });
+  showNavigationSql(`-- combined hot+cold view of "${baseTable}" (synthesized, read-only)`);
+  return vscode.postMessage({ command: 'runCombinedQuery', table: baseTable });
 }
 
 runBtn.addEventListener('click', () => {
@@ -272,7 +387,7 @@ backupCheck.addEventListener('change', sendToggleSafeMode);
 checkChangesCheck.addEventListener('change', sendToggleSafeMode);
 
 function setLiveUiEnabled(enabled: boolean): void {
-  state.liveEnabled = enabled;
+  data.state.liveEnabled = enabled;
   modeLiveRadio.checked = enabled;
   modeStaticRadio.checked = !enabled;
   liveOptionsEl.hidden = !enabled;
@@ -297,15 +412,15 @@ function stopLiveStatusTicker(): void {
 }
 
 function updateLiveStatusText(): void {
-  if (!state.liveEnabled) return;
+  if (!data.state.liveEnabled) return;
   const status = liveStatusText({
-    enabled: state.liveEnabled,
-    hostStale: state.liveStale,
-    hasSource: state.liveHasSource,
-    sourceLookedFor: state.liveSourceLookedFor,
-    lastUpdatedMs: state.liveLastUpdatedMs,
-    intervalMs: state.liveIntervalMs,
-    lastError: state.liveLastError,
+    enabled: data.state.liveEnabled,
+    hostStale: data.state.liveStale,
+    hasSource: data.state.liveHasSource,
+    sourceLookedFor: data.state.liveSourceLookedFor,
+    lastUpdatedMs: data.state.liveLastUpdatedMs,
+    intervalMs: data.state.liveIntervalMs,
+    lastError: data.state.liveLastError,
   });
   liveStatusEl.textContent = status.text;
   liveStatusEl.className = status.className;
@@ -337,7 +452,7 @@ modeStaticRadio.addEventListener('change', () => {
 });
 
 liveIntervalInput.addEventListener('change', () => {
-  if (!state.liveEnabled) return;
+  if (!data.state.liveEnabled) return;
   const intervalMs = Math.round(Number(liveIntervalInput.value || '2') * 1000);
   vscode.postMessage({ command: 'setLiveRefreshInterval', intervalMs });
 });
@@ -346,23 +461,43 @@ liveIntervalInput.addEventListener('change', () => {
 // in the click handler, so opening a file can run the SAME thing — an
 // auto-preview that built its own query would be a second code path to keep in
 // step with this one for no reason.
+//
+// The choice is made at once (sidebar, picker); the preview it asks for is
+// dispatched by the reducer -- immediately, or after the one already in flight.
+// Navigation never takes over the SQL editor: see showNavigationSql.
 function previewTable(name: string): void {
+  for (const effect of data.choose(name)) applyEffect(effect);
+}
+
+function dispatchPreview(name: string, seq: number): void {
+  let requestId: number;
   if (combinedTableNames.has(name)) {
     // Not a real table — a synthesized hot+cold union built server-side
     // (see duckdbConnection.ts's buildCombinedQuery); the extension
     // rebuilds and runs it directly rather than the usual
     // `SELECT * FROM "<name>"`, which wouldn't resolve to anything.
-    const baseTable = name.slice(0, -'_combined'.length);
-    runCombinedQuery(baseTable);
-    return;
+    requestId = runCombinedQuery(name.slice(0, -'_combined'.length));
+  } else {
+    const sqlText = `SELECT * FROM "${name}" LIMIT 100;`;
+    showNavigationSql(sqlText);
+    setRunning(true);
+    statusEl.textContent = 'Running…';
+    data.state.awaitingTotalForSql = sqlText.trim();
+    requestId = vscode.postMessage({ command: 'runQuery', sql: sqlText, sheetPreview: name, selectionSeq: seq });
   }
-  const sqlText = `SELECT * FROM "${name}" LIMIT 100;`;
-  setEditorText(sqlText);
-  if (running) return;
-  setRunning(true);
-  statusEl.textContent = 'Running…';
-  state.awaitingTotalForSql = sqlText.trim();
-  vscode.postMessage({ command: 'runQuery', sql: sqlText, sheetPreview: name });
+  data.previewSent(seq, requestId);
+}
+
+/** The picker, the sidebar mark and the outline all follow the choice at once. */
+function applySelection(): void {
+  const sheet = data.state.selection.sheet;
+  tableListEl.querySelectorAll<HTMLDivElement>('.table-item').forEach((item) => {
+    item.setAttribute('aria-selected', String(item.dataset.table === sheet));
+    item.classList.toggle('selected', item.dataset.table === sheet);
+  });
+  picker.dropForeignSelection(sheet);
+  refreshQueryTargets();
+  refreshTableHighlight();
 }
 
 // ------------------------------------------------------------------- charts
@@ -371,10 +506,37 @@ function previewTable(name: string): void {
 // chartView.ts). All this half does is decide which columns are worth
 // offering a button for, and ask the host to plot one.
 
+/** Plot-only axis choice (PLOT-03); empty is Automatic. Never changes the data or the query. */
+let axisChoice: AxisChoice = {};
+
+/** The columns the axis choice can name: the result's, or every detected table's on a worksheet. */
+function axisColumns(): string[] {
+  const result = data.state.lastResult;
+  if (!result) return [];
+  return result.sheetTables ? [...new Set(result.sheetTables.flatMap((table) => table.columns))] : result.columns;
+}
+
+function refreshAxisChoice(): void {
+  const columns = axisColumns();
+  if (axisChoice.dateColumn !== undefined && !columns.includes(axisChoice.dateColumn)) axisChoice = {};
+  const dates = document.createElement('optgroup');
+  dates.label = 'Read column as dates';
+  for (const column of columns) dates.append(new Option(column, `date:${column}`));
+  plotAxisEl.replaceChildren(new Option('Automatic', 'auto'), new Option('Row numbers', 'row'), dates);
+  plotAxisEl.value = axisChoice.row ? 'row' : axisChoice.dateColumn !== undefined ? `date:${axisChoice.dateColumn}` : 'auto';
+}
+
+plotAxisEl.addEventListener('change', () => {
+  const value = plotAxisEl.value;
+  axisChoice = value === 'row' ? { row: true } : value.startsWith('date:') ? { dateColumn: value.slice(5) } : {};
+  renderedHeaderKey = undefined;
+  renderResults(true);
+});
+
 /** The x axis for what is currently on screen, or undefined if it has not got one. */
-function chartXAxis(): { column: string; kind: 'datetime' | 'text' | 'category' } | undefined {
-  if (!state.lastResult) return undefined;
-  return pickXAxis(state.lastResult.columns, state.lastResult.columnStatsKind);
+function chartXAxis(): XAxis | undefined {
+  if (!data.state.lastResult) return undefined;
+  return pickPlotAxis(data.state.lastResult.columns, data.state.lastResult.columnStatsKind, axisChoice);
 }
 
 function requestChart(yColumn: string): void {
@@ -388,20 +550,37 @@ function requestChart(yColumn: string): void {
     // database whether the strings parse.
     xIsText: x.kind === 'text',
     xIsCategory: x.kind === 'category',
+    xIsRow: x.kind === 'row',
+    // The chosen column is the axis; xColumn above already names it.
+    xDateColumn: x.kind === 'date' ? x.column : undefined,
     yColumns: [yColumn],
   });
 }
 
 function renderTables(tables: string[], combined: string[], previewFirst = false): void {
   combinedTableNames = new Set(combined);
+  // EX-07: a catalog refresh rebuilds the list; keyboard focus must stay on the same sheet.
+  const focusedTable = tableListEl.contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.table : undefined;
   tableListEl.innerHTML = '';
+  tableListEl.setAttribute('role', 'listbox');
+  tableListEl.setAttribute('aria-label', 'Tables');
   for (const name of tables) {
     const item = document.createElement('div');
     item.className = 'table-item';
     item.textContent = name;
     item.dataset.table = name;
+    item.setAttribute('role', 'option');
+    item.setAttribute('aria-selected', String(name === data.state.selection.sheet));
+    item.classList.toggle('selected', name === data.state.selection.sheet);
+    item.tabIndex = 0; // EX-07: reachable and operable by keyboard, not only by mouse
     item.addEventListener('click', () => previewTable(name));
+    item.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      previewTable(name);
+    });
     tableListEl.appendChild(item);
+    if (name === focusedTable) item.focus();
   }
   if (tables.length === 0) {
     tableListEl.innerHTML = '<div class="empty">No tables found.</div>';
@@ -412,11 +591,10 @@ function renderTables(tables: string[], combined: string[], previewFirst = false
   // first entry is the one the writer put first, which is the data rather than
   // its metadata.
   //
-  // Safe to do unconditionally when enabled: this webview keeps no state
-  // across reloads (there is no getState/setState anywhere in this file), so
-  // there is never a hand-written query here to overwrite — the editor is
-  // empty every time this message arrives.
-  if (previewFirst && tables.length > 0) {
+  // Safe to do when enabled: navigation never replaces a draft in the editor
+  // (see showNavigationSql), including one the host restored for this file.
+  // Not when the user has already chosen something.
+  if (previewFirst && tables.length > 0 && data.state.selection.sheet === undefined) {
     previewTable(tables[0]);
   }
 }
@@ -459,13 +637,14 @@ function inlineStateFor(table: string): InlineTableUiState {
 }
 
 function sheetTableByName(name: string): DetectedSheetTable | undefined {
-  return state.lastResult?.sheetTables?.find((table) => table.name === name);
+  return data.state.lastResult?.sheetTables?.find((table) => table.name === name);
 }
 
 function sheetTableDisplayLimit(table: DetectedSheetTable): number {
-  if (!state.lastResult) return 1;
-  const firstDataRow = table.headerRow === null ? table.top : table.headerRow + 1;
-  return Math.max(1, Math.min(table.bottom, state.lastResult.rows.length) - firstDataRow);
+  if (!data.state.lastResult) return 1;
+  // One result row per data-row slot on screen: blank and repeated-header rows
+  // are not slots (EX-05 source-row map).
+  return Math.max(1, slotsBefore(tableDataRows(table), data.state.lastResult.rows.length));
 }
 
 function filtersForMessage(current: InlineTableUiState): DetectedTableFilter[] {
@@ -637,6 +816,8 @@ function requestInlineChart(table: DetectedSheetTable, column: string): void {
     command: 'sheetTableChart',
     table: table.name,
     column,
+    xIsRow: axisChoice.row,
+    xDateColumn: axisChoice.dateColumn,
     filters: filtersForMessage(current),
     sort: current.sort,
     limit: sheetTableDisplayLimit(table),
@@ -653,7 +834,7 @@ function requestInlineChart(table: DetectedSheetTable, column: string): void {
 const displayOrderCache = new DisplayOrderCache();
 
 function displayOrder(): number[] {
-  return displayOrderCache.order(state.lastResult!, state.sortState);
+  return displayOrderCache.order(data.state.lastResult!, data.state.sortState);
 }
 
 function renderStatsPopoverContent(container: HTMLElement, message: Extract<ExtensionMessage, { command: 'columnStatsResult' }>): void {
@@ -848,13 +1029,19 @@ function closeCellInspector(): void {
 }
 
 function openCellInspector(rowIdx: number, colIdx: number): void {
-  if (!state.lastResult || running) return;
+  if (!data.state.lastResult || running) return;
   closeStatsPopover();
   closeCellInspector();
 
-  const column = state.lastResult.columns[colIdx];
-  const value = state.lastResult.rows[rowIdx][colIdx];
-  const canEdit = state.lastResult.editable && !safeModeCheck.checked;
+  const column = data.state.lastResult.columns[colIdx];
+  // A cell under a sorted/filtered inline table shows another row's value; its
+  // sheet coordinate is not the row the user sees, so it is never edited here.
+  const overlay = isWorksheetPreview()
+    ? inlineCellValue(rowIdx, colIdx, data.state.lastResult.rows[rowIdx][colIdx])
+    : { value: data.state.lastResult.rows[rowIdx][colIdx], filteredOut: false, reordered: false };
+  const overlaid = overlay.reordered || overlay.filteredOut;
+  const value = overlaid ? overlay.value : data.state.lastResult.rows[rowIdx][colIdx];
+  const canEdit = data.state.lastResult.editable && !safeModeCheck.checked && !overlaid;
 
   const isObjectValue = typeof value === 'object' && value !== null;
   let jsonParsed: unknown;
@@ -932,15 +1119,15 @@ function openCellInspector(rowIdx: number, colIdx: number): void {
       // The host serializes edits rather than dropping a second one, so a
       // double-click would otherwise send two updates and the second would
       // come back as "no matching row" against the row the first just changed.
-      if (running || !state.lastResult || saveBtn.disabled) return;
+      if (running || !data.state.lastResult || saveBtn.disabled) return;
       saveBtn.disabled = true;
       const text = inspectorEditor.state.doc.toString();
       // Empty input means NULL, not the literal empty string — matches how
       // NULL is already shown as literal text "NULL" elsewhere in the grid.
       const newValue = text === '' ? null : text;
       const rowValues: Record<string, unknown> = {};
-      state.lastResult.columns.forEach((c, j) => {
-        rowValues[c] = state.lastResult!.rows[rowIdx][j];
+      data.state.lastResult.columns.forEach((c, j) => {
+        rowValues[c] = data.state.lastResult!.rows[rowIdx][j];
       });
       pendingCellEdit = { rowIdx, colIdx, column, statusEl: statusSpan, saveBtn };
       statusSpan.textContent = 'Saving…';
@@ -953,7 +1140,9 @@ function openCellInspector(rowIdx: number, colIdx: number): void {
   } else {
     const note = document.createElement('span');
     note.className = 'cell-inspector-note';
-    note.textContent = !state.lastResult.editable
+    note.textContent = overlaid
+      ? 'View only — this table is sorted or filtered, so this cell is not the sheet row it sits on. Clear its sort and filters, or open it with SQL, to edit.'
+      : !data.state.lastResult.editable
       ? "View only — this result isn't a plain single-table SELECT, so it can't be edited."
       : 'View only — uncheck Safe Mode to edit.';
     footer.appendChild(note);
@@ -989,17 +1178,22 @@ function inlineCellValue(
   rowIndex: number,
   columnIndex: number,
   original: unknown
-): { value: unknown; filteredOut: boolean } {
-  for (const table of state.lastResult?.sheetTables ?? []) {
-    const current = inlineTableState.get(table.name)?.result;
+): { value: unknown; filteredOut: boolean; reordered: boolean } {
+  for (const table of data.state.lastResult?.sheetTables ?? []) {
+    const ui = inlineTableState.get(table.name);
+    const current = ui?.result;
     if (!current || columnIndex < table.left || columnIndex >= table.right) continue;
-    const firstDataRow = table.headerRow === null ? table.top : table.headerRow + 1;
-    if (rowIndex < firstDataRow || rowIndex >= table.bottom) continue;
-    const resultRow = current.rows[rowIndex - firstDataRow];
-    if (!resultRow) return { value: '', filteredOut: true };
-    return { value: resultRow[columnIndex - table.left], filteredOut: false };
+    // Result row k fills the k-th data row of the source-row map; a blank or
+    // repeated-header row inside the table keeps showing the sheet.
+    const slot = slotOfGridRow(tableDataRows(table), rowIndex);
+    if (slot < 0) continue;
+    // Sorted or filtered, the cell no longer shows this sheet row's value.
+    const reordered = ui.filters.size > 0 || ui.sort !== undefined;
+    const resultRow = current.rows[slot];
+    if (!resultRow) return { value: '', filteredOut: true, reordered };
+    return { value: resultRow[columnIndex - table.left], filteredOut: false, reordered };
   }
-  return { value: original, filteredOut: false };
+  return { value: original, filteredOut: false, reordered: false };
 }
 
 function appendInlineHeaderControls(
@@ -1033,7 +1227,7 @@ function appendInlineHeaderControls(
     sqlButton.addEventListener('click', event => {
       event.stopPropagation();
       vscode.postMessage({ command: 'sheetTableSql', table: table.name, filters: filtersForMessage(current), sort: current.sort,
-        limit: sheetTableDisplayLimit(table), generation: queryGeneration });
+        limit: sheetTableDisplayLimit(table), generation: picker.generation });
     });
     controls.appendChild(sqlButton);
   }
@@ -1077,7 +1271,7 @@ function appendInlineHeaderControls(
   controls.appendChild(filter);
   controls.appendChild(stats);
   const kinds = current.result?.columnStatsKind ?? table.columnStatsKind;
-  if (plottableColumns(table.columns, kinds).includes(column)) {
+  if (plottableColumns(table.columns, kinds, axisChoice).includes(column)) {
     const plot = document.createElement('button');
     plot.className = 'sheet-table-plot';
     plot.textContent = '📈';
@@ -1093,7 +1287,7 @@ function appendInlineHeaderControls(
 
 /** A worksheet preview, where grid row i is Excel row i + 1 and the columns are Excel letters. */
 function isWorksheetPreview(): boolean {
-  return state.lastResult?.sheetTables !== undefined;
+  return data.state.lastResult?.sheetTables !== undefined;
 }
 
 /**
@@ -1102,8 +1296,8 @@ function isWorksheetPreview(): boolean {
  * belongs to another sheet or no worksheet preview is on screen.
  */
 function highlightedTable(): SheetBounds | undefined {
-  const target = selectedQueryTarget;
-  const result = state.lastResult;
+  const target = picker.selected;
+  const result = data.state.lastResult;
   if (!target || result?.sheetTables === undefined) return undefined;
   if (target.worksheet !== undefined && target.worksheet === result.sheetPreview && target.bounds) return target.bounds;
   // The catalog page carrying bounds can arrive just after the rows; the
@@ -1134,7 +1328,7 @@ function refreshTableHighlight(): void {
 }
 
 function buildRowElement(i: number, displayIdx: number): HTMLTableRowElement {
-  const { rows, cellChanged, rowIsNew, columnStatsKind } = state.lastResult!;
+  const { rows, cellChanged, rowIsNew, columnStatsKind } = data.state.lastResult!;
   const row = rows[i];
   const tr = document.createElement('tr');
   tr.className = displayIdx % 2 === 0 ? 'even' : 'odd';
@@ -1164,7 +1358,7 @@ function buildRowElement(i: number, displayIdx: number): HTMLTableRowElement {
     td.dataset.c = String(j);
     if (j % 2 === 1) td.classList.add('col-odd');
     if (highlighted) applyTableHighlight(td, i, j, highlighted);
-    for (const table of state.lastResult?.sheetTables ?? []) {
+    for (const table of data.state.lastResult?.sheetTables ?? []) {
       const headerRow = table.headerRow ?? table.top;
       if (i === headerRow && j >= table.left && j < table.right) {
         appendInlineHeaderControls(td, table, j);
@@ -1190,7 +1384,7 @@ function appendSpacerRow(tbody: HTMLTableSectionElement, heightPx: number, colCo
 }
 
 function renderVirtualWindow(): void {
-  if (!virtualState || !state.lastResult) return;
+  if (!virtualState || !data.state.lastResult) return;
   const tbody = resultsEl.querySelector('tbody');
   if (!tbody) return;
   const { order, rowHeight } = virtualState;
@@ -1201,7 +1395,7 @@ function renderVirtualWindow(): void {
     rowCount: order.length,
   });
   tbody.innerHTML = '';
-  const colCount = state.lastResult.columns.length + (isWorksheetPreview() ? 1 : 0);
+  const colCount = data.state.lastResult.columns.length + (isWorksheetPreview() ? 1 : 0);
   appendSpacerRow(tbody, topSpacerPx, colCount);
   const frag = document.createDocumentFragment();
   for (let displayIdx = start; displayIdx < end; displayIdx++) {
@@ -1230,7 +1424,7 @@ resultsEl.addEventListener('scroll', () => {
   // auto-follow new rows in when the user was already at the bottom (log
   // tail/chat-scroll convention) — otherwise a live tick would repeatedly
   // yank someone inspecting history back down to the newest row.
-  state.pinnedToBottom = resultsEl.scrollTop + resultsEl.clientHeight >= resultsEl.scrollHeight - 4;
+  data.state.pinnedToBottom = resultsEl.scrollTop + resultsEl.clientHeight >= resultsEl.scrollHeight - 4;
   if (virtualRenderScheduled) return;
   virtualRenderScheduled = true;
   requestAnimationFrame(() => {
@@ -1250,22 +1444,71 @@ resultsEl.addEventListener('scroll', () => {
  * for the common case (a handful of new rows per tick); true identity-based
  * anchoring would be a further refinement.
  */
+/**
+ * SAFE-X1: a worksheet whose table discovery did not complete says so above
+ * the grid, so a failure never looks like "this sheet has no tables". The raw
+ * sheet below stays fully usable. Retry is explicit and only offered when a
+ * fresh attempt could change the answer.
+ */
+function preparationBanner(status: SheetPreparationStatus | undefined): HTMLElement | null {
+  // EX-07: every state that is not "tables ready" says so, so an empty or switched-off detection never looks like a blank success.
+  const titles: Partial<Record<SheetPreparationStatus['state'], string>> = {
+    pending: 'Detecting tables…', none: 'No tables found', disabled: 'Table detection is off',
+    failed: 'Table detection failed', cancelled: 'Table detection cancelled', incomplete: 'Detection incomplete', bounded: 'Detection limited',
+  };
+  const fallback: Partial<Record<SheetPreparationStatus['state'], string>> = {
+    none: 'The whole sheet is shown below.', disabled: 'Enable dataFileViewer.sheetTables to look for tables; the whole sheet is shown below.',
+  };
+  const title = status ? titles[status.state] : undefined;
+  if (!status || !title) return null;
+  const banner = document.createElement('div');
+  banner.className = `sheet-preparation sheet-preparation-${status.state}`;
+  banner.setAttribute('role', 'status');
+  const text = document.createElement('span');
+  text.textContent = status.state === 'pending' ? title : `${title}. ${status.message ?? fallback[status.state] ?? ''}`.trim();
+  banner.appendChild(text);
+  if (status.retryable) {
+    const retry = document.createElement('button');
+    retry.className = 'sheet-preparation-retry';
+    retry.textContent = 'Retry detection';
+    retry.addEventListener('click', () => {
+      retry.disabled = true;
+      retry.textContent = 'Detecting…';
+      vscode.postMessage({ command: 'retrySheetPreparation', sheet: status.sheet });
+    });
+    banner.appendChild(retry);
+  }
+  return banner;
+}
+
+/**
+ * PERF-X1: each grid render is recorded as one `dfv-render` performance
+ * measure (only the latest is kept), so the render phase can be timed
+ * separately from host-side preparation without a debug build.
+ */
 function renderResults(preserveScroll = false): void {
+  const started = performance.now();
+  try { renderResultsNow(preserveScroll); } finally {
+    try { performance.clearMeasures('dfv-render'); performance.measure('dfv-render', { start: started, end: performance.now() }); } catch { /* timing is optional */ }
+  }
+}
+
+function renderResultsNow(preserveScroll: boolean): void {
   const preservedScrollTop = preserveScroll ? resultsEl.scrollTop : 0;
-  const wasPinnedToBottom = preserveScroll && state.pinnedToBottom;
+  const wasPinnedToBottom = preserveScroll && data.state.pinnedToBottom;
 
   virtualState = undefined;
-  if (!state.lastResult) {
+  if (!data.state.lastResult) {
     resultsEl.innerHTML = '';
     renderedHeaderKey = undefined;
     return;
   }
-  if (inlineOwnerRows !== state.lastResult.rows) {
+  if (inlineOwnerRows !== data.state.lastResult.rows) {
     inlineTableState.clear();
-    inlineOwnerRows = state.lastResult.rows;
+    inlineOwnerRows = data.state.lastResult.rows;
     closeFilterPopover();
   }
-  const { columns, rows, cellChanged, rowIsNew, renamedColumns, columnStatsKind } = state.lastResult;
+  const { columns, rows, cellChanged, rowIsNew, renamedColumns, columnStatsKind } = data.state.lastResult;
 
   if (columns.length === 0) {
     resultsEl.innerHTML = '<div class="empty">Query returned no columns.</div>';
@@ -1277,7 +1520,9 @@ function renderResults(preserveScroll = false): void {
   // identical to the one already on screen. Rebuilding it anyway threw away
   // the sort/stats buttons several times a second — and with them the anchor
   // element an open stats popover positions against.
-  const headerKey = JSON.stringify([columns, renamedColumns ?? null, state.sortState ?? null, columnStatsKind, isWorksheetPreview()]);
+  const preparation = isWorksheetPreview() ? data.state.lastResult.sheetPreparation : undefined;
+  const headerKey = JSON.stringify([columns, renamedColumns ?? null, data.state.sortState ?? null, columnStatsKind, isWorksheetPreview(), axisChoice,
+    preparation ? [preparation.state, preparation.generation, preparation.skipped] : null]);
   const existingTable = resultsEl.querySelector('table');
   const reuseHeader = preserveScroll && existingTable !== null && headerKey === renderedHeaderKey;
 
@@ -1288,11 +1533,14 @@ function renderResults(preserveScroll = false): void {
 
   resultsEl.innerHTML = '';
   renderedHeaderKey = headerKey;
+  refreshAxisChoice();
+  const banner = preparationBanner(preparation);
+  if (banner) resultsEl.appendChild(banner);
 
   const table = document.createElement('table');
 
-  const plottable = new Set(plottableColumns(columns, columnStatsKind));
-  const xAxisColumn = chartXAxis()?.column;
+  const plottable = new Set(plottableColumns(columns, columnStatsKind, axisChoice));
+  const xAxis = chartXAxis();
 
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
@@ -1321,7 +1569,7 @@ function renderResults(preserveScroll = false): void {
     // table. Sorting one of them would move whole worksheet rows and detach
     // every detected region from its coordinates; the real table controls
     // live on each promoted header below instead.
-    if (state.lastResult?.sheetTables !== undefined) {
+    if (data.state.lastResult?.sheetTables !== undefined) {
       th.classList.add('sheet-letter');
       th.appendChild(inner);
       headRow.appendChild(th);
@@ -1331,21 +1579,23 @@ function renderResults(preserveScroll = false): void {
     const controls = document.createElement('span');
     controls.className = 'th-controls';
 
-    const isActiveSort = state.sortState?.columnIndex === colIdx;
+    const isActiveSort = data.state.sortState?.columnIndex === colIdx;
     const sortBtn = document.createElement('button');
     sortBtn.className = 'th-sort-btn';
     sortBtn.classList.toggle('th-sort-btn-active', isActiveSort);
-    sortBtn.textContent = isActiveSort ? (state.sortState!.direction === 'asc' ? '▲' : '▼') : '⇅';
+    sortBtn.textContent = isActiveSort ? (data.state.sortState!.direction === 'asc' ? '▲' : '▼') : '⇅';
     sortBtn.title = isActiveSort
-      ? `Sorted ${state.sortState!.direction === 'asc' ? 'ascending' : 'descending'} — click to reverse`
+      ? `Sorted ${data.state.sortState!.direction === 'asc' ? 'ascending' : 'descending'} — click to reverse`
       : 'Sort ascending';
     sortBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (running) return;
-      const direction = isActiveSort && state.sortState!.direction === 'asc' ? 'desc' : 'asc';
-      state.sortState = { columnIndex: colIdx, direction };
-      if (state.lastResult) state.lastResult.serverSorted = false;
-      if (state.lastResult?.hasLimit) {
+      clearRange();
+      vscode.postMessage({ command: 'invalidateRange' });
+      const direction = isActiveSort && data.state.sortState!.direction === 'asc' ? 'desc' : 'asc';
+      data.state.sortState = { columnIndex: colIdx, direction };
+      if (data.state.lastResult) data.state.lastResult.serverSorted = false;
+      if (data.state.lastResult?.hasLimit) {
         // A LIMIT-ed result can't be correctly re-sorted from just the rows
         // already in memory (see hasLimit's origin in duckdbConnection.ts) --
         // ask the host to re-run the query sorted against the full data.
@@ -1378,7 +1628,7 @@ function renderResults(preserveScroll = false): void {
       const plotBtn = document.createElement('button');
       plotBtn.className = 'th-plot-btn';
       plotBtn.textContent = '📈';
-      plotBtn.title = `Plot ${col} against ${xAxisColumn} — the whole series, not just this page`;
+      plotBtn.title = `Plot ${col} against ${xAxis?.kind === 'row' ? 'row numbers' : xAxis?.column} — the whole series, not just this page`;
       plotBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (running) return;
@@ -1401,7 +1651,7 @@ function renderResults(preserveScroll = false): void {
 /** Thousands separators, so a six-figure row count is readable at a glance. */
 /** Body + footer only. Split out so a live tick can refresh the rows under an untouched header. */
 function renderRowsInto(table: HTMLTableElement, preservedScrollTop: number, wasPinnedToBottom: boolean): void {
-  const { rows } = state.lastResult!;
+  const { rows } = data.state.lastResult!;
 
   table.querySelector('tbody')?.remove();
   resultsEl.querySelector('.results-footer')?.remove();
@@ -1426,14 +1676,14 @@ function renderRowsInto(table: HTMLTableElement, preservedScrollTop: number, was
   // footer you would get if a million rows were waiting behind it. So the
   // total is spelled out even when the two match: "146 of 146" is redundant
   // only until it is the thing you needed to know.
-  const total = state.lastResult!.totalRows;
+  const total = data.state.lastResult!.totalRows;
   const shown = rows.length;
   footer.textContent =
     total === undefined
       ? `${fmtCount(shown)} row${shown === 1 ? '' : 's'} shown`
       : `${fmtCount(shown)} of ${fmtCount(total)} row${total === 1 ? '' : 's'} shown`;
 
-  if (state.lastResult!.truncated) {
+  if (data.state.lastResult!.truncated) {
     // The count above is the whole story only when nothing was cut -- say so
     // explicitly, otherwise a capped result reads as the complete answer.
     const cap = document.createElement('span');
@@ -1442,7 +1692,7 @@ function renderRowsInto(table: HTMLTableElement, preservedScrollTop: number, was
     footer.appendChild(cap);
   }
 
-  if (state.lastResult!.diffSkipped) {
+  if (data.state.lastResult!.diffSkipped) {
     const note = document.createElement('span');
     note.className = 'diff-skipped-note';
     note.textContent = ' — result too large to auto-diff against the backup.';
@@ -1482,7 +1732,7 @@ function renderRowsInto(table: HTMLTableElement, preservedScrollTop: number, was
 
 function showError(message: string): void {
   resultsEl.innerHTML = '';
-  state.lastResult = undefined;
+  data.state.lastResult = undefined;
   const el = document.createElement('div');
   el.className = 'error';
   el.textContent = message;
@@ -1523,7 +1773,7 @@ function applyEffect(effect: Effect): void {
       break;
     case 'safeModeState':
       safeModeCheck.checked = effect.safeMode;
-      unlockOptionsEl.hidden = effect.safeMode || state.liveEnabled;
+      unlockOptionsEl.hidden = effect.safeMode || data.state.liveEnabled;
       break;
     case 'setLiveUi':
       setLiveUiEnabled(effect.enabled);
@@ -1612,6 +1862,15 @@ function applyEffect(effect: Effect): void {
         pendingCellEdit.statusEl.textContent = effect.message;
       }
       break;
+    case 'dispatchPreview':
+      dispatchPreview(effect.sheet, effect.seq);
+      break;
+    case 'selectionChanged':
+      applySelection();
+      break;
+    case 'repreviewSheet':
+      previewTable(effect.sheet);
+      break;
   }
 }
 
@@ -1619,55 +1878,61 @@ window.addEventListener('message', (event: MessageEvent<ExtensionMessage>) => {
   const message = event.data;
   const wasRunning = running;
   if (message.command === 'queryCatalog') {
-    if (message.requestId !== catalogRequestId) return;
-    if (message.generation < queryGeneration) return;
-    if (message.generation !== queryGeneration) {
-      queryTargets.clear(); queryColumns.clear(); selectedQueryTarget = undefined;
-      statusEl.textContent = 'The source changed. Select a query table again.';
-    }
-    queryGeneration = message.generation;
-    if (message.cursor === 0) queryTargets.clear();
-    for (const target of message.targets) queryTargets.set(target.id, target);
-    // The fresh copy, not the one selected earlier: a raw worksheet only gains
-    // its used-range bounds once the sheet has been prepared.
-    if (selectedQueryTarget) selectedQueryTarget = queryTargets.get(selectedQueryTarget.id);
-    nextCatalogCursor = message.nextCursor;
+    const outcome = picker.acceptCatalog(message);
+    if (outcome === 'ignored') return;
+    if (outcome === 'reset') statusEl.textContent = 'The source changed. Select a query table again.';
     refreshQueryTargets(); refreshSqlCompletion(); refreshTableHighlight();
     return;
   }
   if (message.command === 'queryTargetDetails') {
-    if (message.requestId !== targetRequestId) return;
-    if (message.target.generation !== queryGeneration) return;
-    queryTargets.set(message.target.id, message.target);
-    queryColumns.set(message.target.id, message.columns);
-    if (!selectedQueryTarget || selectedQueryTarget.id === message.target.id) selectedQueryTarget = message.target;
-    refreshQueryTargets(); refreshSqlCompletion();
+    if (!picker.acceptDetails(message, data.state.selection.seq)) return;
+    refreshQueryTargets(); refreshSqlCompletion(); refreshTableHighlight();
     return;
   }
   if (message.command === 'querySqlDraft') {
-    if (message.requestId !== targetRequestId) return;
-    if (message.target.generation !== queryGeneration) return;
-    if (drafts.length >= 8) { statusEl.textContent = 'Restore a saved draft before opening another SQL draft.'; return; }
-    drafts.push(editor.state.doc.toString());
-    selectedQueryTarget = message.target; queryTargets.set(message.target.id, message.target);
+    const outcome = picker.acceptSqlDraft(message, editor.state.doc.toString(), data.state.selection.seq);
+    if (outcome === 'ignored') return;
+    if (outcome === 'full') { statusEl.textContent = 'Restore a saved draft before opening another SQL draft.'; return; }
     setEditorText(message.sql); queryRestoreEl.hidden = false; refreshQueryTargets(); refreshTableHighlight();
     editor.focus();
     return;
   }
-  const { state: nextState, effects } = reduce(state, event.data);
-  state = nextState;
-  for (const effect of effects) applyEffect(effect);
-  const previewed = (message.command === 'queryResult' || message.command === 'liveTick') ? state.lastResult?.sheetPreview : undefined;
-  if (previewed !== undefined && previewed !== openSheet) {
-    // The picker follows the open sheet, and a choice from another sheet
-    // would outline nothing here.
-    openSheet = previewed;
-    if (selectedQueryTarget?.worksheet !== openSheet) selectedQueryTarget = undefined;
-    refreshQueryTargets(); refreshTableHighlight();
+  if (message.command === 'sqlDraft') {
+    // The draft this file had when its editor was last closed. Restored only
+    // into an editor that holds nothing of the user's yet.
+    const current = editor.state.doc.toString();
+    if (current === '' || current === navigationSql) { setEditorText(message.sql); savedDraft = message.sql; }
+    return;
   }
+  const resultBefore = data.state.lastResult;
+  const effects = data.receive(event.data);
+  for (const effect of effects) applyEffect(effect);
+  // A stale reply changed nothing; it must not trigger a catalog refresh either.
+  if ((message.command === 'queryResult' || message.command === 'error') && data.state.lastResult === resultBefore && !effects.some(e => e.kind === 'showError')) return;
   if (message.command === 'queryResult' || message.command === 'cellUpdated' || (message.command === 'error' && wasRunning) || message.command === 'tables' || (message.command === 'liveTick' && !message.unchanged)) {
     vscode.postMessage({ command: 'queryCatalog', cursor: 0 });
   }
 });
 
+refreshAxisChoice();
+window.addEventListener('message', (event: MessageEvent) => {
+  const message = event.data;
+  if (message.command === 'queryResult' && message.executionSeq === data.state.paintedExecution) {
+    clearRange();
+    rangeContext = message.rangeContext;
+    rangeApply.disabled = !rangeContext;
+    if (rangeContext) rangeTarget.textContent = `${rangeContext.label} · ${rangeContext.rows} captured rows, ${rangeContext.columns} columns`;
+  } else if (message.command === 'queryRangeResult' && rangeContext && rangeContext.token === message.token && message.requestId === rangeRequestId) {
+    rangeApply.disabled = false;
+    if (message.error) { rangePreview.hidden = false; rangePreview.textContent = message.error; }
+    else {
+      rangeContext.rows = message.capturedRows;
+      rangeTarget.textContent = `${rangeContext.label} · ${rangeContext.rows} captured rows, ${rangeContext.columns} columns`;
+      showRangePage(message);
+    }
+  } else if (message.command === 'error' && rangeContext && message.requestId === manualRangeRequestId) {
+    const button = rangePreview.querySelector<HTMLButtonElement>('[data-use-table]');
+    if (button) button.disabled = false;
+  } else if (['sortQueryResult', 'cellUpdated', 'liveTick', 'sheetPreparationRetried'].includes(message.command)) clearRange();
+});
 vscode.postMessage({ command: 'ready' });

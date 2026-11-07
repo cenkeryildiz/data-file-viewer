@@ -1,0 +1,23 @@
+# D3.17 worksheet / detected-table operations (buildDetectedTableQuery, runDetectedTableQuery's SQL,
+# retrySheetPreparation, locateXlsxEdit) over a caller-supplied DuckDB connection. No path or session code here.
+[package]
+name = "dfv-table-xlsx-ops"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+dfv-table-xlsx = { path = "../xlsx" }
+dfv-table-duckdb = { path = "../duckdb-query" }
+duckdb = { version = "=1.10505.0", features = ["bundled", "parquet", "json"] }
+serde_json.workspace = true
+regex = { version = "=1.13.1", default-features = false, features = ["std", "perf"] }
+
+[dev-dependencies]
+zip = { version = "=3.0.0", default-features = false, features = ["deflate"] }
+
+[features]
+# One detector failure per workbook; explicit qualification builds only.
+test-detection-failure = []

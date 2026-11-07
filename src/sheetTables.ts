@@ -55,6 +55,8 @@
  * SPLIT_SIDE_BY_SIDE_TABLES, so the two stay in step.
  */
 
+import { spanRowCount, type ExcludedRow, type RowSpan } from './sheetRowMap';
+
 /** A cell as DuckDB hands it back from an `all_varchar` read. */
 export type Cell = string | number | boolean | null | undefined;
 
@@ -86,7 +88,16 @@ export interface SheetTable {
   headerRow: number | null;
   /** Column names: the promoted header, else the Excel letters for the span. */
   columns: string[];
-  /** Rows below the header. Empty for a header-only table. */
+  /**
+   * The table's source-row map: exactly which grid rows are its data rows, in
+   * order (see sheetRowMap.ts). The rectangle above is only the extent; a
+   * table continued past a blank row and a repeated header holds fewer data
+   * rows than its rectangle has rows.
+   */
+  dataRows: RowSpan[];
+  /** Rows inside the rectangle, below the header, that are structure rather than data. */
+  excludedRows: ExcludedRow[];
+  /** Data rows: always `spanRowCount(dataRows)`. Empty for a header-only table. */
   rowCount: number;
 }
 
@@ -264,7 +275,8 @@ function letterNames(left: number, right: number): string[] {
 /* -------------------------------------------------------- header detection */
 
 /**
- * ETL's `_DATE_COL_PATTERN` (etl_values.py:518-534), verbatim.
+ * ETL's `_DATE_COL_PATTERN` vocabulary (etl_values.py:518-534).
+ * Explicit I variants plus Unicode case folding match Python IGNORECASE.
  *
  * A bare year is deliberately NOT in here. ETL records why at
  * etl_values.py:593-598: matching one would make an ordinary row of yearly data
@@ -272,7 +284,7 @@ function letterNames(left: number, right: number): string[] {
  * genuine "2019 | ppi | wage" case with a contrast test instead.
  */
 export const DATE_COL_PATTERN =
-  /^(?:date|datetime|time|timestamp|period|year|month|week|day|quarter|tarih|tarihi|zaman|yil|yıl|yillar|yıllar|donem|dönem|donemi|dönemi|ay|aylar|hafta|ceyrek|çeyrek|gun|gün|(?:date|dt|ts|time)_.+|.+_(?:date|datetime|dt|ts|time|timestamp|period)|[DWMQYHdwmqyh]\d*date|dt|ts)$/i;
+  /^(?:date|datet[iİı]me|t[iİı]me|t[iİı]mestamp|per[iİı]od|year|month|week|day|quarter|tar[iİı]h|tar[iİı]h[iİı]|zaman|y[iİı]l|y[iİı]llar|donem|dönem|donem[iİı]|dönem[iİı]|ay|aylar|hafta|ceyrek|çeyrek|gun|gün|(?:date|dt|ts|t[iİı]me)_.+|.+_(?:date|datet[iİı]me|dt|ts|t[iİı]me|t[iİı]mestamp|per[iİı]od)|[DWMQYHdwmqyh]\d*date|dt|ts)$/iu;
 
 /** Shared by table detection and chart-axis selection so the two cannot drift. */
 export function isDateColumnName(name: string): boolean {
@@ -555,6 +567,25 @@ export interface DetectOptions {
   extraLabels?: readonly string[];
   /** Split side-by-side tables on blank columns. ETL cannot; here it is the default. */
   splitColumns?: boolean;
+  /** Explicit corrections where the continuation heuristic is ambiguous. */
+  corrections?: TableCorrections;
+}
+
+/**
+ * A user's explicit answer to "is this block the same table as the one above?".
+ *
+ * Each entry is the 0-based grid row where a block STARTS (its first populated
+ * row, e.g. the repeated header). Corrections never widen what can be merged:
+ * a forced merge still needs the block to span exactly the table's columns
+ * with only blank rows between them, so the source-row map stays exact. A
+ * correction that cannot apply is ignored and the heuristic answer stands.
+ */
+export interface TableCorrections {
+  manualTables?: readonly import('./backend/types').ManualSheetTable[];
+  /** Never merge the block starting at these rows into the table above. */
+  split?: readonly number[];
+  /** Merge the block starting at these rows into the table above, even with a different header. */
+  merge?: readonly number[];
 }
 
 /** Populated column indices of a region, by ETL's structural rule (sentinels off). */
@@ -577,6 +608,12 @@ function valueColumnCount(grid: readonly Cell[][], region: Region): number {
     if (any) n++;
   }
   return n;
+}
+
+/** Are grid rows [from, to) blank across columns [left, right)? */
+function gapIsBlank(grid: readonly Cell[][], from: number, to: number, left: number, right: number): boolean {
+  for (let r = from; r < to; r++) if (!rowIsBlank(grid, r, left, right)) return false;
+  return true;
 }
 
 function sameSet(a: ReadonlySet<number>, b: ReadonlySet<number>): boolean {
@@ -620,6 +657,9 @@ export function detectTables(
   // Reading order: down the page, then across it.
   regions.sort((a, z) => (a.top - z.top) || (a.left - z.left));
 
+  const split = new Set(opts.corrections?.split ?? []);
+  const forceMerge = new Set(opts.corrections?.merge ?? []);
+
   const out: SheetTable[] = [];
   for (const region of regions) {
     const headerRow = findHeaderRow(grid, region, minCols);
@@ -635,26 +675,37 @@ export function detectTables(
       describesColumns: previous?.columns,
     });
 
-    // 1. Continuation of the table above. ETL's two shapes, exactly
-    //    (etl_shape.py:1405-1427): no header of its own and the same populated
-    //    columns, or a header repeated character for character.
-    if (previous && !isFooter && region.top >= previous.region.bottom) {
-      const prevCols = populatedColumns(grid, previous.region);
-      const theseCols = populatedColumns(grid, region);
-      const continues = headerPromoted
-        ? columns.length === previous.columns.length &&
-          columns.every((c, i) => c === previous.columns[i])
-        : sameSet(prevCols, theseCols) &&
-          theseCols.size >= Math.min(minCols, region.right - region.left);
+    // 1. Continuation of the table above. ETL's two shapes (etl_shape.py:
+    //    1405-1427): no header of its own and the same populated columns, or a
+    //    header repeated character for character. Narrowed so that the merged
+    //    table's source-row map is exact: the block must span exactly the
+    //    table's columns, only blank rows may separate them, and a repeated
+    //    header must be the block's first row (no caption between).
+    if (previous && region.top >= previous.region.bottom && !split.has(region.top)) {
+      const adjoins =
+        region.left === previous.region.left &&
+        region.right === previous.region.right &&
+        gapIsBlank(grid, previous.region.bottom, region.top, region.left, region.right);
+      const headerAtTop = !headerPromoted || headerRow === region.top;
+      let continues = false;
+      if (adjoins && headerAtTop && forceMerge.has(region.top)) {
+        continues = true;
+      } else if (adjoins && headerAtTop && !isFooter) {
+        continues = headerPromoted
+          ? columns.length === previous.columns.length &&
+            columns.every((c, i) => c === previous.columns[i])
+          : sameSet(populatedColumns(grid, previous.region), populatedColumns(grid, region)) &&
+            populatedColumns(grid, region).size >= Math.min(minCols, region.right - region.left);
+      }
       if (continues) {
-        previous.region = {
-          top: previous.region.top,
-          bottom: region.bottom,
-          left: Math.min(previous.region.left, region.left),
-          right: Math.max(previous.region.right, region.right),
-        };
-        // A repeated header is not data; everything else in the region is.
-        previous.rowCount += region.bottom - region.top - (headerPromoted ? 1 : 0);
+        for (let r = previous.region.bottom; r < region.top; r++) {
+          previous.excludedRows.push({ row: r, reason: 'blank' });
+        }
+        const firstData = headerPromoted ? region.top + 1 : region.top;
+        if (headerPromoted) previous.excludedRows.push({ row: region.top, reason: 'header' });
+        if (firstData < region.bottom) previous.dataRows.push({ start: firstData, end: region.bottom });
+        previous.region = { ...previous.region, bottom: region.bottom };
+        previous.rowCount = spanRowCount(previous.dataRows);
         continue;
       }
     }
@@ -670,11 +721,15 @@ export function detectTables(
     // The table starts at its header; anything above it in the region is a
     // caption, and belongs to the sheet rather than to the table.
     const extent = headerPromoted ? { ...region, top: headerRow } : region;
+    const firstData = headerPromoted ? headerRow + 1 : extent.top;
+    const dataRows = firstData < extent.bottom ? [{ start: firstData, end: extent.bottom }] : [];
     out.push({
       region: extent,
       headerRow,
       columns,
-      rowCount: extent.bottom - extent.top - (headerPromoted ? 1 : 0),
+      dataRows,
+      excludedRows: [],
+      rowCount: spanRowCount(dataRows),
     });
   }
 

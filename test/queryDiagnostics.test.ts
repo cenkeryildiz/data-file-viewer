@@ -1,6 +1,22 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { queryDiagnostic, queryNotices } from '../src/queryDiagnostics';
+import { NativeError } from '../src/backend/nativeWorker';
+
+test('native diagnostics retain typed failures and raw worksheet guidance without engine text', () => {
+  const secret = 'SYNTHETIC_PRIVATE_VALUE';
+  const diagnostic = queryDiagnostic(new NativeError('query_failed', secret), true);
+  assert.equal(diagnostic.category, 'unknown');
+  assert.match(diagnostic.message, /detected table/);
+  assert.ok(!diagnostic.message.includes(secret));
+  assert.match(queryDiagnostic(new NativeError('runtime_busy', secret, { category: 'resource' })).message, /busy/);
+  assert.match(queryDiagnostic(new NativeError('deadline_exceeded', secret, { category: 'resource' })).message, /time limit/);
+  for (const category of ['cancelled', 'resource', 'blocked'] as const) {
+    const diagnostic = queryDiagnostic(new NativeError('query_failed', secret, { category }));
+    assert.equal(diagnostic.category, category);
+    assert.ok(!diagnostic.message.includes(secret));
+  }
+});
 
 test('diagnostics preserve categories without exposing echoed rows, SQL, paths or credentials', () => {
   const sentinel = 'SYNTHETIC_PRIVATE_VALUE';
@@ -56,4 +72,43 @@ test('an unreadable worksheet explains itself, including through a detected-tabl
     }
     assert.equal((await file.runQuery('select count(*) from "Good · Table 1"')).rows[0][0] + '', '1');
   } finally { file?.dispose(); await rm(dir, { recursive: true, force: true }); }
+});
+
+test('typed native failures name their real cause without echoing the worker text', () => {
+  const secret = 'SYNTHETIC_PRIVATE_VALUE /private/path SELECT secret';
+  const e = (code: string, o: ConstructorParameters<typeof NativeError>[2] = {}) => queryDiagnostic(new NativeError(code, secret, o)).message;
+  const cases: Array<[string, RegExp, ConstructorParameters<typeof NativeError>[2]?]> = [
+    ['stale_source', /^The file changed on disk since it was opened\. Reopen it to continue\.$/],
+    ['stale_source', /changed on disk.*Nothing was saved\. Reopen it/, { mutationOutcome: 'not-published' }],
+    ['table_changed', /table changed.*Nothing was saved/, { mutationOutcome: 'not-published' }],
+    ['ambiguous_row', /More than one row.*Nothing was saved/, { mutationOutcome: 'not-published' }],
+    ['no_matching_row', /No row matches.*Nothing was saved/, { mutationOutcome: 'not-published' }],
+    ['mutation_not_published', /did not happen/],
+    ['mutation_unknown', /not confirmed.*reopen the file to check it/i, { mutationOutcome: 'unknown' }],
+    ['worker_exited', /stopped while saving\. The save was not confirmed; reopen the file to check it\./, { mutationOutcome: 'unknown', host: true }],
+    ['worker_timeout', /stopped responding while saving\. The save was not confirmed/, { mutationOutcome: 'unknown', host: true }],
+    ['malformed_value', /The save was not confirmed/, { mutationOutcome: 'unknown', category: 'conversion' }],
+    ['worker_exited', /^The table worker stopped\. Reopen/, { host: true }],
+    ['worker_timeout', /^The table worker stopped responding\. Reopen/, { host: true }],
+    ['worker_failed', /^The table worker failed\. Reopen/],
+    ['protocol_violation', /^The table worker failed\. Reopen/, { host: true }],
+    ['not_open', /document is closed/],
+    ['client_closed', /document is closed/, { host: true }],
+    ['read_only', /read-only/, { category: 'blocked' }],
+    ['unsupported', /not available for this document/, { category: 'unsupported' }],
+    ['unknown_method', /not available for this document/, { host: true }],
+    ['frame_too_large', /too large for the table worker/, { host: true }],
+    ['malformed_value', /value or argument was not valid/, { category: 'conversion' }],
+    ['resource_limit', /resource limit/, { category: 'resource' }],
+    ['cancelled', /^Query cancelled\.$/, { category: 'cancelled' }],
+    ['policy_refused', /^This operation is unavailable for this document or its access settings\.$/, { category: 'blocked' }],
+  ];
+  for (const [code, pattern, o] of cases) {
+    const message = e(code, o);
+    assert.match(message, pattern, `${code} ${JSON.stringify(o)}`);
+    assert.doesNotMatch(message, /could not be completed/, code);
+    assert.ok(!/SYNTHETIC|private|SELECT/.test(message), `${code} leaked`);
+    if (o?.mutationOutcome === 'unknown') assert.doesNotMatch(message, /nothing was saved|retried|was saved\b/i, code);
+  }
+  assert.match(queryDiagnostic(new NativeError('malformed_value', secret, { category: 'conversion' }), false, true).message, /read as dates.*ISO date/);
 });

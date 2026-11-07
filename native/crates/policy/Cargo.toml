@@ -1,0 +1,11 @@
+# D3.4 SQL policy (standalone until D3.1's native/Cargo.toml adopts crates/*). Pure logic: no DuckDB linkage.
+[package]
+name = "dfv-table-policy"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+serde_json = { version = "=1.0.151", features = ["preserve_order"] }

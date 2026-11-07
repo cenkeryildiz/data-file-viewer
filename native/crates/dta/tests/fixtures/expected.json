@@ -1,0 +1,1837 @@
+{
+  "v117-le.dta": {
+    "sha256": "ee2f8e770a79af0df13e0c50306ab9cac70ef9a88f5e6a186d72977a8a18e8fb",
+    "release": 117,
+    "label": "Lossless DTA 117",
+    "columns": [
+      {
+        "name": "byte_value",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "int_value",
+        "label": "",
+        "kind": "int16",
+        "width": 2,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "long_value",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "float_value",
+        "label": "",
+        "kind": "float",
+        "width": 4,
+        "format": "%9.0g",
+        "value_label": ""
+      },
+      {
+        "name": "double_value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "Do not turn text into numbers",
+        "kind": "string",
+        "width": 4,
+        "format": "%3s",
+        "value_label": ""
+      },
+      {
+        "name": "text",
+        "label": "",
+        "kind": "string",
+        "width": 9,
+        "format": "%8s",
+        "value_label": ""
+      },
+      {
+        "name": "long_text",
+        "label": "",
+        "kind": "string",
+        "width": 0,
+        "format": "%9s",
+        "value_label": ""
+      },
+      {
+        "name": "status",
+        "label": "State",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": "status"
+      }
+    ],
+    "value_labels": {
+      "status": {
+        "1": "one",
+        "2": "two",
+        "3": "three"
+      }
+    },
+    "rows": [
+      [
+        {
+          "integer": -127
+        },
+        {
+          "integer": -32767
+        },
+        {
+          "integer": -2147483647
+        },
+        {
+          "float": -1.5
+        },
+        {
+          "float": -1.25
+        },
+        {
+          "text": "007"
+        },
+        {
+          "text": "München"
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 0
+        },
+        {
+          "integer": 32740
+        },
+        {
+          "integer": 2147483620
+        },
+        {
+          "float": 1.25
+        },
+        {
+          "float": 1e+200
+        },
+        {
+          "text": "010"
+        },
+        {
+          "text": "a&b <c>"
+        },
+        {
+          "text": ""
+        },
+        {
+          "integer": 2
+        }
+      ],
+      [
+        {
+          "integer": 100
+        },
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": "123"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "integer": 7
+        },
+        {
+          "float": 1.0000000150474662e+30
+        },
+        {
+          "float": -0.0
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": " padded "
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 3
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  },
+  "v117-be.dta": {
+    "sha256": "fa994c4d00ffd597a787b38dca035be521dd1ad77808ff0525994e5eb5a2c537",
+    "release": 117,
+    "label": "Lossless DTA 117",
+    "columns": [
+      {
+        "name": "byte_value",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "int_value",
+        "label": "",
+        "kind": "int16",
+        "width": 2,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "long_value",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "float_value",
+        "label": "",
+        "kind": "float",
+        "width": 4,
+        "format": "%9.0g",
+        "value_label": ""
+      },
+      {
+        "name": "double_value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "Do not turn text into numbers",
+        "kind": "string",
+        "width": 4,
+        "format": "%3s",
+        "value_label": ""
+      },
+      {
+        "name": "text",
+        "label": "",
+        "kind": "string",
+        "width": 9,
+        "format": "%8s",
+        "value_label": ""
+      },
+      {
+        "name": "long_text",
+        "label": "",
+        "kind": "string",
+        "width": 0,
+        "format": "%9s",
+        "value_label": ""
+      },
+      {
+        "name": "status",
+        "label": "State",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": "status"
+      }
+    ],
+    "value_labels": {
+      "status": {
+        "1": "one",
+        "2": "two",
+        "3": "three"
+      }
+    },
+    "rows": [
+      [
+        {
+          "integer": -127
+        },
+        {
+          "integer": -32767
+        },
+        {
+          "integer": -2147483647
+        },
+        {
+          "float": -1.5
+        },
+        {
+          "float": -1.25
+        },
+        {
+          "text": "007"
+        },
+        {
+          "text": "München"
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 0
+        },
+        {
+          "integer": 32740
+        },
+        {
+          "integer": 2147483620
+        },
+        {
+          "float": 1.25
+        },
+        {
+          "float": 1e+200
+        },
+        {
+          "text": "010"
+        },
+        {
+          "text": "a&b <c>"
+        },
+        {
+          "text": ""
+        },
+        {
+          "integer": 2
+        }
+      ],
+      [
+        {
+          "integer": 100
+        },
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": "123"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "integer": 7
+        },
+        {
+          "float": 1.0000000150474662e+30
+        },
+        {
+          "float": -0.0
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": " padded "
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 3
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  },
+  "v118-le.dta": {
+    "sha256": "0e8267bc48dedfe213a18067f266386067181cccd3e29a0bf380eb14ef211856",
+    "release": 118,
+    "label": "Lossless DTA 118",
+    "columns": [
+      {
+        "name": "byte_value",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "int_value",
+        "label": "",
+        "kind": "int16",
+        "width": 2,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "long_value",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "float_value",
+        "label": "",
+        "kind": "float",
+        "width": 4,
+        "format": "%9.0g",
+        "value_label": ""
+      },
+      {
+        "name": "double_value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "Do not turn text into numbers",
+        "kind": "string",
+        "width": 4,
+        "format": "%3s",
+        "value_label": ""
+      },
+      {
+        "name": "text",
+        "label": "",
+        "kind": "string",
+        "width": 17,
+        "format": "%16s",
+        "value_label": ""
+      },
+      {
+        "name": "long_text",
+        "label": "",
+        "kind": "string",
+        "width": 0,
+        "format": "%9s",
+        "value_label": ""
+      },
+      {
+        "name": "status",
+        "label": "State",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": "status"
+      }
+    ],
+    "value_labels": {
+      "status": {
+        "1": "one",
+        "2": "two",
+        "3": "three"
+      }
+    },
+    "rows": [
+      [
+        {
+          "integer": -127
+        },
+        {
+          "integer": -32767
+        },
+        {
+          "integer": -2147483647
+        },
+        {
+          "float": -1.5
+        },
+        {
+          "float": -1.25
+        },
+        {
+          "text": "007"
+        },
+        {
+          "text": "İstanbul σ😀"
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 0
+        },
+        {
+          "integer": 32740
+        },
+        {
+          "integer": 2147483620
+        },
+        {
+          "float": 1.25
+        },
+        {
+          "float": 1e+200
+        },
+        {
+          "text": "010"
+        },
+        {
+          "text": "a&b <c>"
+        },
+        {
+          "text": ""
+        },
+        {
+          "integer": 2
+        }
+      ],
+      [
+        {
+          "integer": 100
+        },
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": "123"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "integer": 7
+        },
+        {
+          "float": 1.0000000150474662e+30
+        },
+        {
+          "float": -0.0
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": " padded "
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 3
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  },
+  "v118-be.dta": {
+    "sha256": "14a6ede5fd90559754f1008a38f6cd9065c6427b724428b64987dcbbf5d23b77",
+    "release": 118,
+    "label": "Lossless DTA 118",
+    "columns": [
+      {
+        "name": "byte_value",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "int_value",
+        "label": "",
+        "kind": "int16",
+        "width": 2,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "long_value",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "float_value",
+        "label": "",
+        "kind": "float",
+        "width": 4,
+        "format": "%9.0g",
+        "value_label": ""
+      },
+      {
+        "name": "double_value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "Do not turn text into numbers",
+        "kind": "string",
+        "width": 4,
+        "format": "%3s",
+        "value_label": ""
+      },
+      {
+        "name": "text",
+        "label": "",
+        "kind": "string",
+        "width": 17,
+        "format": "%16s",
+        "value_label": ""
+      },
+      {
+        "name": "long_text",
+        "label": "",
+        "kind": "string",
+        "width": 0,
+        "format": "%9s",
+        "value_label": ""
+      },
+      {
+        "name": "status",
+        "label": "State",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": "status"
+      }
+    ],
+    "value_labels": {
+      "status": {
+        "1": "one",
+        "2": "two",
+        "3": "three"
+      }
+    },
+    "rows": [
+      [
+        {
+          "integer": -127
+        },
+        {
+          "integer": -32767
+        },
+        {
+          "integer": -2147483647
+        },
+        {
+          "float": -1.5
+        },
+        {
+          "float": -1.25
+        },
+        {
+          "text": "007"
+        },
+        {
+          "text": "İstanbul σ😀"
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 0
+        },
+        {
+          "integer": 32740
+        },
+        {
+          "integer": 2147483620
+        },
+        {
+          "float": 1.25
+        },
+        {
+          "float": 1e+200
+        },
+        {
+          "text": "010"
+        },
+        {
+          "text": "a&b <c>"
+        },
+        {
+          "text": ""
+        },
+        {
+          "integer": 2
+        }
+      ],
+      [
+        {
+          "integer": 100
+        },
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": "123"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "integer": 7
+        },
+        {
+          "float": 1.0000000150474662e+30
+        },
+        {
+          "float": -0.0
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": " padded "
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 3
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  },
+  "v119-le.dta": {
+    "sha256": "269e6d4d3d3987a612eeff3a31fa5c75cbc7a8380ac8d787a2d60807072deabb",
+    "release": 119,
+    "label": "Lossless DTA 119",
+    "columns": [
+      {
+        "name": "byte_value",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "int_value",
+        "label": "",
+        "kind": "int16",
+        "width": 2,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "long_value",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "float_value",
+        "label": "",
+        "kind": "float",
+        "width": 4,
+        "format": "%9.0g",
+        "value_label": ""
+      },
+      {
+        "name": "double_value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "Do not turn text into numbers",
+        "kind": "string",
+        "width": 4,
+        "format": "%3s",
+        "value_label": ""
+      },
+      {
+        "name": "text",
+        "label": "",
+        "kind": "string",
+        "width": 17,
+        "format": "%16s",
+        "value_label": ""
+      },
+      {
+        "name": "long_text",
+        "label": "",
+        "kind": "string",
+        "width": 0,
+        "format": "%9s",
+        "value_label": ""
+      },
+      {
+        "name": "status",
+        "label": "State",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": "status"
+      }
+    ],
+    "value_labels": {
+      "status": {
+        "1": "one",
+        "2": "two",
+        "3": "three"
+      }
+    },
+    "rows": [
+      [
+        {
+          "integer": -127
+        },
+        {
+          "integer": -32767
+        },
+        {
+          "integer": -2147483647
+        },
+        {
+          "float": -1.5
+        },
+        {
+          "float": -1.25
+        },
+        {
+          "text": "007"
+        },
+        {
+          "text": "İstanbul σ😀"
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 0
+        },
+        {
+          "integer": 32740
+        },
+        {
+          "integer": 2147483620
+        },
+        {
+          "float": 1.25
+        },
+        {
+          "float": 1e+200
+        },
+        {
+          "text": "010"
+        },
+        {
+          "text": "a&b <c>"
+        },
+        {
+          "text": ""
+        },
+        {
+          "integer": 2
+        }
+      ],
+      [
+        {
+          "integer": 100
+        },
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": "123"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "integer": 7
+        },
+        {
+          "float": 1.0000000150474662e+30
+        },
+        {
+          "float": -0.0
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": " padded "
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 3
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  },
+  "v119-be.dta": {
+    "sha256": "47fcb1bcc24500c9f15846ddf4067bbd2ac9ec55f2d0c17f4a498110b0be2d3e",
+    "release": 119,
+    "label": "Lossless DTA 119",
+    "columns": [
+      {
+        "name": "byte_value",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "int_value",
+        "label": "",
+        "kind": "int16",
+        "width": 2,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "long_value",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "float_value",
+        "label": "",
+        "kind": "float",
+        "width": 4,
+        "format": "%9.0g",
+        "value_label": ""
+      },
+      {
+        "name": "double_value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "Do not turn text into numbers",
+        "kind": "string",
+        "width": 4,
+        "format": "%3s",
+        "value_label": ""
+      },
+      {
+        "name": "text",
+        "label": "",
+        "kind": "string",
+        "width": 17,
+        "format": "%16s",
+        "value_label": ""
+      },
+      {
+        "name": "long_text",
+        "label": "",
+        "kind": "string",
+        "width": 0,
+        "format": "%9s",
+        "value_label": ""
+      },
+      {
+        "name": "status",
+        "label": "State",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": "status"
+      }
+    ],
+    "value_labels": {
+      "status": {
+        "1": "one",
+        "2": "two",
+        "3": "three"
+      }
+    },
+    "rows": [
+      [
+        {
+          "integer": -127
+        },
+        {
+          "integer": -32767
+        },
+        {
+          "integer": -2147483647
+        },
+        {
+          "float": -1.5
+        },
+        {
+          "float": -1.25
+        },
+        {
+          "text": "007"
+        },
+        {
+          "text": "İstanbul σ😀"
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 0
+        },
+        {
+          "integer": 32740
+        },
+        {
+          "integer": 2147483620
+        },
+        {
+          "float": 1.25
+        },
+        {
+          "float": 1e+200
+        },
+        {
+          "text": "010"
+        },
+        {
+          "text": "a&b <c>"
+        },
+        {
+          "text": ""
+        },
+        {
+          "integer": 2
+        }
+      ],
+      [
+        {
+          "integer": 100
+        },
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": "123"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "integer": 1
+        },
+        {
+          "integer": 0
+        },
+        {
+          "integer": 7
+        },
+        {
+          "float": 1.0000000150474662e+30
+        },
+        {
+          "float": -0.0
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": " padded "
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 3
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  },
+  "empty-118.dta": {
+    "sha256": "efaad3e840648852bd45dc5498e4a6eb185c049bfbd80d44e974cd06c7a8b3b5",
+    "release": 118,
+    "label": "",
+    "columns": [
+      {
+        "name": "byte_value",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "int_value",
+        "label": "",
+        "kind": "int16",
+        "width": 2,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "long_value",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "float_value",
+        "label": "",
+        "kind": "float",
+        "width": 4,
+        "format": "%9.0g",
+        "value_label": ""
+      },
+      {
+        "name": "double_value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "",
+        "kind": "string",
+        "width": 2,
+        "format": "%1s",
+        "value_label": ""
+      },
+      {
+        "name": "text",
+        "label": "",
+        "kind": "string",
+        "width": 2,
+        "format": "%1s",
+        "value_label": ""
+      },
+      {
+        "name": "long_text",
+        "label": "",
+        "kind": "string",
+        "width": 2,
+        "format": "%1s",
+        "value_label": ""
+      },
+      {
+        "name": "status",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      }
+    ],
+    "value_labels": {},
+    "rows": [],
+    "offsets": [],
+    "row_count": 0
+  },
+  "all-tags-118.dta": {
+    "sha256": "dcfb19c5ae21cb729a370a7679b2a856f9d28d3fe67f2bcaeb9aa816df3e42f9",
+    "release": 118,
+    "label": "Lossless DTA 118",
+    "columns": [
+      {
+        "name": "byte_value",
+        "label": "",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "int_value",
+        "label": "",
+        "kind": "int16",
+        "width": 2,
+        "format": "%8.0g",
+        "value_label": ""
+      },
+      {
+        "name": "long_value",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "float_value",
+        "label": "",
+        "kind": "float",
+        "width": 4,
+        "format": "%9.0g",
+        "value_label": ""
+      },
+      {
+        "name": "double_value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "Do not turn text into numbers",
+        "kind": "string",
+        "width": 4,
+        "format": "%3s",
+        "value_label": ""
+      },
+      {
+        "name": "text",
+        "label": "",
+        "kind": "string",
+        "width": 17,
+        "format": "%16s",
+        "value_label": ""
+      },
+      {
+        "name": "long_text",
+        "label": "",
+        "kind": "string",
+        "width": 0,
+        "format": "%9s",
+        "value_label": ""
+      },
+      {
+        "name": "status",
+        "label": "State",
+        "kind": "int8",
+        "width": 1,
+        "format": "%8.0g",
+        "value_label": "status"
+      }
+    ],
+    "value_labels": {
+      "status": {
+        "1": "one",
+        "2": "two",
+        "3": "three"
+      }
+    },
+    "rows": [
+      [
+        {
+          "integer": -127
+        },
+        {
+          "integer": -32767
+        },
+        {
+          "integer": -2147483647
+        },
+        {
+          "float": -1.5
+        },
+        {
+          "float": -1.25
+        },
+        {
+          "text": "007"
+        },
+        {
+          "text": "İstanbul σ😀"
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "missing": ".a"
+        },
+        {
+          "missing": ".a"
+        },
+        {
+          "missing": ".a"
+        },
+        {
+          "missing": ".a"
+        },
+        {
+          "missing": ".a"
+        },
+        {
+          "text": "010"
+        },
+        {
+          "text": "a&b <c>"
+        },
+        {
+          "text": ""
+        },
+        {
+          "integer": 2
+        }
+      ],
+      [
+        {
+          "missing": ".z"
+        },
+        {
+          "missing": ".z"
+        },
+        {
+          "missing": ".z"
+        },
+        {
+          "missing": ".z"
+        },
+        {
+          "missing": ".z"
+        },
+        {
+          "text": "123"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same same "
+        },
+        {
+          "integer": 1
+        }
+      ],
+      [
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": " padded "
+        },
+        {
+          "text": "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+        },
+        {
+          "integer": 3
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  },
+  "paged-119.dta": {
+    "sha256": "5e3f8155520207ba501cc99796e3e6cd63d42087cc9f88688cabc70a31169b47",
+    "release": 119,
+    "label": "",
+    "columns": [
+      {
+        "name": "id",
+        "label": "",
+        "kind": "int32",
+        "width": 4,
+        "format": "%12.0g",
+        "value_label": ""
+      },
+      {
+        "name": "value",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      }
+    ],
+    "value_labels": {},
+    "rows": [
+      [
+        {
+          "integer": 0
+        },
+        {
+          "float": 0.0
+        }
+      ],
+      [
+        {
+          "integer": 17
+        },
+        {
+          "float": 2.125
+        }
+      ],
+      [
+        {
+          "integer": 9999
+        },
+        {
+          "float": 1249.875
+        }
+      ],
+      [
+        {
+          "integer": 19999
+        },
+        {
+          "float": 2499.875
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      17,
+      9999,
+      19999
+    ],
+    "row_count": 20000
+  },
+  "readstat-14.dta": {
+    "sha256": "da12458a3cfbcd160bab82aaec32f749a63eb0e68e1fc566e4a62de01a462135",
+    "release": 118,
+    "label": "Tags and temporal formats",
+    "columns": [
+      {
+        "name": "value",
+        "label": "Tagged missing values",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "day",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%td",
+        "value_label": ""
+      },
+      {
+        "name": "clock",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%tc",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "",
+        "kind": "string",
+        "width": 4,
+        "format": "%-9s",
+        "value_label": ""
+      }
+    ],
+    "value_labels": {},
+    "rows": [
+      [
+        {
+          "float": 1.5
+        },
+        {
+          "float": 0.0
+        },
+        {
+          "float": 0.0
+        },
+        {
+          "text": "007"
+        }
+      ],
+      [
+        {
+          "missing": ".a"
+        },
+        {
+          "float": 1.0
+        },
+        {
+          "float": 1.0
+        },
+        {
+          "text": "010"
+        }
+      ],
+      [
+        {
+          "missing": ".z"
+        },
+        {
+          "float": -1.0
+        },
+        {
+          "float": -1000.0
+        },
+        {
+          "text": "123"
+        }
+      ],
+      [
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": ""
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  },
+  "readstat-15.dta": {
+    "sha256": "85ed3730c9e57037a227e5d973bcaf046f661abbaee43329d8c55c325e434169",
+    "release": 119,
+    "label": "Tags and temporal formats",
+    "columns": [
+      {
+        "name": "value",
+        "label": "Tagged missing values",
+        "kind": "double",
+        "width": 8,
+        "format": "%10.0g",
+        "value_label": ""
+      },
+      {
+        "name": "day",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%td",
+        "value_label": ""
+      },
+      {
+        "name": "clock",
+        "label": "",
+        "kind": "double",
+        "width": 8,
+        "format": "%tc",
+        "value_label": ""
+      },
+      {
+        "name": "code",
+        "label": "",
+        "kind": "string",
+        "width": 4,
+        "format": "%-9s",
+        "value_label": ""
+      }
+    ],
+    "value_labels": {},
+    "rows": [
+      [
+        {
+          "float": 1.5
+        },
+        {
+          "float": 0.0
+        },
+        {
+          "float": 0.0
+        },
+        {
+          "text": "007"
+        }
+      ],
+      [
+        {
+          "missing": ".a"
+        },
+        {
+          "float": 1.0
+        },
+        {
+          "float": 1.0
+        },
+        {
+          "text": "010"
+        }
+      ],
+      [
+        {
+          "missing": ".z"
+        },
+        {
+          "float": -1.0
+        },
+        {
+          "float": -1000.0
+        },
+        {
+          "text": "123"
+        }
+      ],
+      [
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "missing": "."
+        },
+        {
+          "text": ""
+        }
+      ]
+    ],
+    "offsets": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "row_count": 4
+  }
+}

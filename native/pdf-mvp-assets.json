@@ -1,0 +1,91 @@
+{
+  "format": 1,
+  "scope": "Retained qualified PDF MVP assets for macOS arm64; no new PDF feature or release acceptance.",
+  "provenance": {
+    "artifact": "data-file-viewer-0.0.20-integrated-20261031-r4.vsix",
+    "artifact_sha256": "281a8f573d07524db0ad8a15a911c3480a718e9cc448124adfba6e1ecb644a76",
+    "qualification": "31 October 2026 combined local MVP, PDF_VIEWER_RESEARCH.md; test/_evidence/pdf-mvp-20261031/attempt-03/source.json binds worker and runtime asset hashes."
+  },
+  "files": [
+    {
+      "path": "bin/dfv-pdf",
+      "bytes": 11517400,
+      "sha256": "af044680f79db92fee47998c290669d6d97d7cc1122aa3d0b57627be995e8138"
+    },
+    {
+      "path": "licenses/OFL-Inter.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "licenses/font-manifest.json",
+      "bytes": 702,
+      "sha256": "8c3314d5c345709ecf3dc0a29689dd5c7ad50328339e0dc723521f58b618e9c3"
+    },
+    {
+      "path": "ui/nativeTransport.js",
+      "bytes": 2307,
+      "sha256": "42b10c6c28378870d5774f8a11ca71ddc11bfa998a25cba1858696eb968b0d0f"
+    },
+    {
+      "path": "web/static/editorTransport.js",
+      "bytes": 12302,
+      "sha256": "2722f6a55b435a34a0886e21d04417c620442146ef3b92f2317b4c499c93c552"
+    },
+    {
+      "path": "web/static/index.html",
+      "bytes": 9391,
+      "sha256": "9e2efa6778c72b7d01c1ac12e10e63c96cc246b6884f3e6b9cfe947fe8abf735"
+    },
+    {
+      "path": "web/static/outline.js",
+      "bytes": 19827,
+      "sha256": "18ec38f0c6f64e2c0319a70b3bca08c7c0b2f527009dddb7b1afdc6853a6849c"
+    },
+    {
+      "path": "web/static/style.css",
+      "bytes": 52553,
+      "sha256": "a069d8cfc236cb456e9643d9b17bd68017a16be9ae4acea66bf5494f397c241d"
+    },
+    {
+      "path": "web/static/viewer.js",
+      "bytes": 242248,
+      "sha256": "4962031686578294d4fb5a8b516169fcd160e63cf91c0c17264f11476f88639c"
+    },
+    {
+      "path": "web/static/viewerDraftRecovery.js",
+      "bytes": 10600,
+      "sha256": "1cc9ea0386e81c9620287150d4185b5b41ab9fd7fa3f5602eb81e678a0e1cd7e"
+    },
+    {
+      "path": "web/static/viewerInspector.js",
+      "bytes": 7642,
+      "sha256": "67bf55b28205a1abe480d3d5d317a683ac6190332e7df99c96dfda04061ef529"
+    },
+    {
+      "path": "web/static/viewerOrganize.js",
+      "bytes": 9130,
+      "sha256": "7c62d514ce7d434288503bdfe3bbb2dcf696077817c6a33c81563115a5b0d23c"
+    },
+    {
+      "path": "web/static/viewerReading.js",
+      "bytes": 6002,
+      "sha256": "20079a1e23439a47437a36e81b160b891701c6b35e195ce8e242fa449c2c40c1"
+    },
+    {
+      "path": "web/static/viewerSearch.js",
+      "bytes": 20124,
+      "sha256": "df42505601f742320d6fe2c7b3133e361826f0b5370e278413c1bfd9da88e801"
+    },
+    {
+      "path": "web/static/viewerSelectionActions.js",
+      "bytes": 8145,
+      "sha256": "e63990e18b02501f8b15eae04d16fcc3ac4841760567fb6899aefe93f423c3ec"
+    },
+    {
+      "path": "web/static/workspace.js",
+      "bytes": 62271,
+      "sha256": "88799979eb5f6f3333de1b2e86cd990a7f9208848d943b0f546c49d5cc5ec207"
+    }
+  ]
+}

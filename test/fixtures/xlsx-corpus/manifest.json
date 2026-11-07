@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "generator": "test/fixtures/xlsx-corpus/build_corpus.py (stdlib zipfile; fixed timestamps)",
+  "generatedWith": {
+    "python": "3.14.8",
+    "zlib": "1.3.2"
+  },
+  "sha256": {
+    "duplicate-headings.xlsx": "36ca147c42c57fe49a50617d171cd66e234e719277226d934723a1adea53789b",
+    "explicit-adjacent.xlsx": "27be0c9cbb919881763bd6143a03571372f3e1d33b1322797967083c458ef4f7",
+    "explicit-single.xlsx": "22847e0b951e9f4a315ac748d7ebf556ce73ced058f321ceb31767513f015adf",
+    "explicit-stacked.xlsx": "3c5b416992d86f9a708da2b5f85ec00b00e1148dcc297157a1217fa3d593b6be",
+    "footer.xlsx": "c75b1fd6b125fec2b595246cf205019e0efaf42ad6983663c351a2e0822e154d",
+    "formula-errors.xlsx": "ac2b83d2f8b7f1c55320b6d7219a4445413b3ab2b9d64a297480c78b1b5fe587",
+    "ground-truth.json": "d0fe8254ece97b803e78d7bb125ffc10c4f400d845c4e7f9729674d799b07104",
+    "merged-heading.xlsx": "5e58ef645bc2c3f99d40483ba351fc0e7b23f49b0d88a0ce6246a34875854c38",
+    "mixed-value.xlsx": "fe49fcd5e4c750e160cf61bcf30c02dac9ab5910a2c937a8d0edabfd1add0bee",
+    "multilevel-header.xlsx": "c0dd80deed6a8cbc64bf1f0b90182c6b7ae3523da581af2ce142bbf145c48d0c",
+    "repeated.xlsx": "14e4c2893bf6b00ac3bc648955fbda87af8618c4d418952caf2048101dc335ba",
+    "single-column.xlsx": "19d5aaf95cff07144a65faeb18ed73cd0d9f1896b1dbe83caa1767f8aae0e3f4",
+    "sparse.xlsx": "2695c0c4d7b7316984ae382200a363184cea59e200e369eb15c1e3a0df817396",
+    "two-sheet.xlsx": "bcc1d0a89547566fc5a217f68e2e775af730381bdf47495456534116dfe3d67f"
+  }
+}

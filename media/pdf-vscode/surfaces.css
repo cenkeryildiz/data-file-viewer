@@ -1,0 +1,130 @@
+/* Existing search, reading and editing surfaces share the inspector's materials. */
+body[class*="vscode-"] :is(#document-finder, #editor-transition, #page-selection, #draft-recovery, #reading-view, #selection-note, #external-link) {
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid var(--ui-edge);
+  border-radius: 20px;
+  background: var(--chrome-2);
+  color: var(--ink);
+  box-shadow: var(--ui-shadow);
+  overflow: auto;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  scrollbar-gutter: stable;
+}
+body[class*="vscode-"] :is(#document-finder, #page-selection, #draft-recovery, #reading-view) form {
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+body[class*="vscode-"] :is(#editor-transition, #reading-view, #selection-note) h2 {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  letter-spacing: -.025em;
+}
+body[class*="vscode-"] :is(#document-finder, #editor-transition, #page-selection, #draft-recovery, #reading-view, #selection-note, #external-link) button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 9px;
+}
+body[class*="vscode-"] :is(#document-finder, #page-selection, #draft-recovery, #reading-view, #selection-note) :is(input:not([type="checkbox"]), select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 9px;
+}
+body[class*="vscode-"] #external-link-uri { overflow-wrap: anywhere; }
+body[class*="vscode-"] #external-link button {
+  font: inherit;
+  background: var(--chrome);
+  color: var(--ink);
+  border: 1px solid var(--control-line);
+}
+body[class*="vscode-"] #document-finder {
+  width: min(420px, calc(100vw - 32px));
+  right: 16px;
+}
+body[class*="vscode-"] #document-finder > label {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: var(--text-meta);
+  color: var(--ink-dim);
+}
+body[class*="vscode-"] #find-query { width: 100%; }
+body[class*="vscode-"] #find-start { margin-inline-end: 6px; }
+body[class*="vscode-"] .find-options { gap: 10px 14px; padding-block: 8px; }
+body[class*="vscode-"] .find-options label { min-height: 30px; }
+body[class*="vscode-"] .find-options input[type="checkbox"] { min-height: 0; accent-color: var(--accent); }
+body[class*="vscode-"] :is(#find-status, #find-position, #reading-status) { line-height: 1.6; color: var(--ink-dim); }
+body[class*="vscode-"] #search-results button {
+  margin-block: 8px;
+  padding: 12px;
+  border-color: var(--ui-edge);
+  line-height: 1.55;
+}
+body[class*="vscode-"] #search-results button.current {
+  outline-color: var(--focus);
+  background: var(--chrome);
+}
+body[class*="vscode-"] #search-results mark { background: var(--accent-soft); color: var(--accent-strong); border-radius: 3px; }
+body[class*="vscode-"] #reading-text {
+  padding: 18px;
+  border-color: var(--ui-edge);
+  border-radius: 12px;
+  background: var(--chrome);
+  line-height: 1.75;
+}
+body[class*="vscode-"] :is(#draft-recovery, #selection-note) textarea {
+  padding: 12px;
+  color: var(--field-ink);
+  background: var(--field-paper);
+  line-height: 1.6;
+}
+body[class*="vscode-"] #draft-records { gap: 8px; }
+body[class*="vscode-"] .nedit textarea { padding: 12px; border-radius: 10px; line-height: 1.6; resize: vertical; }
+body[class*="vscode-"] .nedit .erow { display: flex; flex-wrap: wrap; gap: 8px; }
+body[class*="vscode-"] .nedit .ebtn { min-height: 34px; border-radius: 9px; }
+
+/* This fallback keeps its original editor and Apply behavior. */
+body[class*="vscode-"] #editor:not(.inplace) {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  border-color: var(--ui-edge);
+  border-radius: 20px;
+  box-shadow: var(--ui-shadow);
+}
+body[class*="vscode-"] #editor:not(.inplace) .ehead { padding: 16px 20px; flex-wrap: wrap; gap: 10px; }
+body[class*="vscode-"] #editor:not(.inplace) .ebody { padding: 20px; gap: 14px; min-height: 0; overflow: auto; }
+body[class*="vscode-"] #editor:not(.inplace) .badge { white-space: normal; overflow-wrap: anywhere; padding: 5px 10px; line-height: 1.5; }
+body[class*="vscode-"] #editor:not(.inplace) textarea { padding: 12px; border-radius: 10px; line-height: 1.6; }
+body[class*="vscode-"] #editor:not(.inplace) .ebtn { min-height: 36px; border-radius: 9px; }
+body[class*="vscode-"] #editor:not(.inplace) .erow { flex-wrap: wrap; gap: 10px; }
+body[class*="vscode-"] #editor:not(.inplace) .erun summary { padding-block: 8px; line-height: 1.5; }
+body[class*="vscode-"] #toast { border-radius: 12px; }
+
+@media (max-width: 480px), (max-height: 560px) {
+  body[class*="vscode-"] :is(#document-finder, #editor-transition, #page-selection, #draft-recovery, #reading-view, #selection-note, #external-link) { padding: 16px; border-radius: 14px; }
+}
+
+body[class*="vscode-"] #selection-actions {
+  gap: 4px;
+  padding: 6px;
+  border-color: var(--ui-edge);
+  border-radius: 12px;
+  box-shadow: var(--ui-shadow);
+}
+body[class*="vscode-"] #selection-actions button {
+  min-height: 34px;
+  border-color: var(--vscode-contrastBorder, transparent);
+  border-radius: 8px;
+  background: transparent;
+}
+body[class*="vscode-"] #selection-actions button:hover { background: var(--hover); }
+
+/* The primary-action selector otherwise masks the composer's disabled colors. */
+body[class*="vscode-"] #selection-note #selection-note-apply:disabled {
+  color: var(--ink-disabled);
+  background: var(--disabled-bg);
+  border-color: var(--control-line);
+  cursor: default;
+}

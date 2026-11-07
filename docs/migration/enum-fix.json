@@ -1,0 +1,98 @@
+{
+  "source_commit": "55e53c4316021631c166df42568c48a86922a132",
+  "change": "D1.6: primitive strings required for direction, operator and statsKind; malformed objects receive QueryPolicyError without coercion.",
+  "regression_before": {
+    "exit_code": 1,
+    "failed_tests": 2,
+    "log": "docs/migration/enum-fix-before.log"
+  },
+  "verification": [
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "log": "docs/migration/enum-fix-typecheck.log"
+    },
+    {
+      "command": "npm run test:security",
+      "exit_code": 0,
+      "log": "docs/migration/enum-fix-security.log"
+    },
+    {
+      "command": "npm run test:fuzz -- --seed 538030117 --runs 20000",
+      "exit_code": 0,
+      "log": "docs/migration/enum-fix-fuzz.log"
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "log": "docs/migration/enum-fix-all.log"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "log": "docs/migration/enum-fix-build.log"
+    },
+    {
+      "command": "./node_modules/.bin/vsce package --out /Users/macc/pdf_viewer_improvements/dfv-enum-fix-20261014.vsix",
+      "exit_code": 0,
+      "log": "docs/migration/enum-fix-package.log"
+    },
+    {
+      "command": "node test/package.cjs /Users/macc/pdf_viewer_improvements/dfv-enum-fix-20261014.vsix",
+      "exit_code": 0,
+      "log": "docs/migration/enum-fix-package-check.log"
+    },
+    {
+      "command": "DFV_VSIX=/Users/macc/pdf_viewer_improvements/dfv-enum-fix-20261014.vsix npm run test:host",
+      "exit_code": 0,
+      "log": "docs/migration/enum-fix-host.log"
+    }
+  ],
+  "package": {
+    "path": "/Users/macc/pdf_viewer_improvements/dfv-enum-fix-20261014.vsix",
+    "sha256": "36edec6a258ccea59599bf2f9c7f64099610be826ab23f6170075116faf86db1",
+    "installed_in_disposable_profile_only": true
+  },
+  "limits": [
+    "D1.1 remains open; no Rust-readiness or release signoff.",
+    "Existing resource-test edits retained."
+  ],
+  "artifacts": [
+    {
+      "path": "docs/migration/enum-fix-typecheck.log",
+      "sha256": "1ce49ed465c9114c2f4984bd15c93d3d95b1545eb0a9350d4eea1dc8b234d507"
+    },
+    {
+      "path": "docs/migration/enum-fix-security.log",
+      "sha256": "d2e23d00ac447d1c5ad5ec7054d92cf51e3d3a84c117e981dcaf18a40c62a113"
+    },
+    {
+      "path": "docs/migration/enum-fix-fuzz.log",
+      "sha256": "3a1ceca7de0b027611b902518d74c382e6f08a1fa8b6bf683ce5a4ba16340e10"
+    },
+    {
+      "path": "docs/migration/enum-fix-all.log",
+      "sha256": "2025b6e28d26c5060eee552ff820b0499bdcffaa78c8955dd15687d3d8d8b6ea"
+    },
+    {
+      "path": "docs/migration/enum-fix-build.log",
+      "sha256": "05028da2c4ea8d662f8472f308f4fd6c55404b7a423672b5075c6fbce86c9331"
+    },
+    {
+      "path": "docs/migration/enum-fix-package.log",
+      "sha256": "254fa169c384da6b5a5b1d5fc8f48f4a833a8ebfedf5bf8da844cd090b142449"
+    },
+    {
+      "path": "docs/migration/enum-fix-package-check.log",
+      "sha256": "7953b6867e4a5cdf21d711ec731bf33526b5f13008c4bcb136d162c648c7f9c5"
+    },
+    {
+      "path": "docs/migration/enum-fix-host.log",
+      "sha256": "e03120ab7e5de17b250f0273f0913e41f3a52f7c00595a2785143b391e04bda8"
+    },
+    {
+      "path": "docs/migration/enum-fix-before.log",
+      "sha256": "9fada09e4d79fc9072d13caa62667272d7c0e655cc673ee8964080adc7d6e278"
+    }
+  ]
+}

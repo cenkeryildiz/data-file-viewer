@@ -15,6 +15,7 @@ import {
   axisDateLabel,
   pointDateLabel,
   seriesShape,
+  huePalette,
   type ChartMode,
   type SeriesFrequency,
 } from './chartSpec';
@@ -64,6 +65,8 @@ type ChartMessage =
       columns: string[];
       rows: unknown[][];
       xAxisMode: 'time' | 'category';
+      // What the host did to the data that the chart alone would not show (rows without a date left out, ...).
+      note?: string;
       // Absent whenever the file does not declare one, which is most files.
       // Wording only -- see chartSpec's KNOWN_FREQUENCIES.
       frequency?: SeriesFrequency | null;
@@ -72,10 +75,9 @@ type ChartMessage =
     }
   | { command: 'chartError'; message: string };
 
-// One navy, and it is the same navy the R plotting scripts use for a lone
-// series. A single line needs a colour, not a palette; the extra entries only
-// come into play when a query puts several numeric columns on one axis.
-const SERIES_COLOURS = ['#000080', '#b0532a', '#2e7d5b', '#7a3d8f', '#a3872c', '#3c6ea5'];
+// Series colours are scales::hue_pal()(n), exactly as the R scripts assign them
+// (build_hue_color_map): see huePalette() in chartSpec.ts. The palette depends
+// on how many series there are, so it is computed per render, not listed here.
 
 // Stated, not read from --vscode-* variables: the chart page is white whatever
 // the editor theme is, because a chart is a figure -- it gets screenshotted,
@@ -88,6 +90,26 @@ const SERIES_COLOURS = ['#000080', '#b0532a', '#2e7d5b', '#7a3d8f', '#a3872c', '
 // rules at 1.5, gridlines at rgb(229,229,229) hairline-width, serif labels at
 // 10. MINOR_SPLIT_LINE is the one addition -- a lighter line between the
 // labelled ones, for reading a level off the chart without hovering.
+//
+// Intentional differences from helpers_echarts.R (PLOT-01), so a later
+// comparison does not "fix" them back:
+//   * Text is INK (#1f1f1f) where R leaves ECharts' default grey: this figure is
+//     screenshotted and printed, and the lighter grey does not survive that.
+//   * The title is the HTML bar above the canvas (it carries the point count and
+//     the interaction hint), so the grid has no 40px title band at the top, and
+//     there is no 65px bottom band because there is no x-axis name; the legend
+//     only reserves room when there are two or more series, as in R.
+//   * x ticks are ECharts' own (zoom-adaptive), not R's six pinned dates; the
+//     frequency wording is R's. y ticks ARE R's (evenBreaks).
+//   * The hover popup is short (label plus up to six values at four significant
+//     digits); the EXACT stored values and timestamp are in the corner readout
+//     (.chart-readout), parked in the plot corner with the fewest points under
+//     it. R's tooltip keeps everything in the popup. A percent axis is never inferred (R's use_percent is a
+//     per-script setting that has no equivalent here, and guessing it would
+//     relabel a 0..1 ratio as "50.00%").
+//   * Moving-average, trend, average, zero, event and crisis overlays are R
+//     script options and are not drawn.
+//   * A drag under MIN_DRAG_PX is a click (R uses 4px); see below.
 const INK = '#1f1f1f';
 const AXIS_LINE = '#000000';
 const SPLIT_LINE = '#e5e5e5';
@@ -138,7 +160,14 @@ resetEl.textContent = '⟲';
 resetEl.addEventListener('click', () => resetZoom());
 toolsEl.appendChild(modeEl);
 toolsEl.appendChild(resetEl);
+// Exact values for the point under the pointer, parked in whichever plot corner
+// has the fewest points under it. pointer-events:none, so it never steals a hover.
+const readoutEl = document.createElement('div');
+readoutEl.className = 'chart-readout';
+readoutEl.hidden = true;
+let showReadout: (parts: TipParts | null) => void = () => {};
 plotEl.appendChild(canvasEl);
+plotEl.appendChild(readoutEl);
 plotEl.appendChild(toolsEl);
 root.appendChild(titleEl);
 root.appendChild(plotEl);
@@ -149,7 +178,12 @@ root.appendChild(plotEl);
 // dblclick — brush calls preventDefault on mousedown/mouseup, which suppresses
 // selection and focus but not the click pair — so the DOM is where this has to
 // be listened for.
-canvasEl.addEventListener('dblclick', () => resetZoom());
+// Only inside the plot area, as in helpers_echarts.R: a double-click on a legend
+// entry toggles it twice and must not also throw away the zoom.
+canvasEl.addEventListener('dblclick', (event) => {
+  const box = canvasEl.getBoundingClientRect();
+  if (chart?.containPixel({ gridIndex: 0 }, [event.clientX - box.left, event.clientY - box.top])) resetZoom();
+});
 
 let chart: echarts.ECharts | undefined;
 
@@ -211,6 +245,7 @@ function showMessage(text: string): void {
   buildSeries = undefined;
   titleEl.textContent = '';
   toolsEl.hidden = true;
+  readoutEl.hidden = true;
   canvasEl.textContent = text;
 }
 
@@ -231,35 +266,61 @@ interface TooltipParam {
   value?: unknown;
 }
 
-/** Bold header, then one `marker name: value` line per series -- build_tooltip_formatter's shape. */
-function formatTooltip(
-  params: TooltipParam[],
-  isCategory: boolean,
-  frequency?: SeriesFrequency
-): string {
-  if (!params || params.length === 0) return '';
+/** Fewer lines than series are listed in the popup; the corner readout always has every one. */
+const MAX_TIP_LINES = 6;
+
+interface TipParts {
+  header: string;
+  exactX: string;
+  rows: { marker: string; name: string; value: number }[];
+}
+
+/** What the pointer is on: the point's label and one row per series that has a number there. */
+function tipParts(params: TooltipParam[], isCategory: boolean, frequency?: SeriesFrequency): TipParts | null {
+  if (!params || params.length === 0) return null;
   const first = params[0];
   const header = isCategory
     ? (first.axisValueLabel ?? '')
     : pointDateLabel((first.value as [number, unknown])?.[0], frequency);
   const timestamp = !isCategory ? (first.value as [number, unknown])?.[0] : undefined;
   const exactX = timestamp != null && Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : '';
-  const lines = [`<b>${escapeHtml(header)}</b>${exactX ? `<br/>${escapeHtml(exactX)}` : ''}`];
+  const rows: TipParts['rows'] = [];
   for (const p of params) {
     const raw = isCategory ? p.value : (p.value as [number, unknown])?.[1];
     if (raw === null || raw === undefined || typeof raw !== 'number') continue;
-    // Both of these come out of the FILE: `axisValueLabel` is a cell value and
-    // `seriesName` is a column name. ECharts inserts a tooltip formatter's
-    // return value as innerHTML, so a cell holding `<img src=x onerror=...>`
-    // or a column named `<b>x` would reach the DOM as markup. The CSP blocks
-    // the script, but the same reasoning is already applied to `frequency` in
-    // duckdbConnection.ts -- it was simply missed for these two.
-    // `p.marker` is ECharts' own swatch markup and is deliberately not escaped.
-    lines.push(
-      `${p.marker ?? ''} ${escapeHtml(p.seriesName ?? '')}: <b>${formatTooltipNumber(raw)}</b>`
-    );
+    rows.push({ marker: p.marker ?? '', name: p.seriesName ?? '', value: raw });
   }
+  return { header, exactX, rows };
+}
+
+/**
+ * The hover popup, kept small: label plus a few rounded values. Everything exact
+ * (full-precision numbers, the ISO timestamp) goes to the corner readout instead.
+ * `axisValueLabel` is a cell value and `seriesName` a column name, both from the
+ * FILE and inserted as innerHTML, so both are escaped; `marker` is ECharts' own
+ * swatch markup and deliberately is not.
+ */
+function formatTooltip(parts: TipParts | null): string {
+  if (!parts) return '';
+  const shown = parts.rows.slice(0, MAX_TIP_LINES);
+  const lines = [`<b>${escapeHtml(parts.header)}</b>`];
+  for (const r of shown) {
+    lines.push(`${r.marker} ${escapeHtml(r.name)}: <b>${formatAxisNumber4(r.value)}</b>`);
+  }
+  if (parts.rows.length > shown.length) lines.push(`+${parts.rows.length - shown.length} more (see corner)`);
   return lines.join('<br/>');
+}
+
+/** The corner readout: the exact stored values, every series, plus the exact timestamp. */
+function formatReadout(parts: TipParts): string {
+  const lines = [`<b>${escapeHtml(parts.header)}</b>${parts.exactX ? ` <span>${escapeHtml(parts.exactX)}</span>` : ''}`];
+  for (const r of parts.rows) lines.push(`${r.marker} ${escapeHtml(r.name)}: <b>${formatTooltipNumber(r.value)}</b>`);
+  return lines.join('<br/>');
+}
+
+/** Popup numbers: four significant digits; the exact value is in the corner readout. */
+function formatAxisNumber4(value: number): string {
+  return value.toLocaleString(undefined, { maximumSignificantDigits: 4 });
 }
 
 /** Text that is about to be put into innerHTML, made inert. */
@@ -339,12 +400,13 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
   }).sort((a, b) => a - b));
   let detailShown = positions.reduce((n, xs) => n + xs.length, 0) <= DETAIL_POINT_LIMIT;
 
+  const palette = huePalette(message.yColumns.length);
   buildSeries = (forMode: ChartMode) =>
     message.yColumns.map((name, i) => ({
       id: `data-${i}`,
       name,
       data: data[i],
-      ...seriesShape(forMode, SERIES_COLOURS[i % SERIES_COLOURS.length]),
+      ...seriesShape(forMode, palette[i]),
       // Dense scatter views use canvas batching; detail uses individual
       // symbols for hover. Keep every observation without sampling.
       ...detailStyle(forMode, detailShown),
@@ -363,12 +425,13 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
   }
 
   canvasEl.textContent = '';
+  readoutEl.hidden = true;
   const points = `${drawn.toLocaleString()} point${drawn === 1 ? '' : 's'}`;
   const heading =
     message.yColumns.length === 1
       ? `${message.yColumns[0]} by ${message.xColumn} — ${points}`
       : `${message.yColumns.length} series by ${message.xColumn} — ${points}`;
-  titleEl.textContent = heading;
+  titleEl.textContent = message.note ? `${heading} (${message.note})` : heading;
   const hintEl = document.createElement('span');
   hintEl.className = 'chart-hint';
   hintEl.textContent = 'drag to zoom · scroll to zoom · double-click to reset';
@@ -435,7 +498,13 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
       show: true,
       showContent: detailShown,
       trigger: detailShown ? 'axis' : 'none',
-      formatter: (params: unknown) => formatTooltip(params as TooltipParam[], isCategory, frequency),
+      // R's tooltip block: no move transition on the box.
+      transitionDuration: 0,
+      formatter: (params: unknown) => {
+        const parts = tipParts(params as TooltipParam[], isCategory, frequency);
+        showReadout(parts);
+        return formatTooltip(parts);
+      },
       backgroundColor: '#ffffff',
       borderColor: '#000000',
       borderWidth: 1,
@@ -445,6 +514,9 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
       axisPointer: {
         type: 'cross',
         animation: false,
+        // R snaps the crosshair to the nearest real row. Only while the detail
+        // popup is on: a dense view deliberately leaves it following the cursor.
+        snap: detailShown,
         crossStyle: { color: '#000000', width: 1, type: 'solid' },
         label: { show: false },
       },
@@ -578,19 +650,78 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
     const want = visible <= DETAIL_POINT_LIMIT;
     if (want === detailShown) return;
     detailShown = want;
-    if (!want) chart.dispatchAction({ type: 'hideTip' });
+    if (!want) { chart.dispatchAction({ type: 'hideTip' }); readoutEl.hidden = true; }
     chart.setOption({
       axisPointer: { triggerEmphasis: want },
-      tooltip: { showContent: want, trigger: want ? 'axis' : 'none' },
+      tooltip: { showContent: want, trigger: want ? 'axis' : 'none', axisPointer: { snap: want } },
       series: message.yColumns.map((_, i) => ({ id: `data-${i}`, ...detailStyle(mode, want) })),
     });
   };
+  // Corner readout. The top-right corner holds the toolbar, so it is never chosen.
+  // The corner is the one with the fewest visible points under it, and is found
+  // again only after a zoom, a legend change or a resize, not on every hover.
+  type Corner = 'tl' | 'bl' | 'br';
+  const READOUT_PAD = 8; // .chart-canvas padding: ECharts' pixels start inside it
+  let corner: { at: Corner; size: string } | undefined;
+  const pickCorner = (): Corner => {
+    let grid = { x: 0, y: 0, width: chart!.getWidth(), height: chart!.getHeight() };
+    try {
+      const model = (chart as unknown as { getModel(): { getComponent(n: string): { coordinateSystem: { getRect(): typeof grid } } } }).getModel();
+      grid = model.getComponent('grid').coordinateSystem.getRect();
+    } catch { /* keeps the whole canvas: a coarser pick, never a failure */ }
+    const w = Math.min(260, grid.width * 0.5);
+    const h = Math.min(22 + 15 * message.yColumns.length, grid.height * 0.5);
+    const boxes: Record<Corner, [number, number]> = {
+      tl: [grid.x, grid.y],
+      bl: [grid.x, grid.y + grid.height - h],
+      br: [grid.x + grid.width - w, grid.y + grid.height - h],
+    };
+    const counts: Record<Corner, number> = { tl: 0, bl: 0, br: 0 };
+    data.forEach((points, i) => {
+      if (selected[message.yColumns[i]] === false) return;
+      points.forEach((point, index) => {
+        const x = Array.isArray(point) ? point[0] : index;
+        const y = Array.isArray(point) ? point[1] : point;
+        if (y == null || !Number.isFinite(y) || x < visibleRange[0] || x > visibleRange[1]) return;
+        const px = chart!.convertToPixel({ xAxisIndex: X_AXIS_INDEX, yAxisIndex: 0 }, [x, y]) as number[] | undefined;
+        if (!px) return;
+        for (const c of ['tl', 'bl', 'br'] as Corner[]) {
+          if (px[0] >= boxes[c][0] && px[0] <= boxes[c][0] + w && px[1] >= boxes[c][1] && px[1] <= boxes[c][1] + h) counts[c]++;
+        }
+      });
+    });
+    return (['tl', 'bl', 'br'] as Corner[]).reduce((best, c) => (counts[c] < counts[best] ? c : best), 'tl' as Corner);
+  };
+  const placeReadout = (at: Corner): void => {
+    const g = (chart as unknown as { getModel(): { getComponent(n: string): { coordinateSystem: { getRect(): { x: number; y: number; width: number; height: number } } } } }).getModel()
+      .getComponent('grid').coordinateSystem.getRect();
+    const left = READOUT_PAD + g.x + 6;
+    const bottom = plotEl.clientHeight - (READOUT_PAD + g.y + g.height) + 6;
+    const right = plotEl.clientWidth - (READOUT_PAD + g.x + g.width) + 6;
+    readoutEl.style.cssText = at === 'tl' ? `left:${left}px;top:${READOUT_PAD + g.y + 6}px`
+      : at === 'bl' ? `left:${left}px;bottom:${bottom}px`
+      : `right:${right}px;bottom:${bottom}px`;
+  };
+  showReadout = (parts) => {
+    if (!parts || !detailShown) { readoutEl.hidden = true; return; }
+    const size = `${plotEl.clientWidth}x${plotEl.clientHeight}`;
+    if (corner?.size !== size) {
+      corner = { at: pickCorner(), size };
+      try { placeReadout(corner.at); } catch { readoutEl.style.cssText = 'left:14px;top:14px'; }
+    }
+    readoutEl.innerHTML = formatReadout(parts);
+    readoutEl.hidden = false;
+  };
+  chart.getZr().on('globalout', () => { readoutEl.hidden = true; });
+
   chart.on('datazoom', (params: unknown) => {
     visibleRange = zoomBounds(params as ZoomRange, fullRange, visibleRange, isCategory);
+    corner = undefined;
     syncDetail();
   });
   chart.on('legendselectchanged', (params: unknown) => {
     selected = (params as { selected: Record<string, boolean> }).selected;
+    corner = undefined;
     syncDetail();
   });
 

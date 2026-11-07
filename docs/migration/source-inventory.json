@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "platform": "macOS-15.8.1-arm64-arm-64bit-Mach-O",
+  "scan_root": "/Users/macc/Desktop/Kod",
+  "excluded_directory_names": [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "node_modules",
+    "out-test",
+    "target",
+    "venv"
+  ],
+  "follows_directory_symlinks": false,
+  "scope_limit": "Kod source/package candidates and standard VS Code user installation only; custom user-data and external disks not scanned; inventory is not cleanup authorization",
+  "scan_errors": [],
+  "candidates": [
+    {
+      "path": "/Users/macc/Desktop/Kod",
+      "owner": "macc",
+      "classification": "active-reference",
+      "git": {
+        "root": {
+          "exit_code": 0,
+          "stdout": "/Users/macc/Desktop/Kod",
+          "stderr": ""
+        },
+        "head": {
+          "exit_code": 0,
+          "stdout": "3bc5219c3c81c1ff4eef5b4988bd8773b393f80b",
+          "stderr": ""
+        },
+        "branches": {
+          "exit_code": 0,
+          "stdout": "audit/etl-trading-r-fixes    4a8c78c37564f3fe80cae2be604bd9bdadad8d3a config: narrow SOURCES to fred, and correct the zip README path\n* cleanup/code-only            3bc5219c3c81c1ff4eef5b4988bd8773b393f80b Break viewer and PDF Rust delivery into executable tasks\n  etl-feather-output           3aec57c13f745b27df5a74cbe57afbde10cb4045 ETL: add OUTPUT_FORMAT = \"feather\", for R and pandas\n  macro-frequency-vocabulary   5b600320ed637e9c354c12294d3cd65c776b16fa changes\n  macro/browse-from-threshold  7a644f5c702852561f69c198d8abff840c9b7716 ETL: read Arrow input, so \"arrow\" output can be read back in\n  macro/single-series-chart    5234d3204db5072b7c7280a5aa91bc474037a207 macro: SAVE_OUTPUT, for a run you do not have to tidy up after\n  main                         3aec57c13f745b27df5a74cbe57afbde10cb4045 ETL: add OUTPUT_FORMAT = \"feather\", for R and pandas\n  pdf/glyph-recovery-and-latex 2375d7829a3a4f2d9fdc836dd725262d3678445d PDF: keep fontTools and MuPDF diagnostics out of the terminal\n  r-plotting/shade-legend      f585d849f1557cb9d5169945aa444f32aef7f8c8 Name shaded periods in the plot legend\n  trading/engine-phase-a       8f8fe8830520af6022a0e67adc2a00e6b73a9027 Remove locally archived phase artifacts after verified GitHub backup",
+          "stderr": ""
+        },
+        "remotes": {
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "dirty": {
+          "exit_code": 0,
+          "stdout": "M .claude/settings.local.json\n M .gitignore\n D PLAN.md\n M R/Time_Series_Plotting/dual_axis_5.R\n?? .codex-work/\n?? Brush-Up/\n?? Collaborative-LaTeX-Plan.md\n?? Data_Science/\n?? Econometrics/\n?? Python/pdf_creator/tests/migration/\n?? Rust/",
+          "stderr": ""
+        },
+        "local_only_commits": {
+          "exit_code": 0,
+          "stdout": "3bc5219c3c81c1ff4eef5b4988bd8773b393f80b\n77230b42d4f219d4522b9ebbc4614eb195e13048\nf7615d2cf28931689ef604423902a64d4bc73c4e\n7076ae48871ca35c293985e94aecdd14cfc38576\nf594ccf2713302b360b86a4d0ee13221cd88b399\n60b908aa16d0bd2fa9cb455004579ea47701ac74\n79d8a847d573b05d0c021969c826bb53f41e4c8b\nebf6576cc5f6fccf0da1ac79c048f0ea8d648a86\n8cb154ff98306a49a63daab7b2549aa2060b155d\n680de48cd74ed4ea7f6ef340b261c58403e81f0e\ne78a9ec4a9e788190c3e540020664e37e5bcada1\nf585d849f1557cb9d5169945aa444f32aef7f8c8\n8f8fe8830520af6022a0e67adc2a00e6b73a9027\ne6a5d44096dc0afa9038e7536acfe2fe01d6c2f5\n9f3ef69b7986310739defb6ec190c98e8ee0a815\n0e1d2d463c3f5eb617750ef5e77eeae886b67f3b\n9c2b03222a19029b00da0c3cd009df6c435ed69a\n74f236e1194646b6e5e9e206acf4b55674ba5e9f\n48d9c72b35372a731d16bb577c8011851786209d\nd360bc39d1b68331da955c002a0c1b141342c4ea\n53c64f4f68dcdc68632be600b71aa84b42293890\n0a06b5759d58ada25b59e154917e0fe6596fb9eb\na59fe1baf10498311290397d4e528943f19308ad\n010c33d23665f4f31ce5a07e5b859f2f319bb20d\n485115161689a8711fd2b812993c37481d066620\n0ca7a391c6c26d90b3073eda89d992a8a7ba4183\n0df1a02270e26a5521ed77ce97622c371595afcf\nbc0f9a783a652572f11dd37f223232206539603b\nce799bcfc962c33729f2459898684fa6e7b81040\ncf672ab72865bc4eb2878d78d97ae55ba1bb3ad1\neb6bbe4ce5661a8034ae4e5f7dea218febf3cd29\n9bff4362449a7a220ad211b6a6cf0f6eb5b4bfc0\nb3f562d46e29e79ff8590490422cb10008a34460\ncf28baf2654bf127524ade0966981565b8809c6f\n552e38ea36e6ce385906b3e118bf163bc998b2f3\n3707ac6f45f9d94e63e7d92b4f6932f486d25d52\n5d6d89a41655fdffdf440213e84b0de5fd775476\n33c464db7bcda93a20146fc62240f28edee569dd\n21921d49b14fc9917b2a9de4bb93c33244ebd547\n7d45afe42ac5470a94e1136bd9ebb4253bf3c9ee\n84caa785061e1e3af183a314a354c91e9b473df1\n9ced7a1a028a7e5b448c1b34d069ba3d918b249c\nd03348008846e70c24adb4c5716ba7178c02dd72\n9f820d8c7505d54f101dd80c5a45bed28e0d0ca6\n51da5f6567e87b5506bd5c5abc723884bd125ea0\n4f6b80a0ee64829655c23dd39442e8dbc19e6e3c\ncc507a81517ca821c3037e5080a5a3cb5a352e2e\n8a8af1fddb1e0852fb66a1184ee6c00cea69bde9\nbcbbfeb63bd293cfa34b0f8d256b66e27b649a38\n5234d3204db5072b7c7280a5aa91bc474037a207\n2375d7829a3a4f2d9fdc836dd725262d3678445d\ndfee4046ee592407a063fbaeafd6e4e5ded42994\n5b600320ed637e9c354c12294d3cd65c776b16fa\n39f56315c738557eb93b22211d8d46e5eda460d4\n37ef101ac204514771c03c8b296b486b44dd7795\n3aec57c13f745b27df5a74cbe57afbde10cb4045\n7a644f5c702852561f69c198d8abff840c9b7716\n0b74e6e13f9805f83cd96c05e0bb57e9846a264f\n4a8c78c37564f3fe80cae2be604bd9bdadad8d3a\n785afad3842dc3d65751107cc604c3d5bf4c074d\n1d9cdafb1e7ab9b99ebaab2d5ac0fdf8f5b5dbec\n6e4c0e8bbce3d2161a9ee899312ec000516e4a22\n6d9637da64745802081ee3c8dddb98e2841b7fac\ndce60c14bc49c9eec2619538d045b0ccc4217cc5\nd5686c1aaa635cdb4a4e29e6ebc5e2ecc56cce0d\n4b71c17dc06b4cad1bc5e474e8a016a8ba0ff602\n407f6c6fdf6255c790112506a78f176b3463b730\nbcb3a3a299f74e6322bbdfc28eb2f6c15042e9be\na312c7a2c921b4350eba6873cb0e49652804d428\nf70841e42fb7e8596157c41fc2f1edc79476019d\nfaa18b945f26b43f756c8b371d2537eb5b5fa6e9\nac60daec8b81d9c66a8c4124e7e431266ce7dd40\n7629af9cddc5ef282387e0b63f14ac9ecb4edf96\n12f8069d7c9f0c2bbc022dd684428434e6546e8f\n9f3f521bc10399de8e562c741f64cccd911431d2\n702f107023cdc381f73a98e128245ac95f5a0e5f\n4138c7e93dff179ff2406edb723e9bbd9d915dcf\n072f9f0bf8f103d59d0222c5433f109a2992fb48\nc98ff794d7a78bd3dc3031e3184268707a86d09c\n0358b0c05613cd2d5d088a0930aea30be0477d56\nb90470f8a19bc39bf20997cb97157b15816d2af6\nd561b7c5e43365cfc9df2541a6da4a049134127f\nd04364a780b2b1d09feb369b9386f883bee1caa8\n1b0377fba485d76059e0cf61f8838855566175fd\n4903a3d7ed47e00aeecb32940c7a3dc8dce9cf31\n9722587bd02adba43427684a9b45fde5720c4dfe\n7fe904f12689299f52e48e467e1210d6e3bf4c05\n35fca3f047385c3cbfb869f3d9e6485aabbbfbfe\n744a7cf1266be6dc6a5af11cccc415722d5b6dbf\nc32eb9dc97df0e7aa474aea3e4c5a7f6dae72c9a\n420ce9901b093cf066c72fa345d5108882190042\n06cf06fbf81ce11eca95af7df665ce7c64f1a19f\n5730cf4b5c5ff1ca451f50a837966f21d584fdbf\n440f8181f9de70d239a5f7702c9d9049ff84237e\nf9a19878225920d16b46e442cacd9704ff839395\n95901b7c7ae1a49ba4cb4a0083558307060aacb1\n3a42ac95a7e6c54c59b4580896dd5b8f1c513b0a\nb7d29ce80df1c4f5b55361774e8dc0d8e2c4c2f1\n4ab31952dc159f4677a8ac3f36a6ca9ebd4827b6\n1c65c993aa974471c71fa8bc43edd601b49cc0bc\n35d42af3eea4bf1b9ce1dd34bcf70937ea3b78c1\n18200e40151eb42acdbc5bef0ea03c86190f0d60\n50851c051587fc6d4d2cdd83e5c9f578689f211c\n0fe4c0f7acf99060b4929da7d365111535d8fe6a\n264b19e14deab507f7c8d586a136591df51aba0d\ndcb8d62c44649a3508070a48e4afa9716948df88\n6d4d179f9c2bdeb2dc878210ebb706ea769e920f\n575577496865c4db5f90700346ade43040fb7f22\nab6daae3b0a3be319174c29dbc08db3909929e38\n5692622cfb35109b39265776aff22a98699534ee\n59be02b1e183fc79f29d55dc5f7d53ed8fdeb897",
+          "stderr": ""
+        }
+      },
+      "dirty_disposition": "retain all pre-existing changes"
+    },
+    {
+      "path": "/Users/macc/Desktop/Kod/Python/pdf_creator",
+      "owner": "macc",
+      "classification": "active-reference",
+      "git": {
+        "root": {
+          "exit_code": 0,
+          "stdout": "/Users/macc/Desktop/Kod",
+          "stderr": ""
+        },
+        "head": {
+          "exit_code": 0,
+          "stdout": "3bc5219c3c81c1ff4eef5b4988bd8773b393f80b",
+          "stderr": ""
+        },
+        "branches": {
+          "exit_code": 0,
+          "stdout": "audit/etl-trading-r-fixes    4a8c78c37564f3fe80cae2be604bd9bdadad8d3a config: narrow SOURCES to fred, and correct the zip README path\n* cleanup/code-only            3bc5219c3c81c1ff4eef5b4988bd8773b393f80b Break viewer and PDF Rust delivery into executable tasks\n  etl-feather-output           3aec57c13f745b27df5a74cbe57afbde10cb4045 ETL: add OUTPUT_FORMAT = \"feather\", for R and pandas\n  macro-frequency-vocabulary   5b600320ed637e9c354c12294d3cd65c776b16fa changes\n  macro/browse-from-threshold  7a644f5c702852561f69c198d8abff840c9b7716 ETL: read Arrow input, so \"arrow\" output can be read back in\n  macro/single-series-chart    5234d3204db5072b7c7280a5aa91bc474037a207 macro: SAVE_OUTPUT, for a run you do not have to tidy up after\n  main                         3aec57c13f745b27df5a74cbe57afbde10cb4045 ETL: add OUTPUT_FORMAT = \"feather\", for R and pandas\n  pdf/glyph-recovery-and-latex 2375d7829a3a4f2d9fdc836dd725262d3678445d PDF: keep fontTools and MuPDF diagnostics out of the terminal\n  r-plotting/shade-legend      f585d849f1557cb9d5169945aa444f32aef7f8c8 Name shaded periods in the plot legend\n  trading/engine-phase-a       8f8fe8830520af6022a0e67adc2a00e6b73a9027 Remove locally archived phase artifacts after verified GitHub backup",
+          "stderr": ""
+        },
+        "remotes": {
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "dirty": {
+          "exit_code": 0,
+          "stdout": "M .claude/settings.local.json\n M .gitignore\n D PLAN.md\n M R/Time_Series_Plotting/dual_axis_5.R\n?? .codex-work/\n?? Brush-Up/\n?? Collaborative-LaTeX-Plan.md\n?? Data_Science/\n?? Econometrics/\n?? Python/pdf_creator/tests/migration/\n?? Rust/",
+          "stderr": ""
+        },
+        "local_only_commits": {
+          "exit_code": 0,
+          "stdout": "3bc5219c3c81c1ff4eef5b4988bd8773b393f80b\n77230b42d4f219d4522b9ebbc4614eb195e13048\nf7615d2cf28931689ef604423902a64d4bc73c4e\n7076ae48871ca35c293985e94aecdd14cfc38576\nf594ccf2713302b360b86a4d0ee13221cd88b399\n60b908aa16d0bd2fa9cb455004579ea47701ac74\n79d8a847d573b05d0c021969c826bb53f41e4c8b\nebf6576cc5f6fccf0da1ac79c048f0ea8d648a86\n8cb154ff98306a49a63daab7b2549aa2060b155d\n680de48cd74ed4ea7f6ef340b261c58403e81f0e\ne78a9ec4a9e788190c3e540020664e37e5bcada1\nf585d849f1557cb9d5169945aa444f32aef7f8c8\n8f8fe8830520af6022a0e67adc2a00e6b73a9027\ne6a5d44096dc0afa9038e7536acfe2fe01d6c2f5\n9f3ef69b7986310739defb6ec190c98e8ee0a815\n0e1d2d463c3f5eb617750ef5e77eeae886b67f3b\n9c2b03222a19029b00da0c3cd009df6c435ed69a\n74f236e1194646b6e5e9e206acf4b55674ba5e9f\n48d9c72b35372a731d16bb577c8011851786209d\nd360bc39d1b68331da955c002a0c1b141342c4ea\n53c64f4f68dcdc68632be600b71aa84b42293890\n0a06b5759d58ada25b59e154917e0fe6596fb9eb\na59fe1baf10498311290397d4e528943f19308ad\n010c33d23665f4f31ce5a07e5b859f2f319bb20d\n485115161689a8711fd2b812993c37481d066620\n0ca7a391c6c26d90b3073eda89d992a8a7ba4183\n0df1a02270e26a5521ed77ce97622c371595afcf\nbc0f9a783a652572f11dd37f223232206539603b\nce799bcfc962c33729f2459898684fa6e7b81040\ncf672ab72865bc4eb2878d78d97ae55ba1bb3ad1\neb6bbe4ce5661a8034ae4e5f7dea218febf3cd29\n9bff4362449a7a220ad211b6a6cf0f6eb5b4bfc0\nb3f562d46e29e79ff8590490422cb10008a34460\ncf28baf2654bf127524ade0966981565b8809c6f\n552e38ea36e6ce385906b3e118bf163bc998b2f3\n3707ac6f45f9d94e63e7d92b4f6932f486d25d52\n5d6d89a41655fdffdf440213e84b0de5fd775476\n33c464db7bcda93a20146fc62240f28edee569dd\n21921d49b14fc9917b2a9de4bb93c33244ebd547\n7d45afe42ac5470a94e1136bd9ebb4253bf3c9ee\n84caa785061e1e3af183a314a354c91e9b473df1\n9ced7a1a028a7e5b448c1b34d069ba3d918b249c\nd03348008846e70c24adb4c5716ba7178c02dd72\n9f820d8c7505d54f101dd80c5a45bed28e0d0ca6\n51da5f6567e87b5506bd5c5abc723884bd125ea0\n4f6b80a0ee64829655c23dd39442e8dbc19e6e3c\ncc507a81517ca821c3037e5080a5a3cb5a352e2e\n8a8af1fddb1e0852fb66a1184ee6c00cea69bde9\nbcbbfeb63bd293cfa34b0f8d256b66e27b649a38\n5234d3204db5072b7c7280a5aa91bc474037a207\n2375d7829a3a4f2d9fdc836dd725262d3678445d\ndfee4046ee592407a063fbaeafd6e4e5ded42994\n5b600320ed637e9c354c12294d3cd65c776b16fa\n39f56315c738557eb93b22211d8d46e5eda460d4\n37ef101ac204514771c03c8b296b486b44dd7795\n3aec57c13f745b27df5a74cbe57afbde10cb4045\n7a644f5c702852561f69c198d8abff840c9b7716\n0b74e6e13f9805f83cd96c05e0bb57e9846a264f\n4a8c78c37564f3fe80cae2be604bd9bdadad8d3a\n785afad3842dc3d65751107cc604c3d5bf4c074d\n1d9cdafb1e7ab9b99ebaab2d5ac0fdf8f5b5dbec\n6e4c0e8bbce3d2161a9ee899312ec000516e4a22\n6d9637da64745802081ee3c8dddb98e2841b7fac\ndce60c14bc49c9eec2619538d045b0ccc4217cc5\nd5686c1aaa635cdb4a4e29e6ebc5e2ecc56cce0d\n4b71c17dc06b4cad1bc5e474e8a016a8ba0ff602\n407f6c6fdf6255c790112506a78f176b3463b730\nbcb3a3a299f74e6322bbdfc28eb2f6c15042e9be\na312c7a2c921b4350eba6873cb0e49652804d428\nf70841e42fb7e8596157c41fc2f1edc79476019d\nfaa18b945f26b43f756c8b371d2537eb5b5fa6e9\nac60daec8b81d9c66a8c4124e7e431266ce7dd40\n7629af9cddc5ef282387e0b63f14ac9ecb4edf96\n12f8069d7c9f0c2bbc022dd684428434e6546e8f\n9f3f521bc10399de8e562c741f64cccd911431d2\n702f107023cdc381f73a98e128245ac95f5a0e5f\n4138c7e93dff179ff2406edb723e9bbd9d915dcf\n072f9f0bf8f103d59d0222c5433f109a2992fb48\nc98ff794d7a78bd3dc3031e3184268707a86d09c\n0358b0c05613cd2d5d088a0930aea30be0477d56\nb90470f8a19bc39bf20997cb97157b15816d2af6\nd561b7c5e43365cfc9df2541a6da4a049134127f\nd04364a780b2b1d09feb369b9386f883bee1caa8\n1b0377fba485d76059e0cf61f8838855566175fd\n4903a3d7ed47e00aeecb32940c7a3dc8dce9cf31\n9722587bd02adba43427684a9b45fde5720c4dfe\n7fe904f12689299f52e48e467e1210d6e3bf4c05\n35fca3f047385c3cbfb869f3d9e6485aabbbfbfe\n744a7cf1266be6dc6a5af11cccc415722d5b6dbf\nc32eb9dc97df0e7aa474aea3e4c5a7f6dae72c9a\n420ce9901b093cf066c72fa345d5108882190042\n06cf06fbf81ce11eca95af7df665ce7c64f1a19f\n5730cf4b5c5ff1ca451f50a837966f21d584fdbf\n440f8181f9de70d239a5f7702c9d9049ff84237e\nf9a19878225920d16b46e442cacd9704ff839395\n95901b7c7ae1a49ba4cb4a0083558307060aacb1\n3a42ac95a7e6c54c59b4580896dd5b8f1c513b0a\nb7d29ce80df1c4f5b55361774e8dc0d8e2c4c2f1\n4ab31952dc159f4677a8ac3f36a6ca9ebd4827b6\n1c65c993aa974471c71fa8bc43edd601b49cc0bc\n35d42af3eea4bf1b9ce1dd34bcf70937ea3b78c1\n18200e40151eb42acdbc5bef0ea03c86190f0d60\n50851c051587fc6d4d2cdd83e5c9f578689f211c\n0fe4c0f7acf99060b4929da7d365111535d8fe6a\n264b19e14deab507f7c8d586a136591df51aba0d\ndcb8d62c44649a3508070a48e4afa9716948df88\n6d4d179f9c2bdeb2dc878210ebb706ea769e920f\n575577496865c4db5f90700346ade43040fb7f22\nab6daae3b0a3be319174c29dbc08db3909929e38\n5692622cfb35109b39265776aff22a98699534ee\n59be02b1e183fc79f29d55dc5f7d53ed8fdeb897",
+          "stderr": ""
+        }
+      },
+      "dirty_disposition": "retain all pre-existing changes"
+    },
+    {
+      "path": "/Users/macc/Desktop/Kod/Rust/ETL",
+      "owner": "macc",
+      "classification": "unknown-retain",
+      "git": {
+        "root": {
+          "exit_code": 0,
+          "stdout": "/Users/macc/Desktop/Kod/Rust/ETL",
+          "stderr": ""
+        },
+        "head": {
+          "exit_code": 0,
+          "stdout": "9b49855c309549d4f8eb0cfe2bd21f5cfe10125e",
+          "stderr": ""
+        },
+        "branches": {
+          "exit_code": 0,
+          "stdout": "* main                9b49855c309549d4f8eb0cfe2bd21f5cfe10125e [origin/main] Update copyright owner in LICENSE file\n  remotes/origin/HEAD -> origin/main\n  remotes/origin/main 9b49855c309549d4f8eb0cfe2bd21f5cfe10125e Update copyright owner in LICENSE file",
+          "stderr": ""
+        },
+        "remotes": {
+          "exit_code": 0,
+          "stdout": "origin\thttps://github.com/cenkeryildiz/ETL.git (fetch)\norigin\thttps://github.com/cenkeryildiz/ETL.git (push)",
+          "stderr": ""
+        },
+        "dirty": {
+          "exit_code": 0,
+          "stdout": "?? docs/",
+          "stderr": ""
+        },
+        "local_only_commits": {
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "dirty_disposition": "retain all pre-existing changes"
+    },
+    {
+      "path": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "owner": "macc",
+      "classification": "active-reference",
+      "git": {
+        "root": {
+          "exit_code": 0,
+          "stdout": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+          "stderr": ""
+        },
+        "head": {
+          "exit_code": 0,
+          "stdout": "48510a0aa3ef762101d6db53267ca6843cd6dc16",
+          "stderr": ""
+        },
+        "branches": {
+          "exit_code": 0,
+          "stdout": "* main                                                48510a0aa3ef762101d6db53267ca6843cd6dc16 [origin/main] Change copyright from Kernel to Cenker Yildiz\n  remotes/origin/HEAD                                 -> origin/main\n  remotes/origin/archive/20260924-pre-review-build    b8893bf7e20594b264985ea423d9d7a1be06e06f Archive superseded 0.0.19 build snapshot before clone cleanup [skip ci]\n  remotes/origin/base-01/reproduce-integrity-findings f5ba75380a6edcba454968a9e30dd19008cb7e9c tests: E20 reaches the formats that declare their own types\n  remotes/origin/ext-01/save-state-consistency        4b83c4f166c86b3f415eb355d874df6dafde6062 ext-01: a save leaves the file and the grid agreeing, whatever happens\n  remotes/origin/ext-02/exact-cell-targeting          64d1f8736ea3a63209f10782870426091baec5ba ext-02: an edit changes the cell it was made on, or nothing\n  remotes/origin/ext-04/preserve-text-columns         20485377901b2f394b1c60413a36d2ddf98ea51f ext-04: a text column is read without changing what it says\n  remotes/origin/ext-06/csv-types-verified            51eb1e101166f48df0d7af282e56925b25106c98 ext-06: the CSV sniffer keeps typing the file, and is checked where it loses\n  remotes/origin/feat/sql-filtering-security          9f8943bae064ff92daaced13d84630e2e56fd43f Support versioned Windows VS Code layouts and terminate isolated hosts\n  remotes/origin/fix/duckdb-preview-controls          46867f8df83826ba217a70f32119af99a24a7bff Fix missing controls in DuckDB table previews\n  remotes/origin/fix/phase-1-4-review-corrections     a139f457a45e212dd8ee6a9b89579791fbd290b5 Preserve numeric text and reconcile edits after publication\n  remotes/origin/main                                 48510a0aa3ef762101d6db53267ca6843cd6dc16 Change copyright from Kernel to Cenker Yildiz\n  remotes/origin/phase8/int01-fixes                   e8cf568a2de630d9ac8920741ff18ab05022121f Fix phase 8 SQLite integrity and XLSX text preservation",
+          "stderr": ""
+        },
+        "remotes": {
+          "exit_code": 0,
+          "stdout": "origin\thttps://github.com/cenkeryildiz/data-file-viewer.git (fetch)\norigin\thttps://github.com/cenkeryildiz/data-file-viewer.git (push)",
+          "stderr": ""
+        },
+        "dirty": {
+          "exit_code": 0,
+          "stdout": "M test/resources/equivalence.test.ts\n M test/resources/profile.test.ts\n?? docs/baseline/\n?? docs/migration-baseline.md",
+          "stderr": ""
+        },
+        "local_only_commits": {
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "dirty_disposition": "retain all pre-existing changes"
+    },
+    {
+      "path": "/Users/macc/Desktop/Kod/Rust/data-file-viewer/data-file-viewer-0.0.19.vsix",
+      "owner": "macc",
+      "classification": "package-candidate-retain",
+      "sha256": "343ef469b682b8b1ea088d5b0901125e1428143735f0ae6d5bd234f58d0b8a14",
+      "dirty_status": "not-applicable; archive fingerprinted"
+    },
+    {
+      "path": "/Users/macc/Desktop/Kod/Rust/personal_website",
+      "owner": "macc",
+      "classification": "unknown-retain",
+      "git": {
+        "root": {
+          "exit_code": 0,
+          "stdout": "/Users/macc/Desktop/Kod/Rust/personal_website",
+          "stderr": ""
+        },
+        "head": {
+          "exit_code": 0,
+          "stdout": "15d788c5d0338a3cc25d8c4a5b91033c3a6d8598",
+          "stderr": ""
+        },
+        "branches": {
+          "exit_code": 0,
+          "stdout": "* main                15d788c5d0338a3cc25d8c4a5b91033c3a6d8598 [origin/main] Include collector compilation in the full-suite deadline\n  remotes/origin/HEAD -> origin/main\n  remotes/origin/main 15d788c5d0338a3cc25d8c4a5b91033c3a6d8598 Include collector compilation in the full-suite deadline",
+          "stderr": ""
+        },
+        "remotes": {
+          "exit_code": 0,
+          "stdout": "origin\thttps://github.com/cenkeryildiz/personal_website.git (fetch)\norigin\thttps://github.com/cenkeryildiz/personal_website.git (push)",
+          "stderr": ""
+        },
+        "dirty": {
+          "exit_code": 0,
+          "stdout": "M README.md\n M docs/editing.md\n M scripts/check-content.mjs\n M scripts/check-output.mjs\n M scripts/dev.mjs\n M scripts/lib/analytics.mjs\n M scripts/lib/audit.mjs\n M scripts/lib/output.mjs\n M scripts/lib/pipeline.mjs\n M scripts/lib/release.mjs\n M scripts/verify.mjs\n M templates/base.html\n M tests/browser/analytics.spec.mjs\n M tests/browser/site.spec.mjs\n M tests/helpers/content-workflow.mjs\n M tests/helpers/fixtures.mjs\n M tests/stress/phase1.test.mjs\n?? docs/appearance.md\n?? docs/baseline/\n?? docs/migration-baseline.md\n?? scripts/lib/appearance.mjs\n?? site-settings.toml\n?? tests/fixtures/\n?? tests/unit/appearance.test.mjs",
+          "stderr": ""
+        },
+        "local_only_commits": {
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "dirty_disposition": "retain all pre-existing changes"
+    },
+    {
+      "path": "/Users/macc/Desktop/Kod/overleaf-sync",
+      "owner": "macc",
+      "classification": "unknown-retain",
+      "git": {
+        "root": {
+          "exit_code": 0,
+          "stdout": "/Users/macc/Desktop/Kod/overleaf-sync",
+          "stderr": ""
+        },
+        "head": {
+          "exit_code": 0,
+          "stdout": "ce3bcef40f401cb7f11fee39e481f42aa161950f",
+          "stderr": ""
+        },
+        "branches": {
+          "exit_code": 0,
+          "stdout": "* main                ce3bcef40f401cb7f11fee39e481f42aa161950f [origin/main] Revise single-file plan for compile pool, parity and per-run connection choice\n  remotes/origin/main ce3bcef40f401cb7f11fee39e481f42aa161950f Revise single-file plan for compile pool, parity and per-run connection choice",
+          "stderr": ""
+        },
+        "remotes": {
+          "exit_code": 0,
+          "stdout": "origin\thttps://github.com/cenkeryildiz/overleaf-sync.git (fetch)\norigin\thttps://github.com/cenkeryildiz/overleaf-sync.git (push)",
+          "stderr": ""
+        },
+        "dirty": {
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "local_only_commits": {
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "dirty_disposition": "retain all pre-existing changes"
+    },
+    {
+      "path": "/Users/macc/.vscode/extensions/cenker-local.data-file-viewer-0.0.19",
+      "owner": "macc",
+      "classification": "installed-extension-retain",
+      "identity": "cenker-local.data-file-viewer",
+      "version": "0.0.19",
+      "sha256": "faea1eee82fe7cc3795d508710f2dd6a741aae3008565b6773bfb71a64b809b7",
+      "hash_scope": "package.json only; not a full installed-package integrity proof",
+      "dirty_status": "not a Git checkout"
+    }
+  ],
+  "extension_profiles": [
+    {
+      "path": "/Users/macc/.vscode/extensions/extensions.json",
+      "sha256": "f399df74b9a6c5fc6a218650c0a5adcd3d12504e87b08884842d165fe5357524",
+      "viewer_entries": [
+        {
+          "identifier": {
+            "id": "cenker-local.data-file-viewer"
+          },
+          "version": "0.0.19",
+          "location": {
+            "$mid": 1,
+            "path": "/Users/macc/.vscode/extensions/cenker-local.data-file-viewer-0.0.19",
+            "scheme": "file"
+          },
+          "relativeLocation": "cenker-local.data-file-viewer-0.0.19",
+          "metadata": {
+            "isApplicationScoped": true,
+            "isMachineScoped": false,
+            "isBuiltin": false,
+            "installedTimestamp": 1790251600415,
+            "pinned": true,
+            "source": "vsix"
+          }
+        }
+      ]
+    }
+  ],
+  "historical_plan": {
+    "archive": "7076ae4:Website_ETL_and_Viewer_Plan.md",
+    "sha256": "3cea9a7efcc330a1e06176d18c0655c01833f741599fa0bccaae1a4d01c3a843",
+    "working_file_absent": true
+  }
+}

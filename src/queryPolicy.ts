@@ -175,10 +175,10 @@ export class ReadSqlPolicy {
       // Both allowlists from one catalog scan (the scan is the cost, ~10 ms each).
       const reader = await this.connection.runAndReadAll(
         `select function_name,
-           bool_and(internal)
-             and bool_and(function_type in ('scalar','aggregate','macro'))
-             and not bool_or(coalesce(has_side_effects,false)) as scalar_safe,
-           function_name in ('range','generate_series','unnest') and bool_and(internal) as table_safe
+           system.main.bool_and(internal)
+             and system.main.bool_and(function_type in ('scalar','aggregate','macro'))
+             and not system.main.bool_or(coalesce(has_side_effects,false)) as scalar_safe,
+           function_name in ('range','generate_series','unnest') and system.main.bool_and(internal) as table_safe
          from system.main.duckdb_functions()
          group by function_name`
       );

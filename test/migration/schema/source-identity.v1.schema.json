@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/source-identity.v1.schema.json",
+  "title": "Source identity",
+  "$comment": "Identity of the bytes an operation read or wrote. Two identities match only if every present field is equal. mtime keeps the platform's full resolution (unit is explicit). revision is the session's own publish counter.",
+  "x-dfv-version": 1,
+  "type": "object",
+  "properties": {
+    "file_kind": {
+      "$ref": "common.v1.schema.json#/$defs/fileKind"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "Canonical realpath derived by the host, never from SQL or a webview."
+    },
+    "size": {
+      "$ref": "common.v1.schema.json#/$defs/uint64Text"
+    },
+    "mtime": {
+      "$ref": "common.v1.schema.json#/$defs/timestamp"
+    },
+    "sha256": {
+      "$ref": "common.v1.schema.json#/$defs/sha256"
+    },
+    "revision": {
+      "$ref": "common.v1.schema.json#/$defs/uint64Text"
+    }
+  },
+  "required": [
+    "file_kind",
+    "path",
+    "size",
+    "mtime",
+    "revision"
+  ],
+  "additionalProperties": false
+}

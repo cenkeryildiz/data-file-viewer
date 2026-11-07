@@ -1,0 +1,814 @@
+{
+  "schema": 1,
+  "note": "Observed output of the current reader. NOT ground truth; see ground-truth.json.",
+  "sourceCommit": "659a209f438c4ed1986066845d130432a437b6cb",
+  "fixtures": {
+    "single-column": {
+      "sha256": "19d5aaf95cff07144a65faeb18ed73cd0d9f1896b1dbe83caa1767f8aae0e3f4",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Name"
+            ],
+            "rows": [
+              [
+                "Alice"
+              ],
+              [
+                "Bob"
+              ],
+              [
+                "Clara"
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "explicit-single": {
+      "sha256": "22847e0b951e9f4a315ac748d7ebf556ce73ced058f321ceb31767513f015adf",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Name"
+            ],
+            "rows": [
+              [
+                "Alice"
+              ],
+              [
+                "Bob"
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "explicit-adjacent": {
+      "sha256": "27be0c9cbb919881763bd6143a03571372f3e1d33b1322797967083c458ef4f7",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 0,
+              "bottom": 3,
+              "left": 0,
+              "right": 4,
+              "headerRow": 0,
+              "columns": [
+                "Name",
+                "Value",
+                "Code",
+                "Amount"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric",
+                "other",
+                "numeric"
+              ],
+              "rowCount": 2,
+              "queryColumns": [
+                "Name",
+                "Value",
+                "Code",
+                "Amount"
+              ],
+              "queryRows": [
+                [
+                  "Alice",
+                  1,
+                  "X",
+                  2
+                ],
+                [
+                  "Bob",
+                  3,
+                  "Y",
+                  4
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Name",
+              "Value",
+              "Code",
+              "Amount"
+            ],
+            "rows": [
+              [
+                "Alice",
+                1,
+                "X",
+                2
+              ],
+              [
+                "Bob",
+                3,
+                "Y",
+                4
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "explicit-stacked": {
+      "sha256": "3c5b416992d86f9a708da2b5f85ec00b00e1148dcc297157a1217fa3d593b6be",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 0,
+              "bottom": 6,
+              "left": 0,
+              "right": 2,
+              "headerRow": 0,
+              "columns": [
+                "Name",
+                "Value"
+              ],
+              "columnStatsKind": [
+                "other",
+                "other"
+              ],
+              "rowCount": 5,
+              "queryColumns": [
+                "Name",
+                "Value"
+              ],
+              "queryRows": [
+                [
+                  "Alice",
+                  1
+                ],
+                [
+                  "Bob",
+                  2
+                ],
+                [
+                  "Code",
+                  null
+                ],
+                [
+                  "X",
+                  10
+                ],
+                [
+                  "Y",
+                  20
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "error": "Invalid Input Error: read_xlsx: Failed to parse cell 'B4': Could not convert string 'Amount' to DOUBLE"
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "merged-heading": {
+      "sha256": "5e58ef645bc2c3f99d40483ba351fc0e7b23f49b0d88a0ce6246a34875854c38",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 1,
+              "bottom": 4,
+              "left": 0,
+              "right": 2,
+              "headerRow": 1,
+              "columns": [
+                "Name",
+                "Value"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric"
+              ],
+              "rowCount": 2,
+              "queryColumns": [
+                "Name",
+                "Value"
+              ],
+              "queryRows": [
+                [
+                  "Alice",
+                  1
+                ],
+                [
+                  "Bob",
+                  2
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Annual totals"
+            ],
+            "rows": [
+              [
+                "Name"
+              ],
+              [
+                "Alice"
+              ],
+              [
+                "Bob"
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "multilevel-header": {
+      "sha256": "c0dd80deed6a8cbc64bf1f0b90182c6b7ae3523da581af2ce142bbf145c48d0c",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 1,
+              "bottom": 5,
+              "left": 0,
+              "right": 5,
+              "headerRow": 1,
+              "columns": [
+                "_col0",
+                "Units",
+                "Revenue",
+                "Units_1",
+                "Revenue_1"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric",
+                "numeric",
+                "numeric",
+                "numeric"
+              ],
+              "rowCount": 3,
+              "queryColumns": [
+                "C0",
+                "Units",
+                "Revenue",
+                "Units_1",
+                "Revenue_1"
+              ],
+              "queryRows": [
+                [
+                  "Apples",
+                  10,
+                  25.5,
+                  12,
+                  30
+                ],
+                [
+                  "Pears",
+                  4,
+                  8,
+                  6,
+                  12.25
+                ],
+                [
+                  "Plums",
+                  7,
+                  14,
+                  9,
+                  18
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "error": "Invalid Input Error: read_xlsx: Failed to parse cell 'C2': Could not convert string 'Revenue' to DOUBLE"
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "footer": {
+      "sha256": "c75b1fd6b125fec2b595246cf205019e0efaf42ad6983663c351a2e0822e154d",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 0,
+              "bottom": 3,
+              "left": 0,
+              "right": 2,
+              "headerRow": 0,
+              "columns": [
+                "Name",
+                "Value"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric"
+              ],
+              "rowCount": 2,
+              "queryColumns": [
+                "Name",
+                "Value"
+              ],
+              "queryRows": [
+                [
+                  "Alice",
+                  1
+                ],
+                [
+                  "Bob",
+                  2
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Name",
+              "Value"
+            ],
+            "rows": [
+              [
+                "Alice",
+                1
+              ],
+              [
+                "Bob",
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "duplicate-headings": {
+      "sha256": "36ca147c42c57fe49a50617d171cd66e234e719277226d934723a1adea53789b",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 0,
+              "bottom": 3,
+              "left": 0,
+              "right": 5,
+              "headerRow": 0,
+              "columns": [
+                "Date",
+                "Value",
+                "Value_1",
+                "Note",
+                "Note_1"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric",
+                "numeric",
+                "other",
+                "other"
+              ],
+              "rowCount": 2,
+              "queryColumns": [
+                "Date",
+                "Value",
+                "Value_1",
+                "Note",
+                "Note_1"
+              ],
+              "queryRows": [
+                [
+                  "2024-01-01",
+                  1,
+                  2,
+                  "a",
+                  "b"
+                ],
+                [
+                  "2024-01-02",
+                  3,
+                  4,
+                  "c",
+                  "d"
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Date",
+              "Value",
+              "Value_1",
+              "Note",
+              "Note_1"
+            ],
+            "rows": [
+              [
+                "2024-01-01",
+                1,
+                2,
+                "a",
+                "b"
+              ],
+              [
+                "2024-01-02",
+                3,
+                4,
+                "c",
+                "d"
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "repeated": {
+      "sha256": "14e4c2893bf6b00ac3bc648955fbda87af8618c4d418952caf2048101dc335ba",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 0,
+              "bottom": 5,
+              "left": 0,
+              "right": 2,
+              "headerRow": 0,
+              "columns": [
+                "Name",
+                "Value"
+              ],
+              "columnStatsKind": [
+                "other",
+                "other"
+              ],
+              "rowCount": 2,
+              "queryColumns": [
+                "Name",
+                "Value"
+              ],
+              "queryRows": [
+                [
+                  "Alice",
+                  1
+                ],
+                [
+                  null,
+                  null
+                ],
+                [
+                  "Name",
+                  null
+                ],
+                [
+                  "Bob",
+                  2
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Name",
+              "Value"
+            ],
+            "rows": [
+              [
+                "Alice",
+                1
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "sparse": {
+      "sha256": "2695c0c4d7b7316984ae382200a363184cea59e200e369eb15c1e3a0df817396",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 0,
+              "bottom": 3,
+              "left": 0,
+              "right": 2,
+              "headerRow": 0,
+              "columns": [
+                "Name",
+                "Value"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric"
+              ],
+              "rowCount": 2,
+              "queryColumns": [
+                "Name",
+                "Value"
+              ],
+              "queryRows": [
+                [
+                  "Alice",
+                  1
+                ],
+                [
+                  "Bob",
+                  2
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Name",
+              "Value"
+            ],
+            "rows": [
+              [
+                "Alice",
+                1
+              ],
+              [
+                "Bob",
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "mixed-value": {
+      "sha256": "fe49fcd5e4c750e160cf61bcf30c02dac9ab5910a2c937a8d0edabfd1add0bee",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 0,
+              "bottom": 4,
+              "left": 0,
+              "right": 2,
+              "headerRow": 0,
+              "columns": [
+                "Name",
+                "Value"
+              ],
+              "columnStatsKind": [
+                "other",
+                "other"
+              ],
+              "rowCount": 3,
+              "queryColumns": [
+                "Name",
+                "Value"
+              ],
+              "queryRows": [
+                [
+                  "Alice",
+                  1
+                ],
+                [
+                  "Bob",
+                  null
+                ],
+                [
+                  "Clara",
+                  3
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "error": "Invalid Input Error: read_xlsx: Failed to parse cell 'B3': Could not convert string 'not numeric' to DOUBLE"
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    },
+    "formula-errors": {
+      "sha256": "ac2b83d2f8b7f1c55320b6d7219a4445413b3ab2b9d64a297480c78b1b5fe587",
+      "sheets": {
+        "Sheet": {
+          "detectedTables": [
+            {
+              "name": "Sheet · Table 1",
+              "sheet": "Sheet",
+              "top": 0,
+              "bottom": 7,
+              "left": 0,
+              "right": 3,
+              "headerRow": 0,
+              "columns": [
+                "Name",
+                "Value",
+                "Label"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric",
+                "other"
+              ],
+              "rowCount": 6,
+              "queryColumns": [
+                "Name",
+                "Value",
+                "Label"
+              ],
+              "queryRows": [
+                [
+                  "Alice",
+                  1,
+                  "plain"
+                ],
+                [
+                  "Bob",
+                  2,
+                  "ab"
+                ],
+                [
+                  "Clara",
+                  null,
+                  "after div"
+                ],
+                [
+                  "Dan",
+                  null,
+                  "after na"
+                ],
+                [
+                  "Eve",
+                  null,
+                  "literal ref error"
+                ],
+                [
+                  "Finn",
+                  2.5,
+                  "last"
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "error": "Invalid Input Error: read_xlsx: Failed to parse cell 'B4': Could not convert string '#DIV/0!' to DOUBLE"
+          }
+        }
+      },
+      "lateWarnings": [
+        "Sheet \"Sheet\" holds cell values Excel could not compute (#DIV/0!, #N/A, #REF! and the like). They are shown as empty cells in the tables read from it; the sheet itself shows them exactly as the file has them."
+      ],
+      "sourceUnchanged": true
+    },
+    "two-sheet": {
+      "sha256": "bcc1d0a89547566fc5a217f68e2e775af730381bdf47495456534116dfe3d67f",
+      "sheets": {
+        "Raw_Data": {
+          "detectedTables": [
+            {
+              "name": "Raw_Data · Table 1",
+              "sheet": "Raw_Data",
+              "top": 0,
+              "bottom": 3,
+              "left": 0,
+              "right": 2,
+              "headerRow": 0,
+              "columns": [
+                "Date",
+                "Rate"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric"
+              ],
+              "rowCount": 2,
+              "queryColumns": [
+                "Date",
+                "Rate"
+              ],
+              "queryRows": [
+                [
+                  "2024-01-01",
+                  1.5
+                ],
+                [
+                  "2024-01-02",
+                  1.75
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Date",
+              "Rate"
+            ],
+            "rows": [
+              [
+                "2024-01-01",
+                1.5
+              ],
+              [
+                "2024-01-02",
+                1.75
+              ]
+            ]
+          }
+        },
+        "ZOther": {
+          "detectedTables": [
+            {
+              "name": "ZOther · Table 1",
+              "sheet": "ZOther",
+              "top": 0,
+              "bottom": 3,
+              "left": 0,
+              "right": 2,
+              "headerRow": 0,
+              "columns": [
+                "Code",
+                "Amount"
+              ],
+              "columnStatsKind": [
+                "other",
+                "numeric"
+              ],
+              "rowCount": 2,
+              "queryColumns": [
+                "Code",
+                "Amount"
+              ],
+              "queryRows": [
+                [
+                  "X",
+                  10
+                ],
+                [
+                  "Y",
+                  20
+                ]
+              ]
+            }
+          ],
+          "duckdbDefaultComparator": {
+            "columns": [
+              "Code",
+              "Amount"
+            ],
+            "rows": [
+              [
+                "X",
+                10
+              ],
+              [
+                "Y",
+                20
+              ]
+            ]
+          }
+        }
+      },
+      "lateWarnings": [],
+      "sourceUnchanged": true
+    }
+  }
+}

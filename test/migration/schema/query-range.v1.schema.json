@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/query-range.v1.schema.json",
+  "title": "Host result range view",
+  "x-dfv-version": 1,
+  "$comment": "Host/webview-only read-only view; not a new native table RPC. One-based inclusive rectangles. SQL results require an outer ORDER BY and captured immutable order. Bounds, source generation/token, row lengths and the 16384-cell page budget are additionally validated at runtime. Raw worksheet previews may be extended with a bounded read; unmaterialized SQL-result rows refuse. Exact displayed values retain the current backend display representation. Manual discovery correction applies only to a current captured raw worksheet, with an in-range one-based header row or null for none; it changes session metadata, never workbook bytes.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/invalidate"
+    },
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/error"
+    },
+    {
+      "$ref": "#/$defs/manualTable"
+    }
+  ],
+  "$defs": {
+    "request": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "const": "queryRange"
+        },
+        "range": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 40
+        },
+        "token": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048575
+        },
+        "requestId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "command",
+        "range",
+        "token"
+      ],
+      "additionalProperties": false
+    },
+    "invalidate": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "const": "invalidateRange"
+        },
+        "requestId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "const": "queryRangeResult"
+        },
+        "error": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "token": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "requestId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "command",
+        "error",
+        "token"
+      ],
+      "additionalProperties": false
+    },
+    "success": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "const": "queryRangeResult"
+        },
+        "range": {
+          "type": "string",
+          "pattern": "^[A-Z]{1,3}[1-9][0-9]{0,6}:[A-Z]{1,3}[1-9][0-9]{0,6}$"
+        },
+        "target": {
+          "type": "string"
+        },
+        "token": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048575
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "totalRows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "capturedRows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "nextOffset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048575
+        },
+        "firstRow": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "firstColumn": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16384,
+          "items": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16384,
+            "items": true
+          }
+        },
+        "sql": {
+          "type": "string"
+        },
+        "requestId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "worksheet": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        }
+      },
+      "required": [
+        "command",
+        "range",
+        "target",
+        "token",
+        "offset",
+        "pageSize",
+        "totalRows",
+        "capturedRows",
+        "firstRow",
+        "firstColumn",
+        "columns",
+        "rows",
+        "sql"
+      ],
+      "additionalProperties": false
+    },
+    "manualTable": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "const": "useRangeAsTable"
+        },
+        "range": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 40
+        },
+        "token": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "headerRow": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1048576
+            }
+          ]
+        },
+        "requestId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "command",
+        "range",
+        "token",
+        "headerRow"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

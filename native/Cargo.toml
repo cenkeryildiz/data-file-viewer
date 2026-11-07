@@ -1,0 +1,17 @@
+# D3.1 native table worker skeleton (TN = TT/native). Other crates under crates/ join automatically.
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+dfv-table-protocol = { path = "crates/protocol" }
+dfv-table-engine = { path = "crates/table" }
+serde_json = "=1.0.151"
+libc = "=0.2.189"

@@ -1,0 +1,1250 @@
+{
+  "fixture_version": 1,
+  "task": "D1.9",
+  "documents": [
+    {
+      "schema": "source-identity.v1.schema.json",
+      "name": "identity with size beyond 2^53 and ns mtime",
+      "valid": true,
+      "document": {
+        "file_kind": "xlsx",
+        "path": "/data/book.xlsx",
+        "size": "9007199254740993",
+        "mtime": {
+          "$t": "timestamp",
+          "v": "1729851234567123456",
+          "unit": "ns",
+          "tz": "UTC"
+        },
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "revision": "0"
+      }
+    },
+    {
+      "schema": "source-identity.v1.schema.json",
+      "name": "size as JSON number",
+      "valid": false,
+      "document": {
+        "file_kind": "xlsx",
+        "path": "/data/book.xlsx",
+        "size": 9007199254740992,
+        "mtime": {
+          "$t": "timestamp",
+          "v": "1729851234567123456",
+          "unit": "ns",
+          "tz": "UTC"
+        },
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "revision": "0"
+      }
+    },
+    {
+      "schema": "source-identity.v1.schema.json",
+      "name": "missing revision",
+      "valid": false,
+      "document": {
+        "file_kind": "xlsx",
+        "path": "/data/book.xlsx",
+        "size": "9007199254740993",
+        "mtime": {
+          "$t": "timestamp",
+          "v": "1729851234567123456",
+          "unit": "ns",
+          "tz": "UTC"
+        },
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "schema": "source-identity.v1.schema.json",
+      "name": "mtime without tz",
+      "valid": false,
+      "document": {
+        "file_kind": "xlsx",
+        "path": "/data/book.xlsx",
+        "size": "9007199254740993",
+        "mtime": {
+          "$t": "timestamp",
+          "v": "1",
+          "unit": "ns"
+        },
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "revision": "0"
+      }
+    },
+    {
+      "schema": "read-metadata.v1.schema.json",
+      "name": "workbook metadata with a detected table",
+      "valid": true,
+      "document": {
+        "file_kind": "xlsx",
+        "read_only": false,
+        "read_only_by_format": false,
+        "has_sibling": false,
+        "has_pending_sheets": false,
+        "worksheets": [
+          "Raw_Data"
+        ],
+        "detected_tables": [
+          {
+            "name": "Raw_Data · Table 1",
+            "sheet": "Raw_Data",
+            "top": 0,
+            "bottom": 4,
+            "left": 0,
+            "right": 2,
+            "header_row": 0,
+            "columns": [
+              "id",
+              "amount"
+            ],
+            "column_stats_kind": [
+              "numeric",
+              "numeric"
+            ],
+            "data_rows": [
+              {
+                "start": 1,
+                "end": 4
+              }
+            ],
+            "excluded_rows": [],
+            "row_count": "3"
+          }
+        ],
+        "open_warnings": [],
+        "warnings": [],
+        "number_locale": null,
+        "source": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740993",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "revision": "0"
+        }
+      }
+    },
+    {
+      "schema": "read-metadata.v1.schema.json",
+      "name": "legacy stamp instead of source identity",
+      "valid": false,
+      "document": {
+        "file_kind": "xlsx",
+        "read_only": false,
+        "read_only_by_format": false,
+        "has_sibling": false,
+        "has_pending_sheets": false,
+        "worksheets": [
+          "Raw_Data"
+        ],
+        "detected_tables": [
+          {
+            "name": "Raw_Data · Table 1",
+            "sheet": "Raw_Data",
+            "top": 0,
+            "bottom": 4,
+            "left": 0,
+            "right": 2,
+            "header_row": 0,
+            "columns": [
+              "id",
+              "amount"
+            ],
+            "column_stats_kind": [
+              "numeric",
+              "numeric"
+            ],
+            "data_rows": [
+              {
+                "start": 1,
+                "end": 4
+              }
+            ],
+            "excluded_rows": [],
+            "row_count": "3"
+          }
+        ],
+        "open_warnings": [],
+        "warnings": [],
+        "number_locale": null,
+        "source": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740993",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "revision": "0"
+        },
+        "stamp": {
+          "size": 1,
+          "mtimeMs": 1.5
+        }
+      }
+    },
+    {
+      "schema": "paged-resource.v1.schema.json",
+      "name": "page at offset beyond 2^53 with int64 limits and a decimal",
+      "valid": true,
+      "document": {
+        "resource": {
+          "id": "r1",
+          "source_revision": "0"
+        },
+        "columns": [
+          {
+            "name": "id",
+            "type": {
+              "id": "int64"
+            },
+            "nullable": false,
+            "source_type": "BIGINT"
+          },
+          {
+            "name": "amount",
+            "type": {
+              "id": "decimal",
+              "precision": 38,
+              "scale": 2
+            },
+            "nullable": true,
+            "source_type": "DECIMAL(38,2)"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "$t": "int64",
+              "v": "9223372036854775807"
+            },
+            {
+              "$t": "decimal",
+              "v": "-0.01",
+              "precision": 38,
+              "scale": 2
+            }
+          ],
+          [
+            {
+              "$t": "int64",
+              "v": "-9223372036854775808"
+            },
+            null
+          ]
+        ],
+        "page": {
+          "offset": "9007199254740992",
+          "row_count": "2",
+          "total_rows": null,
+          "next_offset": null,
+          "truncated": true
+        },
+        "sql": "select * from t"
+      }
+    },
+    {
+      "schema": "paged-resource.v1.schema.json",
+      "name": "bare number cell",
+      "valid": false,
+      "document": {
+        "resource": {
+          "id": "r1",
+          "source_revision": "0"
+        },
+        "columns": [
+          {
+            "name": "id",
+            "type": {
+              "id": "int64"
+            },
+            "nullable": false,
+            "source_type": "BIGINT"
+          },
+          {
+            "name": "amount",
+            "type": {
+              "id": "decimal",
+              "precision": 38,
+              "scale": 2
+            },
+            "nullable": true,
+            "source_type": "DECIMAL(38,2)"
+          }
+        ],
+        "rows": [
+          [
+            1,
+            null
+          ]
+        ],
+        "page": {
+          "offset": "9007199254740992",
+          "row_count": "2",
+          "total_rows": null,
+          "next_offset": null,
+          "truncated": true
+        },
+        "sql": "select * from t"
+      }
+    },
+    {
+      "schema": "paged-resource.v1.schema.json",
+      "name": "offset as JSON number",
+      "valid": false,
+      "document": {
+        "resource": {
+          "id": "r1",
+          "source_revision": "0"
+        },
+        "columns": [
+          {
+            "name": "id",
+            "type": {
+              "id": "int64"
+            },
+            "nullable": false,
+            "source_type": "BIGINT"
+          },
+          {
+            "name": "amount",
+            "type": {
+              "id": "decimal",
+              "precision": 38,
+              "scale": 2
+            },
+            "nullable": true,
+            "source_type": "DECIMAL(38,2)"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "$t": "int64",
+              "v": "9223372036854775807"
+            },
+            {
+              "$t": "decimal",
+              "v": "-0.01",
+              "precision": 38,
+              "scale": 2
+            }
+          ],
+          [
+            {
+              "$t": "int64",
+              "v": "-9223372036854775808"
+            },
+            null
+          ]
+        ],
+        "page": {
+          "offset": 0,
+          "row_count": "2",
+          "total_rows": null,
+          "next_offset": null,
+          "truncated": true
+        },
+        "sql": "select * from t"
+      }
+    },
+    {
+      "schema": "error.v1.schema.json",
+      "name": "stale source refusal",
+      "valid": true,
+      "document": {
+        "code": "stale_source",
+        "category": "blocked",
+        "message": "The source changed. Refresh the document before running another query.",
+        "retryable": false,
+        "mutation_outcome": null
+      }
+    },
+    {
+      "schema": "error.v1.schema.json",
+      "name": "unknown on-disk outcome",
+      "valid": true,
+      "document": {
+        "code": "mutation_unknown",
+        "category": "blocked",
+        "message": "The workbook matches neither version; it was left alone.",
+        "retryable": false,
+        "mutation_outcome": "unknown"
+      }
+    },
+    {
+      "schema": "error.v1.schema.json",
+      "name": "mutation_outcome omitted",
+      "valid": false,
+      "document": {
+        "code": "stale_source",
+        "category": "blocked",
+        "message": "The source changed. Refresh the document before running another query.",
+        "retryable": false
+      }
+    },
+    {
+      "schema": "error.v1.schema.json",
+      "name": "unknown code",
+      "valid": false,
+      "document": {
+        "code": "E_STALE",
+        "category": "blocked",
+        "message": "The source changed. Refresh the document before running another query.",
+        "retryable": false,
+        "mutation_outcome": null
+      }
+    },
+    {
+      "schema": "mutation-receipt.v1.schema.json",
+      "name": "xlsx cell patch receipt",
+      "valid": true,
+      "document": {
+        "operation": "updateCell",
+        "outcome": "published",
+        "rows_changed": "1",
+        "source_before": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740993",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "revision": "0"
+        },
+        "source_after": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740995",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "revision": "1"
+        },
+        "cell": "B7",
+        "reconciled": false,
+        "directory_sync": "synced",
+        "recovered": [
+          {
+            "kind": "lock",
+            "name": "book.xlsx.dfv-lock",
+            "outcome": "published"
+          }
+        ],
+        "notices": []
+      }
+    },
+    {
+      "schema": "mutation-receipt.v1.schema.json",
+      "name": "rows_changed as JSON number",
+      "valid": false,
+      "document": {
+        "operation": "updateCell",
+        "outcome": "published",
+        "rows_changed": 1,
+        "source_before": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740993",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "revision": "0"
+        },
+        "source_after": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740995",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "revision": "1"
+        },
+        "cell": "B7",
+        "reconciled": false,
+        "directory_sync": "synced",
+        "recovered": [
+          {
+            "kind": "lock",
+            "name": "book.xlsx.dfv-lock",
+            "outcome": "published"
+          }
+        ],
+        "notices": []
+      }
+    },
+    {
+      "schema": "capabilities.v1.schema.json",
+      "name": "reference capabilities",
+      "valid": true,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "capabilities",
+        "engine": {
+          "name": "reference-ts",
+          "version": "0.0.19"
+        },
+        "methods": [
+          "runQuery",
+          "updateCell"
+        ],
+        "formats": [
+          {
+            "file_kind": "xlsx",
+            "read": true,
+            "write": "cell_patch",
+            "backup": true,
+            "compression": []
+          },
+          {
+            "file_kind": "kdb",
+            "read": true,
+            "write": "none",
+            "backup": false,
+            "compression": []
+          }
+        ],
+        "value_tags": [
+          "int64",
+          "decimal",
+          "timestamp"
+        ],
+        "time_units": [
+          "s",
+          "ms",
+          "us",
+          "ns"
+        ],
+        "limits": {
+          "max_frame_bytes": "33554432",
+          "sql_bytes": "262144",
+          "result_bytes": "33554432",
+          "cell_bytes": "4194304",
+          "queued_requests": "8",
+          "deadline_ms": "30000"
+        }
+      }
+    },
+    {
+      "schema": "capabilities.v1.schema.json",
+      "name": "unsupported version",
+      "valid": false,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 2,
+        "kind": "capabilities",
+        "engine": {
+          "name": "reference-ts",
+          "version": "0.0.19"
+        },
+        "methods": [
+          "runQuery",
+          "updateCell"
+        ],
+        "formats": [
+          {
+            "file_kind": "xlsx",
+            "read": true,
+            "write": "cell_patch",
+            "backup": true,
+            "compression": []
+          },
+          {
+            "file_kind": "kdb",
+            "read": true,
+            "write": "none",
+            "backup": false,
+            "compression": []
+          }
+        ],
+        "value_tags": [
+          "int64",
+          "decimal",
+          "timestamp"
+        ],
+        "time_units": [
+          "s",
+          "ms",
+          "us",
+          "ns"
+        ],
+        "limits": {
+          "max_frame_bytes": "33554432",
+          "sql_bytes": "262144",
+          "result_bytes": "33554432",
+          "cell_bytes": "4194304",
+          "queued_requests": "8",
+          "deadline_ms": "30000"
+        }
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "request with uint64-max id and named args",
+      "valid": true,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "request",
+        "id": "18446744073709551615",
+        "method": "runQuery",
+        "args": {
+          "sql": "select 1",
+          "maxRows": {
+            "$t": "uint32",
+            "v": "0"
+          }
+        }
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "numeric id",
+      "valid": false,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "request",
+        "id": 1,
+        "method": "runQuery",
+        "args": {
+          "sql": "select 1",
+          "maxRows": {
+            "$t": "uint32",
+            "v": "0"
+          }
+        }
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "positional args",
+      "valid": false,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "request",
+        "id": "18446744073709551615",
+        "method": "runQuery",
+        "args": [
+          "select 1"
+        ]
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "cancel",
+      "valid": true,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "cancel",
+        "id": "7"
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "success with metadata",
+      "valid": true,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "response",
+        "id": "7",
+        "ok": true,
+        "result": {
+          "resource": {
+            "id": "r1",
+            "source_revision": "0"
+          },
+          "columns": [
+            {
+              "name": "id",
+              "type": {
+                "id": "int64"
+              },
+              "nullable": false,
+              "source_type": "BIGINT"
+            },
+            {
+              "name": "amount",
+              "type": {
+                "id": "decimal",
+                "precision": 38,
+                "scale": 2
+              },
+              "nullable": true,
+              "source_type": "DECIMAL(38,2)"
+            }
+          ],
+          "rows": [
+            [
+              {
+                "$t": "int64",
+                "v": "9223372036854775807"
+              },
+              {
+                "$t": "decimal",
+                "v": "-0.01",
+                "precision": 38,
+                "scale": 2
+              }
+            ],
+            [
+              {
+                "$t": "int64",
+                "v": "-9223372036854775808"
+              },
+              null
+            ]
+          ],
+          "page": {
+            "offset": "9007199254740992",
+            "row_count": "2",
+            "total_rows": null,
+            "next_offset": null,
+            "truncated": true
+          },
+          "sql": "select * from t"
+        },
+        "metadata": {
+          "file_kind": "xlsx",
+          "read_only": false,
+          "read_only_by_format": false,
+          "has_sibling": false,
+          "has_pending_sheets": false,
+          "worksheets": [
+            "Raw_Data"
+          ],
+          "detected_tables": [
+            {
+              "name": "Raw_Data · Table 1",
+              "sheet": "Raw_Data",
+              "top": 0,
+              "bottom": 4,
+              "left": 0,
+              "right": 2,
+              "header_row": 0,
+              "columns": [
+                "id",
+                "amount"
+              ],
+              "column_stats_kind": [
+                "numeric",
+                "numeric"
+              ],
+              "data_rows": [
+                {
+                  "start": 1,
+                  "end": 4
+                }
+              ],
+              "excluded_rows": [],
+              "row_count": "3"
+            }
+          ],
+          "open_warnings": [],
+          "warnings": [],
+          "number_locale": null,
+          "source": {
+            "file_kind": "xlsx",
+            "path": "/data/book.xlsx",
+            "size": "9007199254740993",
+            "mtime": {
+              "$t": "timestamp",
+              "v": "1729851234567123456",
+              "unit": "ns",
+              "tz": "UTC"
+            },
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "revision": "0"
+          }
+        }
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "operation failure keeps metadata",
+      "valid": true,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "response",
+        "id": "7",
+        "ok": false,
+        "error": {
+          "code": "stale_source",
+          "category": "blocked",
+          "message": "The source changed. Refresh the document before running another query.",
+          "retryable": false,
+          "mutation_outcome": null
+        },
+        "metadata": {
+          "file_kind": "xlsx",
+          "read_only": false,
+          "read_only_by_format": false,
+          "has_sibling": false,
+          "has_pending_sheets": false,
+          "worksheets": [
+            "Raw_Data"
+          ],
+          "detected_tables": [
+            {
+              "name": "Raw_Data · Table 1",
+              "sheet": "Raw_Data",
+              "top": 0,
+              "bottom": 4,
+              "left": 0,
+              "right": 2,
+              "header_row": 0,
+              "columns": [
+                "id",
+                "amount"
+              ],
+              "column_stats_kind": [
+                "numeric",
+                "numeric"
+              ],
+              "data_rows": [
+                {
+                  "start": 1,
+                  "end": 4
+                }
+              ],
+              "excluded_rows": [],
+              "row_count": "3"
+            }
+          ],
+          "open_warnings": [],
+          "warnings": [],
+          "number_locale": null,
+          "source": {
+            "file_kind": "xlsx",
+            "path": "/data/book.xlsx",
+            "size": "9007199254740993",
+            "mtime": {
+              "$t": "timestamp",
+              "v": "1729851234567123456",
+              "unit": "ns",
+              "tz": "UTC"
+            },
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "revision": "0"
+          }
+        }
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "ok true with error",
+      "valid": false,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "response",
+        "id": "7",
+        "ok": true,
+        "error": {
+          "code": "stale_source",
+          "category": "blocked",
+          "message": "The source changed. Refresh the document before running another query.",
+          "retryable": false,
+          "mutation_outcome": null
+        }
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "failure without error",
+      "valid": false,
+      "document": {
+        "protocol": "dfv-table",
+        "version": 1,
+        "kind": "response",
+        "id": "7",
+        "ok": false
+      }
+    },
+    {
+      "schema": "envelope.v1.schema.json",
+      "name": "PDF protocol name is not the table protocol",
+      "valid": false,
+      "document": {
+        "protocol": "dfv-pdf",
+        "version": 1,
+        "kind": "request",
+        "id": "18446744073709551615",
+        "method": "runQuery",
+        "args": {
+          "sql": "select 1",
+          "maxRows": {
+            "$t": "uint32",
+            "v": "0"
+          }
+        }
+      }
+    },
+    {
+      "schema": "query-range.v1.schema.json",
+      "name": "one-based host range request",
+      "valid": true,
+      "document": {
+        "command": "queryRange",
+        "range": "A1:D929",
+        "token": 7,
+        "offset": 100,
+        "requestId": 23,
+        "generation": 2
+      }
+    },
+    {
+      "schema": "query-range.v1.schema.json",
+      "name": "host range execution token must be integer",
+      "valid": false,
+      "document": {
+        "command": "queryRange",
+        "range": "A1:D929",
+        "token": "7",
+        "offset": 100,
+        "requestId": 23,
+        "generation": 2
+      }
+    },
+    {
+      "schema": "query-range.v1.schema.json",
+      "name": "host range page offset cannot be negative",
+      "valid": false,
+      "document": {
+        "command": "queryRange",
+        "range": "A1:D929",
+        "token": 7,
+        "offset": -1,
+        "requestId": 23,
+        "generation": 2
+      }
+    },
+    {
+      "schema": "query-range.v1.schema.json",
+      "name": "host range invalidate snapshot",
+      "valid": true,
+      "document": {
+        "command": "invalidateRange",
+        "requestId": 24
+      }
+    },
+    {
+      "schema": "query-range.v1.schema.json",
+      "name": "host range stale refusal",
+      "valid": true,
+      "document": {
+        "command": "queryRangeResult",
+        "token": 7,
+        "error": "The source changed. Run the query again.",
+        "requestId": 23
+      }
+    },
+    {
+      "schema": "query-range.v1.schema.json",
+      "name": "manual worksheet table with selected header",
+      "valid": true,
+      "document": {
+        "command": "useRangeAsTable",
+        "range": "A1:D929",
+        "token": 7,
+        "headerRow": 2
+      }
+    },
+    {
+      "schema": "query-range.v1.schema.json",
+      "name": "manual worksheet table without header",
+      "valid": true,
+      "document": {
+        "command": "useRangeAsTable",
+        "range": "A1:D929",
+        "token": 7,
+        "headerRow": null
+      }
+    },
+    {
+      "schema": "query-range.v1.schema.json",
+      "name": "manual table header must be an integer or null",
+      "valid": false,
+      "document": {
+        "command": "useRangeAsTable",
+        "range": "A1:D929",
+        "token": 7,
+        "headerRow": "2"
+      }
+    },
+    {
+      "schema": "read-metadata.v1.schema.json",
+      "name": "manual table provenance structural score",
+      "valid": true,
+      "document": {
+        "file_kind": "xlsx",
+        "read_only": false,
+        "read_only_by_format": false,
+        "has_sibling": false,
+        "has_pending_sheets": false,
+        "worksheets": [
+          "Raw_Data"
+        ],
+        "detected_tables": [
+          {
+            "name": "Raw_Data · Table 1",
+            "sheet": "Raw_Data",
+            "top": 0,
+            "bottom": 4,
+            "left": 0,
+            "right": 2,
+            "header_row": 0,
+            "columns": [
+              "id",
+              "amount"
+            ],
+            "column_stats_kind": [
+              "numeric",
+              "numeric"
+            ],
+            "data_rows": [
+              {
+                "start": 1,
+                "end": 4
+              }
+            ],
+            "excluded_rows": [],
+            "row_count": "3",
+            "provenance": "manual",
+            "confidence": 1,
+            "reason": "User-selected rectangle and header."
+          }
+        ],
+        "open_warnings": [],
+        "warnings": [],
+        "number_locale": null,
+        "source": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740993",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "revision": "0"
+        }
+      }
+    },
+    {
+      "schema": "read-metadata.v1.schema.json",
+      "name": "heuristic table provenance structural score",
+      "valid": true,
+      "document": {
+        "file_kind": "xlsx",
+        "read_only": false,
+        "read_only_by_format": false,
+        "has_sibling": false,
+        "has_pending_sheets": false,
+        "worksheets": [
+          "Raw_Data"
+        ],
+        "detected_tables": [
+          {
+            "name": "Raw_Data · Table 1",
+            "sheet": "Raw_Data",
+            "top": 0,
+            "bottom": 4,
+            "left": 0,
+            "right": 2,
+            "header_row": 0,
+            "columns": [
+              "id",
+              "amount"
+            ],
+            "column_stats_kind": [
+              "numeric",
+              "numeric"
+            ],
+            "data_rows": [
+              {
+                "start": 1,
+                "end": 4
+              }
+            ],
+            "excluded_rows": [],
+            "row_count": "3",
+            "provenance": "heuristic",
+            "confidence": 0.5,
+            "reason": "Heuristic rectangle."
+          }
+        ],
+        "open_warnings": [],
+        "warnings": [],
+        "number_locale": null,
+        "source": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740993",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "revision": "0"
+        }
+      }
+    },
+    {
+      "schema": "read-metadata.v1.schema.json",
+      "name": "invalid provenance refuses",
+      "valid": false,
+      "document": {
+        "file_kind": "xlsx",
+        "read_only": false,
+        "read_only_by_format": false,
+        "has_sibling": false,
+        "has_pending_sheets": false,
+        "worksheets": [
+          "Raw_Data"
+        ],
+        "detected_tables": [
+          {
+            "name": "Raw_Data · Table 1",
+            "sheet": "Raw_Data",
+            "top": 0,
+            "bottom": 4,
+            "left": 0,
+            "right": 2,
+            "header_row": 0,
+            "columns": [
+              "id",
+              "amount"
+            ],
+            "column_stats_kind": [
+              "numeric",
+              "numeric"
+            ],
+            "data_rows": [
+              {
+                "start": 1,
+                "end": 4
+              }
+            ],
+            "excluded_rows": [],
+            "row_count": "3",
+            "provenance": "guessed",
+            "confidence": 0.5,
+            "reason": "Unrecognized source."
+          }
+        ],
+        "open_warnings": [],
+        "warnings": [],
+        "number_locale": null,
+        "source": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740993",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "revision": "0"
+        }
+      }
+    },
+    {
+      "schema": "read-metadata.v1.schema.json",
+      "name": "overconfident score refuses",
+      "valid": false,
+      "document": {
+        "file_kind": "xlsx",
+        "read_only": false,
+        "read_only_by_format": false,
+        "has_sibling": false,
+        "has_pending_sheets": false,
+        "worksheets": [
+          "Raw_Data"
+        ],
+        "detected_tables": [
+          {
+            "name": "Raw_Data · Table 1",
+            "sheet": "Raw_Data",
+            "top": 0,
+            "bottom": 4,
+            "left": 0,
+            "right": 2,
+            "header_row": 0,
+            "columns": [
+              "id",
+              "amount"
+            ],
+            "column_stats_kind": [
+              "numeric",
+              "numeric"
+            ],
+            "data_rows": [
+              {
+                "start": 1,
+                "end": 4
+              }
+            ],
+            "excluded_rows": [],
+            "row_count": "3",
+            "provenance": "explicit",
+            "confidence": 1.1,
+            "reason": "Invalid score."
+          }
+        ],
+        "open_warnings": [],
+        "warnings": [],
+        "number_locale": null,
+        "source": {
+          "file_kind": "xlsx",
+          "path": "/data/book.xlsx",
+          "size": "9007199254740993",
+          "mtime": {
+            "$t": "timestamp",
+            "v": "1729851234567123456",
+            "unit": "ns",
+            "tz": "UTC"
+          },
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "revision": "0"
+        }
+      }
+    }
+  ]
+}

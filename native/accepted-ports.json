@@ -1,0 +1,299 @@
+{
+  "schema": "dfv-accepted-ports.v1",
+  "accepted_at": "2026-11-07T14:16:18.638473+00:00",
+  "scope": "V20/V21/V23 full native DFV with retained PDF MVP, final macOS arm64 VSIX qualified",
+  "candidate_inventory_sha256": "8b690c919d3f892943f1dde332f545dfd023ac2e8114864ae0781928fdfadc46",
+  "platforms": {
+    "qualified": "darwin-arm64 on macOS 15.8.2 / Apple M4 / 16 GiB",
+    "not_qualified": [
+      "Windows",
+      "Linux",
+      "other architectures",
+      "other macOS versions"
+    ]
+  },
+  "workers": {
+    "dfv-table": {
+      "sha256": "e438f85267a68a6789895e02ce2440b70e607b98d225b3e31ac12f530a8e81b2",
+      "bytes": 53322144
+    },
+    "dfv-mat": {
+      "sha256": "2605868b5ce9bda699447524f482f27b4157d49ed78804706ed2e16cb41b7a40",
+      "bytes": 919296
+    }
+  },
+  "capabilities": {
+    "dfv-table": {
+      "protocol": "dfv-table",
+      "version": 1,
+      "kind": "capabilities",
+      "engine": {
+        "name": "dfv-table",
+        "version": "0.0.0"
+      },
+      "methods": [
+        "ping",
+        "open",
+        "close",
+        "getQueryCatalog",
+        "getQueryColumns",
+        "runQuery",
+        "runSortedQuery",
+        "runChartQuery",
+        "countMatchingRows",
+        "getColumnTopValues",
+        "getColumnDescriptiveStats",
+        "readResource",
+        "releaseResource",
+        "listTables",
+        "listSidebarTables",
+        "listSiblingTables",
+        "getCombinableTableNames",
+        "buildCombinedQuery",
+        "getPollCadenceSeconds",
+        "getSeriesFrequency",
+        "buildDetectedTableQuery",
+        "runDetectedTableQuery",
+        "locateXlsxEdit",
+        "retrySheetPreparation",
+        "checkEditableSelect",
+        "compareToBackup",
+        "diffQueryAgainstBackup",
+        "createBackup",
+        "setSafeMode",
+        "updateCell",
+        "queryMutationOutcome"
+      ],
+      "formats": [
+        {
+          "file_kind": "csv",
+          "read": true,
+          "write": "table_rewrite",
+          "backup": true,
+          "compression": []
+        },
+        {
+          "file_kind": "parquet",
+          "read": true,
+          "write": "table_rewrite",
+          "backup": true,
+          "compression": []
+        },
+        {
+          "file_kind": "duckdb",
+          "read": true,
+          "write": "transactional",
+          "backup": true,
+          "compression": []
+        },
+        {
+          "file_kind": "sqlite",
+          "read": true,
+          "write": "transactional",
+          "backup": true,
+          "compression": []
+        },
+        {
+          "file_kind": "xlsx",
+          "read": true,
+          "write": "cell_patch",
+          "backup": true,
+          "compression": []
+        },
+        {
+          "file_kind": "arrow",
+          "read": true,
+          "write": "table_rewrite",
+          "backup": true,
+          "compression": []
+        },
+        {
+          "file_kind": "feather",
+          "read": true,
+          "write": "table_rewrite",
+          "backup": true,
+          "compression": []
+        },
+        {
+          "file_kind": "dta",
+          "read": true,
+          "write": "none",
+          "backup": false,
+          "compression": []
+        },
+        {
+          "file_kind": "kdb",
+          "read": true,
+          "write": "none",
+          "backup": false,
+          "compression": []
+        }
+      ],
+      "value_tags": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "int128",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "uint128",
+        "float32",
+        "float64",
+        "decimal",
+        "date",
+        "time",
+        "timestamp",
+        "interval",
+        "binary",
+        "uuid",
+        "list",
+        "struct",
+        "map"
+      ],
+      "time_units": [
+        "s",
+        "ms",
+        "us",
+        "ns"
+      ],
+      "limits": {
+        "max_frame_bytes": "33554432",
+        "sql_bytes": "262144",
+        "result_bytes": "33554432",
+        "cell_bytes": "4194304",
+        "queued_requests": "8",
+        "deadline_ms": "30000"
+      }
+    },
+    "dfv-mat": {
+      "protocol": "dfv-mat",
+      "version": 1,
+      "kind": "capabilities",
+      "engine": {
+        "name": "dfv-mat",
+        "version": "0.0.0"
+      },
+      "methods": [
+        "open",
+        "catalog",
+        "describe",
+        "slice",
+        "sparse",
+        "children",
+        "close",
+        "release"
+      ],
+      "formats": [
+        {
+          "format": "mat",
+          "schema": "dfv-mat.v1",
+          "read_only": true,
+          "versions": [
+            "v5",
+            "v6",
+            "v7"
+          ],
+          "v7_3": false,
+          "limits": {
+            "sessions": "4",
+            "handles": "16384",
+            "page": "1000",
+            "cells": "10000",
+            "variable_bytes": "268435456"
+          }
+        }
+      ],
+      "value_tags": [
+        "int8",
+        "uint8",
+        "int16",
+        "uint16",
+        "int32",
+        "uint32",
+        "int64",
+        "uint64",
+        "float32",
+        "float64"
+      ],
+      "time_units": [],
+      "limits": {
+        "max_frame_bytes": "8388608",
+        "deadline_ms": "30000",
+        "queued_requests": "8"
+      }
+    }
+  },
+  "pdf": {
+    "sha256": "af044680f79db92fee47998c290669d6d97d7cc1122aa3d0b57627be995e8138",
+    "pin": "native/pdf-mvp-assets.json",
+    "scope": "retained qualified MVP; full PDF-port parity excluded"
+  },
+  "verification": {
+    "fresh_default_native_tests": 541,
+    "feature_native_tests": 607,
+    "ui_pass": 1190,
+    "ui_fail": 0,
+    "ui_explicit_skips": 43,
+    "reference_todos": 9,
+    "fault_host_tests": 26,
+    "fault_host_fail": 0,
+    "native_resource_peak_mib": 515.5625,
+    "native_resource_budget_mib": 2048,
+    "critical_preservation_failures_unresolved": 0,
+    "mixed_soak": {
+      "phase": "soak-measurement",
+      "seconds": 1800.3516884590001,
+      "counts": {
+        "cycles": 6052,
+        "edits": 1008,
+        "reopens": 1513,
+        "kills": {
+          "table": 7,
+          "pdf": 4,
+          "mat": 2
+        }
+      },
+      "samples": 2041,
+      "peakNativeMiB": 644.4375,
+      "driftMiB": {
+        "table": 2.5625,
+        "pdf": 71.328125,
+        "mat": 3.875
+      },
+      "peakByClassMiB": {
+        "table": 288.671875,
+        "pdf": 257.765625,
+        "mat": 119.40625
+      },
+      "scratchPeakBytes": 0,
+      "cycleMs": {
+        "p50": 210.56670800002757,
+        "p95": 935.793624999933
+      },
+      "distinctWorkersSeen": 2541
+    },
+    "installed_package": "all-format including kdb, native security/range/150kplot/lifecycle/EX07/PDFUI/MAT kill isolation; PDF render/rotate/export/text/Unicode/markers/annotations/pages/save/discard/restart/hot-exit/worker kill; final rebuilt archive smoke pass",
+    "final_runtime_vs_candidate": "README only changed; every other archive entry byte-identical",
+    "physical_trackpad": "user-reported smooth in packaged0.0.21",
+    "public_mat_reader": "focused genuine MATLAB oracle test passes without user-supplied research dataset; same >1050 variable assertion"
+  },
+  "limits": [
+    "XLSX sheets over the 64 MiB cache cap reload on every read; sparse extent still drives memory within the 10M-cell bound",
+    "MAT uses accepted read-only Level-5 V-MAT1 scope; v7.3/HDF5 unsupported",
+    "PDF advanced parity remains deferred",
+    "resource samples every 100 ms may miss shorter peaks; Code/Chromium excluded from native budget"
+  ],
+  "rollback": "Retain the earlier qualified MVP VSIX and current source bases; do not install in the real profile without authorization. Completed candidate source archive/commit is V24.",
+  "artifact": {
+    "version": "0.0.21",
+    "platform": "darwin-arm64",
+    "filename": "data-file-viewer-0.0.21-darwin-arm64.vsix",
+    "bytes": 32728486,
+    "sha256": "3e3e02d1f8b0cf48904428bea1d85797e22aec2c95f19ecb43ed614c5a9db9db",
+    "release_tag": "v0.0.21",
+    "repository": "cenkeryildiz/data-file-viewer"
+  }
+}

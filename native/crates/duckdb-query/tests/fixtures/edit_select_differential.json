@@ -1,0 +1,532 @@
+{
+ "generatedBy": "tools/make_edit_differential.cjs",
+ "cases": [
+  {
+   "sql": "select * from t",
+   "table": "t"
+  },
+  {
+   "sql": "SELECT * FROM T",
+   "table": "T"
+  },
+  {
+   "sql": "  select  *  from  t  ",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t;",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t ;  ",
+   "table": "t"
+  },
+  {
+   "sql": "select * from \"My Table\"",
+   "table": "My Table"
+  },
+  {
+   "sql": "select * from \"a\"\"b\"",
+   "table": "a\"b"
+  },
+  {
+   "sql": "select * from \"\"",
+   "table": null
+  },
+  {
+   "sql": "select * from \"",
+   "table": null
+  },
+  {
+   "sql": "select * from \"abc",
+   "table": null
+  },
+  {
+   "sql": "select * from \"a\"b\"",
+   "table": null
+  },
+  {
+   "sql": "select * from \"a\" \"b\"",
+   "table": null
+  },
+  {
+   "sql": "select * from main.t",
+   "table": null
+  },
+  {
+   "sql": "select * from \"main\".\"t\"",
+   "table": null
+  },
+  {
+   "sql": "select * from t1",
+   "table": "t1"
+  },
+  {
+   "sql": "select * from _t",
+   "table": "_t"
+  },
+  {
+   "sql": "select * from 1t",
+   "table": null
+  },
+  {
+   "sql": "select * from é",
+   "table": null
+  },
+  {
+   "sql": "select * from \"é\"",
+   "table": "é"
+  },
+  {
+   "sql": "select*from t",
+   "table": null
+  },
+  {
+   "sql": "select *from t",
+   "table": null
+  },
+  {
+   "sql": "select* from t",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a=1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where",
+   "table": null
+  },
+  {
+   "sql": "select * from t where ",
+   "table": null
+  },
+  {
+   "sql": "select * from t where  ",
+   "table": null
+  },
+  {
+   "sql": "select * from t where x",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t  where  x",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t wherex",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 1 order by a",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t order by a",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t order by",
+   "table": null
+  },
+  {
+   "sql": "select * from t order  by  a desc",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t order by a limit 5",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t limit 5",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t limit 5 offset 2",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t limit 5 offset",
+   "table": null
+  },
+  {
+   "sql": "select * from t limit x",
+   "table": null
+  },
+  {
+   "sql": "select * from t limit -1",
+   "table": null
+  },
+  {
+   "sql": "select * from t limit 1.5",
+   "table": null
+  },
+  {
+   "sql": "select * from t offset 3",
+   "table": null
+  },
+  {
+   "sql": "select * from t limit 5;",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t limit 5 ; ",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t limit 5; select 1",
+   "table": null
+  },
+  {
+   "sql": "select * from t; select 1",
+   "table": null
+  },
+  {
+   "sql": "select * from t limit 5 where a = 1",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 1 limit 5 offset 2;",
+   "table": "t"
+  },
+  {
+   "sql": "select a from t",
+   "table": null
+  },
+  {
+   "sql": "select *, 1 from t",
+   "table": null
+  },
+  {
+   "sql": "select * from t, u",
+   "table": null
+  },
+  {
+   "sql": "select * from t as x",
+   "table": null
+  },
+  {
+   "sql": "select * from t x",
+   "table": null
+  },
+  {
+   "sql": "select * from t join u on 1=1",
+   "table": null
+  },
+  {
+   "sql": "select * from t JOIN u",
+   "table": null
+  },
+  {
+   "sql": "select * from t group by a",
+   "table": null
+  },
+  {
+   "sql": "select * from t GROUP   BY a",
+   "table": null
+  },
+  {
+   "sql": "select * from t group\tby a",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a group by",
+   "table": null
+  },
+  {
+   "sql": "select * from t where grouped = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where group_by = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where a = 'group by'",
+   "table": null
+  },
+  {
+   "sql": "select distinct * from t",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 'distinct'",
+   "table": null
+  },
+  {
+   "sql": "select * from t where redistinct = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t union select * from u",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a in (select 1 union select 2)",
+   "table": null
+  },
+  {
+   "sql": "select * from t where unions = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t intersect select * from t",
+   "table": null
+  },
+  {
+   "sql": "select * from t except select * from t",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 1 using sample 10",
+   "table": null
+  },
+  {
+   "sql": "select * from t window w as (partition by a)",
+   "table": null
+  },
+  {
+   "sql": "select * from t where x = my_window",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where window_ = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where a = rejoin",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where joiner = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where é = 1 and join = 2",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a_join = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where éjoin = 1",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 1 -- comment",
+   "table": "t"
+  },
+  {
+   "sql": "/* c */ select * from t",
+   "table": null
+  },
+  {
+   "sql": "select /* c */ * from t",
+   "table": null
+  },
+  {
+   "sql": "select * from t /* c */",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = (select max(b) from u)",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where a = 1\nlimit 5",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t\n where a = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select\n*\nfrom\nt",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t",
+   "table": "t"
+  },
+  {
+   "sql": "select*fromt",
+   "table": null
+  },
+  {
+   "sql": "﻿select * from t",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t ",
+   "table": "t"
+  },
+  {
+   "sql": " select * from t",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where a = 1 limit 3",
+   "table": "t"
+  },
+  {
+   "sql": "SeLeCt * FrOm t WhErE a OrDeR bY a LiMiT 5 OfFsEt 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where a = 1 order by a limit 5 offset 1 ;",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t limit 5 offset 1 limit 2",
+   "table": null
+  },
+  {
+   "sql": "select * from t order by a order by b",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t where a where b",
+   "table": "t"
+  },
+  {
+   "sql": "",
+   "table": null
+  },
+  {
+   "sql": " ",
+   "table": null
+  },
+  {
+   "sql": ";",
+   "table": null
+  },
+  {
+   "sql": "select",
+   "table": null
+  },
+  {
+   "sql": "select *",
+   "table": null
+  },
+  {
+   "sql": "select * from",
+   "table": null
+  },
+  {
+   "sql": "select * from ",
+   "table": null
+  },
+  {
+   "sql": "select * from;",
+   "table": null
+  },
+  {
+   "sql": "insert into t values (1)",
+   "table": null
+  },
+  {
+   "sql": "delete from t",
+   "table": null
+  },
+  {
+   "sql": "drop table t",
+   "table": null
+  },
+  {
+   "sql": "with x as (select 1) select * from x",
+   "table": null
+  },
+  {
+   "sql": "select * from read_csv('x')",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 'x''y'",
+   "table": "t"
+  },
+  {
+   "sql": "select * from \"t\" where \"a\" = 1",
+   "table": "t"
+  },
+  {
+   "sql": "select * from \"T\" order by \"A\"",
+   "table": "T"
+  },
+  {
+   "sql": "describe select * from t",
+   "table": null
+  },
+  {
+   "sql": "explain select * from t",
+   "table": null
+  },
+  {
+   "sql": "from t",
+   "table": null
+  },
+  {
+   "sql": "select * from t tablesample 10",
+   "table": null
+  },
+  {
+   "sql": "select * from t qualify row_number() over () = 1",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 1 having b",
+   "table": "t"
+  },
+  {
+   "sql": "select * from t for update",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a like '%using%'",
+   "table": null
+  },
+  {
+   "sql": "select * from t where a = 'it''s using'",
+   "table": null
+  },
+  {
+   "sql": "select * from \"a b\" where \"c d\" = 1 order by \"e f\" limit 1",
+   "table": "a b"
+  },
+  {
+   "sql": "select * from \"line\nbreak\"",
+   "table": "line\nbreak"
+  },
+  {
+   "sql": "select * from \"tab\tname\"",
+   "table": "tab\tname"
+  },
+  {
+   "sql": "select * from \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"",
+   "table": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  {
+   "sql": "select * from t where a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and a = 1 and b = 2",
+   "table": "t"
+  }
+ ],
+ "reference": {
+  "source_commit": "59bc9e825f3424086593f9e8ab0e500af009b71d",
+  "source_sha256": {
+   "src/duckdbConnection.ts": "ac766c3a88a47136771e850be65c3044191229d51616d2bbb78b1ce2a3e2fead"
+  },
+  "bundle_sha256": "6190c9a24b2b27a06c634a73c39c5c387e84827f98aff6a4e96a9343b240da27"
+ }
+}

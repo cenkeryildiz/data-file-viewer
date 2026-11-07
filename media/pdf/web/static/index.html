@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF Studio</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- Title bar: Acrobat puts the document name centred, app identity at the left. -->
+<header id="titlebar">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" class="logo" aria-hidden="true">
+      <rect x="3" y="2" width="18" height="20" rx="2.5" fill="#EB1000"/>
+      <path d="M7.6 16.5V7.8h3.1c1.9 0 3 1 3 2.7s-1.1 2.8-3 2.8H9.4v3.2zm1.8-4.7h1.1c.9 0 1.4-.4 1.4-1.3s-.5-1.3-1.4-1.3H9.4z" fill="#fff"/>
+    </svg>
+    <span>PDF Studio</span>
+  </div>
+  <div id="docname" class="docname">—</div>
+  <div class="brandpad"></div>
+</header>
+
+<!-- Toolbar (UI-01). Fixed actions never move into a menu: panels, history,
+     the workspace switch, page navigation and zoom, Find, Comments and
+     Export. Each workspace's tools sit in #workspace-tools; what does not fit
+     moves into the labelled More menu (workspace.js measures it). Tools of the
+     other workspaces wait, hidden, in #workspace-parking. -->
+<div id="toolbar" role="toolbar" aria-label="Document tools">
+  <div class="tgroup fixed-group" id="panel-actions">
+    <button id="rail-toggle" class="tbtn panel on" title="Pages" aria-controls="sidebar" aria-expanded="true">
+      <svg viewBox="0 0 20 20"><rect x="2.5" y="2.5" width="6" height="6" rx="1"/><rect x="2.5" y="11.5" width="6" height="6" rx="1"/><rect x="11.5" y="2.5" width="6" height="6" rx="1"/><rect x="11.5" y="11.5" width="6" height="6" rx="1"/></svg>
+    </button>
+    <button id="outline-toggle" class="tbtn panel" title="Outline" aria-label="Outline" aria-controls="sidebar" aria-expanded="false">
+      <svg viewBox="0 0 20 20"><path d="M3 4h2v2H3zm4 0h10v2H7zM5 9h2v2H5zm4 0h8v2H9zm-4 5h2v2H5zm4 0h8v2H9z"/></svg>
+    </button>
+  </div>
+
+  <!-- Off until the server says there is something to undo or redo; the
+       tooltip names it (viewer.js, syncUndo). -->
+  <div class="tgroup fixed-group" id="history-actions">
+    <button id="undo" class="tbtn" title="Nothing to undo" disabled>
+      <svg viewBox="0 0 20 20"><path d="M8 3.5 2.5 8 8 12.5V9.2h4a3.4 3.4 0 0 1 0 6.8H9.5v1.8H12a5.2 5.2 0 0 0 0-10.4H8z"/></svg>
+    </button>
+    <button id="redo" class="tbtn" title="Nothing to redo" disabled>
+      <svg viewBox="0 0 20 20"><path d="M12 3.5 17.5 8 12 12.5V9.2H8a3.4 3.4 0 0 0 0 6.8h2.5v1.8H8a5.2 5.2 0 0 1 0-10.4h4z"/></svg>
+    </button>
+  </div>
+
+  <div class="tgroup fixed-group" id="workspace-tabs" role="group" aria-label="Workspace">
+    <button type="button" class="tbtn wtab" data-workspace-tab="read" aria-pressed="true">Read</button>
+    <button type="button" class="tbtn wtab" data-workspace-tab="annotate" aria-pressed="false">Annotate</button>
+    <button type="button" class="tbtn wtab" data-workspace-tab="edit" aria-pressed="false">Edit</button>
+    <button type="button" class="tbtn wtab" data-workspace-tab="organize" aria-pressed="false">Organize</button>
+  </div>
+
+  <div class="tspacer"></div>
+
+  <div class="tgroup zoom fixed-group">
+    <button id="zoom-out" class="tbtn" title="Zoom out">
+      <svg viewBox="0 0 20 20"><path d="M4 9h12v2H4z"/></svg>
+    </button>
+    <input id="zoomlbl" value="100%" type="text" inputmode="decimal" maxlength="8" aria-label="Zoom percentage" aria-describedby="navigation-error">
+    <button id="zoom-in" class="tbtn" title="Zoom in">
+      <svg viewBox="0 0 20 20"><path d="M9 4h2v5h5v2h-5v5H9v-5H4V9h5z"/></svg>
+    </button>
+  </div>
+
+  <div class="tgroup fixed-group" id="document-actions">
+    <!-- Highlights, underlines, strikeouts and notes, whoever made them. -->
+    <button id="notes-toggle" class="tbtn wide panel" title="Highlights, notes and comments" aria-controls="notes" aria-expanded="false">
+      <svg viewBox="0 0 20 20"><path d="M3 3.6h14v9.2h-7.2L6 17v-4.2H3z"/></svg>
+      <span>Comments</span>
+    </button>
+    <button id="export" class="tbtn primary" title="Export a copy">
+      <svg viewBox="0 0 20 20"><path d="M10 2l4.5 4.5-1.4 1.4L11 5.8V13H9V5.8L6.9 7.9 5.5 6.5zM3.5 15h13v2.5h-13z"/></svg>
+      <span>Export</span>
+    </button>
+  </div>
+
+  <div id="workspace-tools" role="group" aria-label="Workspace tools">
+    <div id="workspace-tools-bar"></div>
+    <button type="button" id="tools-more" class="tbtn wide" aria-label="More tools" aria-expanded="false" aria-controls="tools-more-list" aria-haspopup="true" hidden>More ▾</button>
+    <div id="tools-more-list" role="group" aria-label="More tools" hidden></div>
+  </div>
+
+  <div id="workspace-parking" hidden>
+    <button id="rot-l" class="tbtn" title="Rotate left" data-workspace="organize">
+      <svg viewBox="0 0 20 20"><path d="M10 5V2L5.5 5.5 10 9V6a5 5 0 1 1-5 5H3.5A6.5 6.5 0 1 0 10 5z"/></svg>
+    </button>
+    <button id="rot-r" class="tbtn" title="Rotate right" data-workspace="organize">
+      <svg viewBox="0 0 20 20"><path d="M10 5V2l4.5 3.5L10 9V6a5 5 0 1 0 5 5h1.5A6.5 6.5 0 1 1 10 5z"/></svg>
+    </button>
+    <button id="del" class="tbtn" title="Delete selected pages" data-workspace="organize">
+      <svg viewBox="0 0 20 20"><path d="M6 3h8v2h3v1.5H3V5h3zM5 8h10l-.8 9.2a1 1 0 0 1-1 .8H6.8a1 1 0 0 1-1-.8z"/></svg>
+    </button>
+    <button id="text-toggle" class="tbtn wide" title="Show and edit text" aria-pressed="false" data-workspace="edit">
+      <svg viewBox="0 0 20 20"><path d="M3 3h14v3.2h-1.6V4.6h-4.6v10.8h2V17H7.2v-1.6h2V4.6H4.6v1.6H3z"/></svg>
+      <span>Edit Text</span>
+    </button>
+    <!-- Replace a formula the PDF already draws: draw a box around it. -->
+    <button id="formula-toggle" class="tbtn wide" title="Replace a formula: draw a box around it" aria-pressed="false" data-workspace="edit">
+      <svg viewBox="0 0 20 20"><path d="M4.5 3h11v2.6h-1.6V4.6H7.4l4.2 5.4-4.2 5.4h6.5v-1h1.6V17h-11v-1.4L9.5 10 4.5 4.4z"/></svg>
+      <span>Replace Formula</span>
+    </button>
+    <!-- Bold, italic and text colour for the selected words (viewer.js, buildMarkGroup). -->
+    <div class="tgroup" id="stylegroup" aria-label="Style the selected text" data-workspace="edit"></div>
+    <!-- Marking up a document is not editing it, so these need no mode: drag
+         across words on any page and they light up. Filled in by viewer.js
+         (buildMarkGroup) because the highlight colours are the document's
+         own palette. -->
+    <div class="tgroup" id="markgroup" aria-label="Mark up the selected text" data-workspace="annotate"></div>
+  </div>
+</div>
+
+<div id="warnings"></div>
+
+<main>
+  <!-- One panel state for both sides (viewer.js, panel controller): docked,
+       collapsed by the layout, or an overlay drawer in narrow windows. -->
+  <aside id="sidebar" aria-label="Pages and outline">
+    <div class="sidebar-head">
+      <div id="sidebar-tabs" role="tablist" aria-label="Sidebar view">
+        <button type="button" id="sidebar-tab-pages" role="tab" aria-controls="pages-panel" aria-selected="true">Pages</button>
+        <button type="button" id="sidebar-tab-outline" role="tab" aria-controls="outline-panel" aria-selected="false" tabindex="-1">Outline</button>
+      </div>
+      <button type="button" id="sidebar-close" aria-label="Close sidebar" title="Close sidebar">×</button>
+    </div>
+    <div id="pages-panel" role="tabpanel" aria-labelledby="sidebar-tab-pages">
+      <div id="rail" aria-label="Page thumbnails"></div>
+    </div>
+    <div id="outline-panel" role="tabpanel" aria-labelledby="sidebar-tab-outline" hidden></div>
+  </aside>
+  <div id="sidebar-resize" class="panel-resize" role="separator" tabindex="0" aria-orientation="vertical"
+       aria-controls="sidebar" aria-label="Resize sidebar" aria-valuemin="160" aria-valuemax="300" aria-valuenow="192"></div>
+  <section id="stage" tabindex="0" aria-label="PDF document"><div id="pages"></div></section>
+  <div id="notes-resize" class="panel-resize panel-collapsed" role="separator" tabindex="0" aria-orientation="vertical"
+       aria-controls="notes" aria-label="Resize comments" aria-valuemin="260" aria-valuemax="420" aria-valuenow="304"></div>
+  <aside id="notes" class="hidden" aria-label="Comments" tabindex="-1"></aside>
+</main>
+
+<footer id="statusbar">
+  <span id="pageinfo">—</span>
+  <span class="ssep"></span>
+  <span id="editinfo">No edits</span>
+  <span class="ssep"></span>
+  <!-- Which build of viewer.js is loaded. A cached script is indistinguishable
+       from a broken feature without this. -->
+  <span id="build" class="build" title="Version of the viewer this page is running">—</span>
+  <div class="tspacer"></div>
+  <span id="safety" title="Every edit is verified before it is kept">
+    <svg viewBox="0 0 20 20" class="shield"><path d="M10 1.5l6.5 2.5v5c0 4-2.8 7.6-6.5 9-3.7-1.4-6.5-5-6.5-9V4z"/></svg>
+    Verified editing
+  </span>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/editorTransport.js"></script>
+<script src="/static/viewer.js"></script>
+<script src="/static/viewerInspector.js"></script>
+<script src="/static/viewerSearch.js"></script>
+<script src="/static/workspace.js"></script>
+<script src="/static/viewerOrganize.js"></script>
+<script src="/static/viewerDraftRecovery.js"></script>
+<script src="/static/viewerReading.js"></script>
+<script src="/static/viewerSelectionActions.js"></script>
+<script src="/static/outline.js"></script>
+</body>
+</html>

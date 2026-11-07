@@ -4,12 +4,13 @@ import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { DuckDBInstance } from '@duckdb/node-api';
-import { ViewerFile } from '../src/viewerFile';
+import { referenceBackend } from '../src/backend/reference';
+import type { DocumentFile } from '../src/backend/types';
 import { xlsxFile, sqliteFile, duckdbFile, parquetFile, arrowStreamFile, featherFile } from './stress/generators/_write';
 
 for (const format of ['csv', 'duckdb', 'xlsx', 'sqlite', 'parquet', 'arrows', 'feather']) test(`read/write handoff: ${format} saves exactly one row and keeps backup comparison`, async () => {
   const dir = await mkdtemp(join(tmpdir(), 'dfv-handoff-'));
-  let file: ViewerFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const path = join(dir, `data.${format}`);
     if (format === 'csv') await writeFile(path, 'id,value\n1,10\n2,20\n');
@@ -28,7 +29,7 @@ for (const format of ['csv', 'duckdb', 'xlsx', 'sqlite', 'parquet', 'arrows', 'f
       c.closeSync(); instance.closeSync();
     }
     const original = await readFile(path);
-    file = await ViewerFile.open(path);
+    file = await referenceBackend.open(path);
     let table = 'data';
     if (format === 'xlsx') {
       await file.runQuery('select * from data');
@@ -64,11 +65,11 @@ for (const format of ['csv', 'duckdb', 'xlsx', 'sqlite', 'parquet', 'arrows', 'f
 
 test('stale source refuses a save and preserves the replacement bytes', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'dfv-stale-'));
-  let file: ViewerFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const path = join(dir, 'data.csv');
     await writeFile(path, 'id,value\n1,10\n');
-    file = await ViewerFile.open(path);
+    file = await referenceBackend.open(path);
     await file.runQuery('select * from data');
     const replacement = 'id,value\n1,200\n2,300\n';
     await writeFile(path, replacement);
@@ -81,13 +82,13 @@ test('stale source refuses a save and preserves the replacement bytes', async ()
 
 test('paired-file grants remain exact and survive reader refresh', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dfv-pair-policy-'));
-  let file: ViewerFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const source = join(root, 'cold.duckdb'), sibling = join(root, 'hot.sqlite');
     const columns = [{ name: 'id', type: 'INTEGER' }, { name: 'value', type: 'INTEGER' }];
     await duckdbFile(source, [{ name: 'data', columns, rows: [[1, 10]] }]);
     await sqliteFile(sibling, [{ name: 'data', columns, rows: [[2, 20]] }]);
-    file = await ViewerFile.open(source, undefined, { siblingPath: sibling });
+    file = await referenceBackend.open(source, undefined, { siblingPath: sibling });
     const query = await file.buildCombinedQuery('data');
     assert.equal((await file.runQuery(query.sql)).rows.length, 2);
     await assert.rejects(file.runQuery(query.sql + ' '), /document|permitted|relation|catalog/i);

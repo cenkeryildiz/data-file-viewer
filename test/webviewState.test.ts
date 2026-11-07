@@ -5,6 +5,7 @@ import {
   type ExtensionMessage,
   type QueryResultFields,
   type WebviewState,
+  chooseWorksheet,
   initialState,
   reduce,
 } from '../src/webviewState';
@@ -139,8 +140,10 @@ test('an unchanged live tick updates the clock but does not re-render', () => {
 });
 
 test('the previewed worksheet name survives a query result and a live tick', () => {
-  const preview = fields({ sheetPreview: 'Raw_Data', sheetTables: [] });
-  const fresh = reduce(initialState(), { command: 'queryResult', ...preview });
+  // EX-02: the preview answers an explicit choice of that sheet.
+  const chosen = chooseWorksheet(initialState(), 'Raw_Data', 0, 0).state;
+  const preview = fields({ sheetPreview: 'Raw_Data', sheetTables: [], selectionSeq: chosen.selection.seq });
+  const fresh = reduce(chosen, { command: 'queryResult', ...preview });
   assert.equal(fresh.state.lastResult!.sheetPreview, 'Raw_Data');
   const ticked = reduce(fresh.state, { command: 'liveTick', lastUpdatedMs: 1, unchanged: false, result: preview });
   assert.equal(ticked.state.lastResult!.sheetPreview, 'Raw_Data');
@@ -163,6 +166,8 @@ test('an inline sheet-table result updates only that region, not the worksheet r
           headerRow: 3,
           columns: ['Date', 'Value'],
           columnStatsKind: ['other', 'numeric'],
+          dataRows: [{ start: 4, end: 8 }],
+          excludedRows: [],
           rowCount: 4,
         },
       ],

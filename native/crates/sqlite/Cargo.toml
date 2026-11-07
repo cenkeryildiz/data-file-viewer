@@ -1,0 +1,12 @@
+# D3.7 SQLite reads and identity. Standalone until the workspace adopts it; no path dependencies.
+[package]
+name = "dfv-table-sqlite"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+# Bundled SQLite keeps the engine independent of the system library the tests compare against.
+rusqlite = { version = "=0.40.2", features = ["bundled", "backup"] }

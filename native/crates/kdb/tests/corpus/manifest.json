@@ -1,0 +1,97 @@
+{
+ "files": {
+  "atoms.kdb": {
+   "bytes": 930,
+   "note": "every atom type 1..19 with null/infinity/extreme sentinels; UTF-8 symbols",
+   "sha256": "19b49e01c2cbcf6407b10c7d22c977257f8099e9481b07a4a81f536862817a97"
+  },
+  "compressed.kdb": {
+   "bytes": 3141,
+   "note": "q file compression (.z.zd), header 'kxzipped'",
+   "sha256": "e42193d8590dafbd3b0f6cf61b899330d1037ade52c8c84c0d139de7aeeff445"
+  },
+  "dict.kdb": {
+   "bytes": 35,
+   "note": "a dict, not a table",
+   "sha256": "7db648c62da4f01a449043b1fb12e8c08adf5bebfb260a5199be227c4deba372"
+  },
+  "empty_table.kdb": {
+   "bytes": 41,
+   "note": "zero rows, typed columns",
+   "sha256": "c26e807ac3467cfee7fc58e7d9c1a093e0d8e402a5b906baebde9da68d7589c0"
+  },
+  "enumerated.kdb": {
+   "bytes": 41,
+   "note": "enumerated symbol column (type 21) in a flat table",
+   "sha256": "e8093fdd237abeefeb8233618366a1a755a6d290d00dd57079bacb34fdaf1c68"
+  },
+  "general_lists.kdb": {
+   "bytes": 205,
+   "note": "general list columns: atoms of different types, typed vectors, empty lists",
+   "sha256": "9f9239d7de54f86b90f7665305a413b10a20e4a742743a3db1ea9d67d409fc4d"
+  },
+  "inf_datetime.kdb": {
+   "bytes": 33,
+   "note": "0wz does not fit i64 microseconds",
+   "sha256": "fdb7c55e6663456a491a1b2a570ed84d5aa6f2a483d89a7e2a9c5d456742a135"
+  },
+  "keyed_table.kdb": {
+   "bytes": 69,
+   "note": "keyed table (a dict of two tables)",
+   "sha256": "9aa7a5e7003c686967504bd11120532b7db19c0e99991810038d14da26929d28"
+  },
+  "lambda.kdb": {
+   "bytes": 15,
+   "note": "a function object",
+   "sha256": "492812417219c338fe8f0c9d0580d9e0b6afb8e6b74d91c21e07d15095a319f0"
+  },
+  "plain_list.kdb": {
+   "bytes": 40,
+   "note": "a vector: q writes it with a different (0xfe 0x20) header",
+   "sha256": "fd20720cf712daa8c6083e6613e60a6cae8d3738f1a528a6034e7a1b871d9fc1"
+  },
+  "random1500.kdb": {
+   "bytes": 141011,
+   "note": "1500 rows x 18 types, seeded random raw values with sentinels",
+   "sha256": "19701718e36272afe30923c74e059a1d2e13e79e9eea59359678d72e37e838d3"
+  },
+  "single_row.kdb": {
+   "bytes": 46,
+   "note": "one row",
+   "sha256": "1807ad95b8d33d3871722d9a38decdc2b3d8058834ab3aa9821747a958c2048f"
+  },
+  "splayed_a.kdb": {
+   "bytes": 40,
+   "note": "q splayed column/dir file a",
+   "sha256": "fd20720cf712daa8c6083e6613e60a6cae8d3738f1a528a6034e7a1b871d9fc1"
+  },
+  "splayed_d.kdb": {
+   "bytes": 12,
+   "note": "q splayed column/dir file .d",
+   "sha256": "c734b7e1f9d5d7116cd0e3a3326d4fc7d8d0bb83ce42b304240959717b8873f2"
+  },
+  "splayed_s.kdb": {
+   "bytes": 4120,
+   "note": "q splayed column/dir file s",
+   "sha256": "d870fc4d5084386202955aeb8e1c1f612511b9a903d6b57affcbc90c92b86417"
+  },
+  "symbol_atom.kdb": {
+   "bytes": 7,
+   "note": "an atom, not a table",
+   "sha256": "9e356b8c6351811a3af5ac2e5074013430f7a2865bb151eb359a93129e3958aa"
+  },
+  "utf8_char_column.kdb": {
+   "bytes": 60,
+   "note": "a char column holding UTF-8 bytes decodes to fewer code points than rows: refused, not misaligned",
+   "sha256": "2e0ef26930dd84ae69e9c186ae1f57d01ff15b867a430c291ae4fa5f361a305f"
+  },
+  "wide_names.kdb": {
+   "bytes": 124,
+   "note": "unusual column names",
+   "sha256": "b9d44ef18d007551ef53e30f0c238c618758dddf31d72598f508d04946a4ead4"
+  }
+ },
+ "generator": "generate_corpus.py",
+ "pykx": "4.2.0",
+ "q_release": "5f 2026.10.15"
+}

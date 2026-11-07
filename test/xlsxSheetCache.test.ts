@@ -5,7 +5,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { DuckDbFile } from '../src/duckdbConnection';
+import { groupQueryTargets } from '../src/queryTargetList';
 import { xlsxFile } from './stress/generators/_write';
+import { TRUTH, fixturePath, sha256File } from './xlsxCorpus';
 
 const drainedCache = new WeakMap<DuckDbFile, string[]>();
 
@@ -188,6 +190,8 @@ test('detected tables stay lazy until first use, so opening a sheet reads the wo
           headerRow: 0,
           columns: ['date', 'left'],
           columnStatsKind: ['other', 'numeric'],
+          dataRows: [{ start: 1, end: 3 }],
+          excludedRows: [],
           rowCount: 2,
         },
         {
@@ -200,6 +204,8 @@ test('detected tables stay lazy until first use, so opening a sheet reads the wo
           headerRow: 0,
           columns: ['date', 'right'],
           columnStatsKind: ['other', 'numeric'],
+          dataRows: [{ start: 1, end: 3 }],
+          excludedRows: [],
           rowCount: 2,
         },
       ]
@@ -356,3 +362,74 @@ test('detected-table blank and non-blank filters include empty spreadsheet cells
     rmSync(d, { recursive: true, force: true });
   }
 });
+
+/* ------------------------------------------------- EX-01 reproduced defects */
+
+// test/fixtures/xlsx-corpus/repeated.xlsx: Name/Value, Alice/1, blank,
+// Name/Value, Bob/2. The detector counts two data rows; the derived table
+// reads the whole rectangle. Ground truth: exactly Alice/1 and Bob/2.
+
+test('repeated header (real fixture): one table is detected with rowCount 2 and the source is untouched', async () => {
+  const path = fixturePath('repeated');
+  const before = sha256File(path);
+  const file = await DuckDbFile.open(path, undefined, { forceReadOnly: true });
+  try {
+    const table = await tableOf(file, 'Sheet');
+    const [meta] = file.getDetectedSheetTables('Sheet');
+    assert.equal(meta.name, table);
+    assert.equal(meta.rowCount, 2);
+    const bob = await file.runDetectedTableQuery(table, [{ column: 'Name', operator: 'equals', value: 'Bob' }]);
+    assert.deepEqual(bob.rows.map((r) => [r[0], Number(r[1])]), [['Bob', 2]]);
+  } finally {
+    await file.dispose();
+  }
+  assert.equal(sha256File(path), before);
+});
+
+test(
+  'repeated header (real fixture): the derived table holds exactly the logical rows',
+  async () => {
+    const want = TRUTH.fixtures.repeated.tables[0].rows;
+    const file = await DuckDbFile.open(fixturePath('repeated'), undefined, { forceReadOnly: true });
+    try {
+      const table = await tableOf(file, 'Sheet');
+      const all = await file.runDetectedTableQuery(table);
+      assert.equal(all.totalRows, want.length);
+      assert.deepEqual(all.rows.map((r) => [r[0], r[1] === null ? null : Number(r[1])]), want);
+      const stats = file.getDetectedSheetTables('Sheet')[0].columnStatsKind;
+      assert.deepEqual(stats, ['other', 'numeric'], 'the repeated header text turned Value non-numeric');
+    } finally {
+      await file.dispose();
+    }
+  }
+);
+
+// test/fixtures/xlsx-corpus/two-sheet.xlsx through the real query catalog. The
+// browser probe delivered a current-generation catalog without Raw_Data's raw
+// entry and the picker listed ZOther's table (picker-missing-raw.png).
+
+async function twoSheetTargets() {
+  const file = await DuckDbFile.open(fixturePath('two-sheet'), undefined, { forceReadOnly: true });
+  try {
+    await tableOf(file, 'Raw_Data');
+    await tableOf(file, 'ZOther');
+    return (await file.getQueryCatalog()).map((r) => ({ ...r, id: r.name, generation: 1 }));
+  } finally {
+    await file.dispose();
+  }
+}
+
+test('real catalog with every raw entry: the Raw_Data picker lists Raw_Data only', async () => {
+  const targets = await twoSheetTargets();
+  const ids = groupQueryTargets(targets, 'Raw_Data').flatMap((g) => g.options.map((o) => o.id));
+  assert.deepEqual(ids, ['Raw_Data', 'Raw_Data · Table 1']);
+});
+
+test(
+  'real catalog missing the open sheet\'s raw entry: no other sheet\'s table is offered',
+  async () => {
+    const targets = (await twoSheetTargets()).filter((t) => !(t.rawWorksheet && t.name === 'Raw_Data'));
+    const ids = groupQueryTargets(targets, 'Raw_Data').flatMap((g) => g.options.map((o) => o.id));
+    assert.ok(!ids.some((id) => id.startsWith('ZOther')), `foreign options: ${ids.join(', ')}`);
+  }
+);

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/mutation-receipt.v1.schema.json",
+  "title": "Mutation receipt",
+  "$comment": "Returned only when a write completed or was reconciled as published. Every failure is an error with mutation_outcome instead. No mutation is retried or replayed automatically.",
+  "x-dfv-version": 1,
+  "type": "object",
+  "properties": {
+    "operation": {
+      "enum": [
+        "updateCell",
+        "createBackup"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "published",
+        "no_match"
+      ]
+    },
+    "rows_changed": {
+      "$ref": "common.v1.schema.json#/$defs/uint64Text"
+    },
+    "source_before": {
+      "$ref": "source-identity.v1.schema.json"
+    },
+    "source_after": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "source-identity.v1.schema.json"
+        }
+      ]
+    },
+    "backup_path": {
+      "type": "string"
+    },
+    "cell": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,3}[1-9][0-9]{0,6}$"
+    },
+    "reconciled": {
+      "type": "boolean"
+    },
+    "directory_sync": {
+      "enum": [
+        "synced",
+        "unsupported",
+        "failed"
+      ]
+    },
+    "recovered": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              "stage",
+              "lock"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "published",
+              "not-published",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "notices": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "operation",
+    "outcome",
+    "rows_changed",
+    "source_before",
+    "source_after",
+    "reconciled",
+    "directory_sync",
+    "recovered",
+    "notices"
+  ],
+  "additionalProperties": false
+}

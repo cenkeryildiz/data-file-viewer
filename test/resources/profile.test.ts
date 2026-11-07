@@ -130,7 +130,7 @@ test('PROFILE: every format, end to end and by stage', async () => {
   assert.ok(existsSync(join(profileDir, 'wide.csv')), 'build the corpus first: conda run -n myproject python test/resources/build_profile_corpus.py');
   const dir = await mkdtemp(join(tmpdir(), 'dfv-profile-'));
   const user = join(homedir(), 'Desktop', 'scatter', 'YieldCurve_Data.xlsx');
-  const userHash = existsSync(user) ? await sha(user) : undefined;
+  const userHash = process.env.DFV_BASELINE_SYNTHETIC !== '1' && existsSync(user) ? await sha(user) : undefined;
   try {
     const copy = async (p: string) => { const d = join(dir, basename(p)); await copyFile(p, d); return d; };
     const wideBook = await xlsxFile(join(dir, 'fifty.xlsx'), Array.from({ length: 50 }, (_, s) => ({

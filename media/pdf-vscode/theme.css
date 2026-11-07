@@ -1,0 +1,59 @@
+/* VS Code owns the chrome theme; PDF page pixels and overlays keep their colours. */
+:root:has(body.vscode-light),
+:root:has(body.vscode-dark),
+:root:has(body.vscode-high-contrast),
+:root:has(body.vscode-high-contrast-light) {
+  --chrome: var(--vscode-sideBar-background, #252526);
+  --chrome-2: var(--vscode-editorWidget-background, var(--chrome));
+  --title: var(--vscode-editorGroupHeader-tabsBackground, var(--chrome));
+  --hover: var(--vscode-toolbar-hoverBackground, color-mix(in srgb, var(--ink) 7%, var(--chrome)));
+  --pressed: var(--vscode-toolbar-activeBackground, color-mix(in srgb, var(--ink) 12%, var(--chrome)));
+  --panel-on: var(--vscode-list-inactiveSelectionBackground, color-mix(in srgb, var(--ink) 10%, var(--chrome)));
+  --well: var(--vscode-editor-background, var(--chrome));
+  --well-edge: var(--vscode-panel-border, color-mix(in srgb, var(--ink) 25%, var(--chrome)));
+  --line: var(--vscode-panel-border, color-mix(in srgb, var(--ink) 25%, var(--chrome)));
+  --line-soft: var(--vscode-widget-border, var(--line));
+  --control-line: var(--vscode-input-border, var(--vscode-contrastBorder, #858d99));
+  --ink: var(--vscode-foreground, #cccccc);
+  --ink-dim: var(--vscode-descriptionForeground, #b0b0b0);
+  --ink-disabled: var(--vscode-disabledForeground, #858585);
+  --disabled-bg: var(--vscode-editorWidget-background, #252526);
+  --accent: var(--vscode-button-background, #0e639c);
+  --accent-dk: var(--vscode-button-hoverBackground, #1177bb);
+  --on-accent: var(--vscode-button-foreground, #ffffff);
+  --accent-soft: var(--vscode-list-activeSelectionBackground, #094771);
+  --accent-strong: var(--vscode-list-activeSelectionForeground, #ffffff);
+  --accent-line: var(--vscode-focusBorder, #007fd4);
+  --focus: var(--vscode-focusBorder, #007fd4);
+  --ok: var(--ink); /* the standalone dark green is 1.6:1 on a light VS Code chrome */
+  --ok-soft: var(--chrome);
+  --ok-line: var(--ok);
+  --warn: var(--vscode-inputValidation-warningForeground, var(--vscode-foreground, #cccccc));
+  --warn-soft: var(--vscode-inputValidation-warningBackground, var(--chrome));
+  --warn-line: var(--vscode-inputValidation-warningBorder, var(--warn));
+  --warn-ink: var(--vscode-inputValidation-warningForeground, var(--vscode-foreground, #cccccc));
+  --danger: var(--vscode-errorForeground, var(--vscode-foreground, #cccccc));
+  --danger-soft: var(--vscode-inputValidation-errorBackground, var(--chrome));
+  --danger-line: var(--vscode-inputValidation-errorBorder, var(--danger));
+  --field-paper: var(--vscode-input-background, var(--chrome-2));
+  --field-ink: var(--vscode-input-foreground, var(--ink));
+  --font-ui: var(--vscode-font-family, system-ui, sans-serif);
+  --font-mono: var(--vscode-editor-font-family, monospace);
+}
+
+body.vscode-light, body.vscode-high-contrast-light { color-scheme: light; }
+body.vscode-dark, body.vscode-high-contrast { color-scheme: dark; }
+
+/* The standalone viewer's theme picker cannot change the host's theme. */
+body[class*="vscode-"] #theme { display: none; }
+
+body[class*="vscode-"] .tbtn,
+body[class*="vscode-"] #sidebar-tabs [role="tab"] {
+  border-color: var(--vscode-contrastBorder, transparent);
+}
+
+/* Keep selected states distinct from ordinary high-contrast control borders. */
+body[class*="vscode-"] .tbtn.on,
+body[class*="vscode-"] .wtab[aria-pressed="true"] {
+  border-color: var(--accent-line);
+}

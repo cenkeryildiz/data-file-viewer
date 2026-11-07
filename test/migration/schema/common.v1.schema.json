@@ -1,0 +1,769 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/common.v1.schema.json",
+  "title": "DFV table protocol v1 common definitions",
+  "$comment": "Closed set: every $ref in this directory resolves to a file in this directory. No TypeScript or Python types are required to consume it.",
+  "x-dfv-version": 1,
+  "$defs": {
+    "int8Text": {
+      "type": "string",
+      "pattern": "^(?:0|-?[1-9][0-9]*)$",
+      "maxLength": 4,
+      "$comment": "Canonical decimal text of a int8; range is checked by the decoder."
+    },
+    "int8": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "int8"
+        },
+        "v": {
+          "$ref": "#/$defs/int8Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "int16Text": {
+      "type": "string",
+      "pattern": "^(?:0|-?[1-9][0-9]*)$",
+      "maxLength": 6,
+      "$comment": "Canonical decimal text of a int16; range is checked by the decoder."
+    },
+    "int16": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "int16"
+        },
+        "v": {
+          "$ref": "#/$defs/int16Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "int32Text": {
+      "type": "string",
+      "pattern": "^(?:0|-?[1-9][0-9]*)$",
+      "maxLength": 11,
+      "$comment": "Canonical decimal text of a int32; range is checked by the decoder."
+    },
+    "int32": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "int32"
+        },
+        "v": {
+          "$ref": "#/$defs/int32Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "int64Text": {
+      "type": "string",
+      "pattern": "^(?:0|-?[1-9][0-9]*)$",
+      "maxLength": 20,
+      "$comment": "Canonical decimal text of a int64; range is checked by the decoder."
+    },
+    "int64": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "int64"
+        },
+        "v": {
+          "$ref": "#/$defs/int64Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "int128Text": {
+      "type": "string",
+      "pattern": "^(?:0|-?[1-9][0-9]*)$",
+      "maxLength": 40,
+      "$comment": "Canonical decimal text of a int128; range is checked by the decoder."
+    },
+    "int128": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "int128"
+        },
+        "v": {
+          "$ref": "#/$defs/int128Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "uint8Text": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)$",
+      "maxLength": 3,
+      "$comment": "Canonical decimal text of a uint8; range is checked by the decoder."
+    },
+    "uint8": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "uint8"
+        },
+        "v": {
+          "$ref": "#/$defs/uint8Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "uint16Text": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)$",
+      "maxLength": 5,
+      "$comment": "Canonical decimal text of a uint16; range is checked by the decoder."
+    },
+    "uint16": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "uint16"
+        },
+        "v": {
+          "$ref": "#/$defs/uint16Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "uint32Text": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)$",
+      "maxLength": 10,
+      "$comment": "Canonical decimal text of a uint32; range is checked by the decoder."
+    },
+    "uint32": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "uint32"
+        },
+        "v": {
+          "$ref": "#/$defs/uint32Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "uint64Text": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)$",
+      "maxLength": 20,
+      "$comment": "Canonical decimal text of a uint64 (sizes, counts, offsets, ids). Range is checked by the decoder."
+    },
+    "uint64": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "uint64"
+        },
+        "v": {
+          "$ref": "#/$defs/uint64Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "uint128Text": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)$",
+      "maxLength": 39,
+      "$comment": "Canonical decimal text of a uint128; range is checked by the decoder."
+    },
+    "uint128": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "uint128"
+        },
+        "v": {
+          "$ref": "#/$defs/uint128Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "floatText": {
+      "type": "string",
+      "pattern": "^(?:NaN|Infinity|-Infinity|-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:e[-+][0-9]+)?)$",
+      "$comment": "Shortest round-trip text; NaN, Infinity, -Infinity and -0 are explicit."
+    },
+    "float32": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "float32"
+        },
+        "v": {
+          "$ref": "#/$defs/floatText"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "float64": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "float64"
+        },
+        "v": {
+          "$ref": "#/$defs/floatText"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "decimal": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "decimal"
+        },
+        "v": {
+          "type": "string",
+          "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$",
+          "maxLength": 41
+        },
+        "precision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 38
+        },
+        "scale": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 38
+        }
+      },
+      "required": [
+        "$t",
+        "v",
+        "precision",
+        "scale"
+      ],
+      "additionalProperties": false,
+      "$comment": "Exact decimal text with exactly `scale` fraction digits and at most `precision` significant digits (decoder-checked). Negative zero is malformed."
+    },
+    "timeUnit": {
+      "enum": [
+        "s",
+        "ms",
+        "us",
+        "ns"
+      ]
+    },
+    "timezone": {
+      "oneOf": [
+        {
+          "type": "null",
+          "$comment": "Naive wall-clock value with no zone."
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:UTC|[+-](?:0[0-9]|1[0-4]):[0-5][0-9]|[A-Za-z]+(?:/[A-Za-z0-9_+-]+)+)$"
+        }
+      ]
+    },
+    "date": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "date"
+        },
+        "v": {
+          "$ref": "#/$defs/int32Text"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false,
+      "$comment": "Days since 1970-01-01 (proleptic Gregorian)."
+    },
+    "time": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "time"
+        },
+        "v": {
+          "$ref": "#/$defs/int64Text"
+        },
+        "unit": {
+          "$ref": "#/$defs/timeUnit"
+        }
+      },
+      "required": [
+        "$t",
+        "v",
+        "unit"
+      ],
+      "additionalProperties": false,
+      "$comment": "Count of `unit` since midnight."
+    },
+    "timestamp": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "timestamp"
+        },
+        "v": {
+          "$ref": "#/$defs/int64Text"
+        },
+        "unit": {
+          "$ref": "#/$defs/timeUnit"
+        },
+        "tz": {
+          "$ref": "#/$defs/timezone"
+        }
+      },
+      "required": [
+        "$t",
+        "v",
+        "unit",
+        "tz"
+      ],
+      "additionalProperties": false,
+      "$comment": "Count of `unit` since 1970-01-01T00:00:00 in `tz`; tz is required and null means naive."
+    },
+    "interval": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "interval"
+        },
+        "months": {
+          "$ref": "#/$defs/int32Text"
+        },
+        "days": {
+          "$ref": "#/$defs/int32Text"
+        },
+        "nanos": {
+          "$ref": "#/$defs/int64Text"
+        }
+      },
+      "required": [
+        "$t",
+        "months",
+        "days",
+        "nanos"
+      ],
+      "additionalProperties": false
+    },
+    "binary": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "binary"
+        },
+        "encoding": {
+          "const": "base64"
+        },
+        "v": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+        }
+      },
+      "required": [
+        "$t",
+        "encoding",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "uuid": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "uuid"
+        },
+        "v": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "list": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "list"
+        },
+        "v": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/value"
+          }
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "struct": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "struct"
+        },
+        "v": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/value"
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2,
+            "items": false
+          }
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false,
+      "$comment": "Ordered [name, value] pairs; duplicate names are malformed (decoder-checked)."
+    },
+    "map": {
+      "type": "object",
+      "properties": {
+        "$t": {
+          "const": "map"
+        },
+        "v": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "$ref": "#/$defs/value"
+              },
+              {
+                "$ref": "#/$defs/value"
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2,
+            "items": false
+          }
+        }
+      },
+      "required": [
+        "$t",
+        "v"
+      ],
+      "additionalProperties": false
+    },
+    "value": {
+      "$comment": "JSON null/boolean/string are SQL null/boolean/text and stay distinct; every other value is tagged. Bare numbers, arrays and untagged objects are malformed.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/int8"
+        },
+        {
+          "$ref": "#/$defs/int16"
+        },
+        {
+          "$ref": "#/$defs/int32"
+        },
+        {
+          "$ref": "#/$defs/int64"
+        },
+        {
+          "$ref": "#/$defs/int128"
+        },
+        {
+          "$ref": "#/$defs/uint8"
+        },
+        {
+          "$ref": "#/$defs/uint16"
+        },
+        {
+          "$ref": "#/$defs/uint32"
+        },
+        {
+          "$ref": "#/$defs/uint64"
+        },
+        {
+          "$ref": "#/$defs/uint128"
+        },
+        {
+          "$ref": "#/$defs/float32"
+        },
+        {
+          "$ref": "#/$defs/float64"
+        },
+        {
+          "$ref": "#/$defs/decimal"
+        },
+        {
+          "$ref": "#/$defs/date"
+        },
+        {
+          "$ref": "#/$defs/time"
+        },
+        {
+          "$ref": "#/$defs/timestamp"
+        },
+        {
+          "$ref": "#/$defs/interval"
+        },
+        {
+          "$ref": "#/$defs/binary"
+        },
+        {
+          "$ref": "#/$defs/uuid"
+        },
+        {
+          "$ref": "#/$defs/list"
+        },
+        {
+          "$ref": "#/$defs/struct"
+        },
+        {
+          "$ref": "#/$defs/map"
+        }
+      ]
+    },
+    "columnType": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "enum": [
+            "null",
+            "bool",
+            "utf8",
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "int128",
+            "uint8",
+            "uint16",
+            "uint32",
+            "uint64",
+            "uint128",
+            "float32",
+            "float64",
+            "decimal",
+            "date",
+            "time",
+            "timestamp",
+            "interval",
+            "binary",
+            "uuid",
+            "list",
+            "struct",
+            "map"
+          ]
+        },
+        "precision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 38
+        },
+        "scale": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 38
+        },
+        "unit": {
+          "$ref": "#/$defs/timeUnit"
+        },
+        "tz": {
+          "$ref": "#/$defs/timezone"
+        },
+        "child": {
+          "$ref": "#/$defs/columnType"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/$defs/columnType"
+              }
+            },
+            "required": [
+              "name",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "key": {
+          "$ref": "#/$defs/columnType"
+        },
+        "value": {
+          "$ref": "#/$defs/columnType"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "$comment": "decimal requires precision+scale; time requires unit; timestamp requires unit+tz; list requires child; struct requires fields; map requires key+value (decoder-checked)."
+    },
+    "dictionary": {
+      "type": "object",
+      "properties": {
+        "index_type": {
+          "enum": [
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "uint64"
+          ]
+        },
+        "ordered": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "index_type",
+        "ordered"
+      ],
+      "additionalProperties": false,
+      "$comment": "Arrow dictionary encoding of the column; row values are still the decoded value type, never dictionary indices."
+    },
+    "column": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/columnType"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "source_type": {
+          "type": "string",
+          "$comment": "Engine/storage type as declared, e.g. BIGINT, DECIMAL(18,4), SQLite storage class or undeclared."
+        },
+        "stats_kind": {
+          "enum": [
+            "numeric",
+            "datetime",
+            "other"
+          ]
+        },
+        "dictionary": {
+          "$ref": "#/$defs/dictionary"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "nullable",
+        "source_type"
+      ],
+      "additionalProperties": false
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "fileKind": {
+      "enum": [
+        "duckdb",
+        "parquet",
+        "sqlite",
+        "csv",
+        "dta",
+        "arrow",
+        "feather",
+        "xlsx",
+        "kdb"
+      ]
+    },
+    "protocol": {
+      "const": "dfv-table"
+    },
+    "version": {
+      "const": 1
+    }
+  }
+}

@@ -1,0 +1,355 @@
+{
+  "schema": "dfv-qualifications.v1",
+  "scope": "first full-DFV macOS arm64 VSIX, retained qualified PDF MVP; full deferred PDF parity and user-excluded MOD-04 archive are excluded",
+  "authority": "Projects/PDF_VIEWER_RESEARCH.md#first-vsix-delivery-plan in Kod owns acceptance/evidence; FIRST_VSIX_PLAN.md is compatibility redirect",
+  "environment": {
+    "rust": "1.99.1-aarch64-apple-darwin",
+    "cargo": "offline locked -j2, corrected path remaps from scripts/stage-vsix.sh, owned fresh target",
+    "python": "DFV_REF_PYTHON and DFV_FIXTURE_PYTHON point to myproject; oracle/fixture creation only",
+    "workers": "DFV_TABLE_WORKER, DFV_MAT_WORKER, DFV_PDF_BIN explicit pinned actual executables; DFV_MAT_FIXTURE names native_v7.mat",
+    "state": "0700 task-private TMPDIR and DFV_TABLE_STATE_DIR; synthetic or committed fixtures only",
+    "serialization": "every heavy group requires the shared heavy-test lock; run each group once, not once per qualification"
+  },
+  "groups": {
+    "native_default": {
+      "cwd": ".",
+      "command": "cargo test --manifest-path native/Cargo.toml --release --workspace --offline --locked -j2",
+      "state": "verified: 541 passed, zero failed/ignored from empty release target"
+    },
+    "native_faults": {
+      "cwd": ".",
+      "command": "cargo test --manifest-path native/Cargo.toml --release --workspace --offline --locked -j2 --features dfv-table/test-doc,dfv-table-engine/test-detection-failure,dfv-table-db-write/test-mutations",
+      "state": "verified: 607 passed, zero failed/ignored; feature-only target never packaged",
+      "note": "test-only features; retain default workers before this build and never package these binaries"
+    },
+    "ui_units": {
+      "cwd": ".",
+      "command": "npx --no-install tsc -p tsconfig.test.json && node --test --test-concurrency=2 \"out-test/test/*.test.js\"",
+      "state": "verified: 1190 passed, 0 failed, 43 explicit skips, 9 reference-only TODOs; feature-only gaps covered separately"
+    },
+    "native_security": {
+      "cwd": ".",
+      "command": "DFV_SECURITY_BACKEND=native node --test out-test/test/securityMatrix.test.js",
+      "state": "verified within full UI run with DFV_SECURITY_BACKEND=native"
+    },
+    "native_mutation_recovery": {
+      "cwd": ".",
+      "command": "DFV_TEST_MUTATION_RECOVERY=1 node --test out-test/test/nativeMutationRecovery.test.js",
+      "state": "verified: combined actual recovery/test-doc/adapter gate 26/26, no skips; six SIGKILL/outcome scenarios",
+      "note": "explicit test-mutations worker required"
+    },
+    "native_browser": {
+      "cwd": ".",
+      "command": "npm run test:browser:native",
+      "state": "verified: real native plot/range/axis and EX07 narrow/state gates"
+    },
+    "native_host": {
+      "cwd": ".",
+      "command": "npm run test:host:native && node test/host/sqlWorkflow.cjs && node test/host/ex02Selection.cjs && node test/host/mixedIsolation.cjs && node test/host/matLifecycle.cjs",
+      "state": "verified: native host scripts plus SQL/EX02/mixed isolation/MAT lifecycle/viewer, disposable profiles, actual pinned release workers",
+      "note": "DFV_EXTENSION_DEVELOPMENT_PATH must name this snapshot; disposable profiles only"
+    },
+    "pdf_pin": {
+      "cwd": ".",
+      "command": "node --test test/pdfMvpPin.test.cjs && npm run build",
+      "state": "verified: build pin and 3 refusal tests"
+    },
+    "resource_limits": {
+      "cwd": ".",
+      "command": "DFV_NATIVE_RESOURCES=1 DFV_NATIVE_RESOURCE_PHASE=limits node --test out-test/test/nativeResources.test.js",
+      "state": "verified on release table/MAT + pinned PDF; 50-cycle delta -7.05 MiB, scratch empty"
+    },
+    "resource_seven": {
+      "cwd": ".",
+      "command": "DFV_NATIVE_RESOURCES=1 DFV_NATIVE_RESOURCE_PHASE=seven-document node --test out-test/test/nativeResources.test.js",
+      "state": "verified: 20 rounds, sampled native peak 515.5625 MiB vs 2048, no source change/orphans"
+    },
+    "mixed_soak": {
+      "cwd": ".",
+      "command": "DFV_NATIVE_RESOURCES=1 DFV_NATIVE_RESOURCE_PHASE=soak DFV_SOAK_SECONDS=1800 node --test out-test/test/nativeResources.test.js",
+      "state": "verified: full1800.35seconds,6052cycles,1008verifiededits,1513reopens,table7/PDF4/MAT2kills; plateau/integrity/noorphan pass"
+    },
+    "package": {
+      "cwd": ".",
+      "command": "DFV_NATIVE_DIR=\"$PWD/native\" DFV_WORKER_DIR=\"$DFV_DEFAULT_WORKERS\" scripts/stage-vsix.sh package \"$DFV_VSIX\"",
+      "state": "verified: final0.0.21/darwin-arm64,1326files,32728486bytes, exact runtime pins/notices/target/archive checks"
+    },
+    "packaged_workflows": {
+      "cwd": ".",
+      "command": "DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostRefusals.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostRange.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostPlot.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostLifecycle.cjs && DFV_MAT_ISOLATION=1 DFV_VSIX=\"$DFV_VSIX\" node test/host/matViewer.cjs; table format and PDF installed scripts additionally required",
+      "state": "verified: native suites/all11table formats/MAT/PDF editing-export-recovery/final fresh installed smoke; user trackpad smooth",
+      "note": "MAT host runner accepts DFV_VSIX, clears development/backend/worker overrides, installs only in disposable profile and asserts installed worker paths; remaining table/PDF installed workflows run separately before credit"
+    }
+  },
+  "qualifications": [
+    {
+      "id": "D3.1-D3.3",
+      "requirement": "framing, scheduler, cancellation, resource ownership",
+      "groups": [
+        "native_default",
+        "native_faults",
+        "ui_units"
+      ],
+      "paths": [
+        "native/crates/protocol/tests",
+        "native/crates/dfv-table/tests",
+        "test/nativeBackend.test.ts"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.4-D3.5",
+      "requirement": "restricted SQL, exact values, queries and operation inventory",
+      "groups": [
+        "native_default",
+        "native_security",
+        "ui_units"
+      ],
+      "paths": [
+        "native/crates/duckdb-query/tests",
+        "test/nativeOperationCoverage.test.ts",
+        "test/securityMatrix.test.ts"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.6",
+      "requirement": "CSV and Parquet source/type fidelity and refusals",
+      "groups": [
+        "native_default"
+      ],
+      "paths": [
+        "native/crates/duckdb-query/tests/csv_differential.rs",
+        "native/crates/duckdb-query/tests/parquet_differential.rs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.7",
+      "requirement": "SQLite standalone and sidecar/source refusals",
+      "groups": [
+        "native_default"
+      ],
+      "paths": [
+        "native/crates/sqlite/tests"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.8,EX04-EX06,SAFE-X4",
+      "requirement": "XLSX raw coordinates, lazy detection, declared/manual tables, ZIP budgets",
+      "groups": [
+        "native_default",
+        "native_faults",
+        "ui_units",
+        "native_browser",
+        "native_host"
+      ],
+      "paths": [
+        "native/crates/xlsx/tests",
+        "native/crates/xlsx-ops/tests/operations.rs",
+        "test/nativeSheetPerformance.test.ts",
+        "test/nativeRangeCap.test.ts"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.9-D3.11",
+      "requirement": "Arrow IPC, DTA and kdb fidelity/hostile formats/read-only guarantees",
+      "groups": [
+        "native_default",
+        "ui_units"
+      ],
+      "paths": [
+        "native/crates/arrow-ipc/tests",
+        "native/crates/dta/tests",
+        "native/crates/kdb/tests",
+        "native/crates/table/tests/format_routes.rs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.12-D3.13",
+      "requirement": "publication and backup/diff integrity and truthful outcomes",
+      "groups": [
+        "native_default",
+        "native_faults",
+        "native_mutation_recovery"
+      ],
+      "paths": [
+        "native/crates/publication/tests/publication.rs",
+        "native/crates/backup-diff/tests",
+        "test/nativeMutationRecovery.test.ts"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.14",
+      "requirement": "DuckDB and SQLite exact intended-cell writes",
+      "groups": [
+        "native_default",
+        "native_faults"
+      ],
+      "paths": [
+        "native/crates/db-write/tests",
+        "native/crates/table/tests/write_routes.rs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.15",
+      "requirement": "CSV, Parquet and Arrow intended-cell writes and external readback",
+      "groups": [
+        "native_default"
+      ],
+      "paths": [
+        "native/crates/csv-write/tests",
+        "native/crates/parquet-write/tests",
+        "native/crates/arrow-write/tests",
+        "native/crates/table/tests/format_write_routes.rs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.16,SAFE-X2,SAFE-X3",
+      "requirement": "XLSX intended-member publication, repeated edits and independent readback",
+      "groups": [
+        "native_default",
+        "native_faults",
+        "native_host"
+      ],
+      "paths": [
+        "native/crates/xlsx-patch/tests",
+        "native/crates/table/tests/xlsx_edit_cycle.rs",
+        "test/host/nativeHostLifecycle.cjs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D3.17-D3.18,SQL-RANGE-01,PLOT02-PLOT03",
+      "requirement": "complete host/native operations, stable exact ranges and real chart canvas",
+      "groups": [
+        "ui_units",
+        "native_browser",
+        "native_host"
+      ],
+      "paths": [
+        "test/nativeOperationCoverage.test.ts",
+        "test/nativeProvider.test.ts",
+        "test/browser/nativePlot.cjs",
+        "test/host/nativeHostRange.cjs",
+        "test/host/nativeHostPlot.cjs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "MOD03,MOD05",
+      "requirement": "independent data-only initialization and protocol mismatch refusal",
+      "groups": [
+        "ui_units",
+        "native_default"
+      ],
+      "paths": [
+        "test/nativeDefault.test.ts",
+        "native/crates/dfv-mat/tests/worker.rs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D6.7-D6.9,V-MAT1",
+      "requirement": "MAT bounded codec, worker and read-only viewer",
+      "groups": [
+        "native_default",
+        "ui_units",
+        "native_host"
+      ],
+      "paths": [
+        "native/crates/mat/tests",
+        "native/crates/dfv-mat/tests",
+        "test/matViewer.test.ts",
+        "test/matLifecycle.test.ts",
+        "test/host/matLifecycle.cjs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D6.1-D6.2",
+      "requirement": "aggregate supervision, feature isolation, admission and resource budgets",
+      "groups": [
+        "ui_units",
+        "native_host",
+        "resource_limits",
+        "resource_seven"
+      ],
+      "paths": [
+        "test/nativeSupervisor.test.ts",
+        "test/nativeResources.test.ts",
+        "native/resource-policy.json"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "V11,V20 retained PDF MVP",
+      "requirement": "pinned qualified PDF worker and edit/export/recovery regression, excludes deferred full parity",
+      "groups": [
+        "pdf_pin",
+        "ui_units",
+        "native_host"
+      ],
+      "paths": [
+        "native/pdf-mvp-assets.json",
+        "test/pdfHost.test.ts",
+        "test/pdfHostFailure.test.ts",
+        "test/pdfBackup.test.ts",
+        "test/host/pdfUiHost.cjs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D6.10,V21",
+      "requirement": "full 30-minute seven-document soak, class kills, independent integrity and plateau",
+      "groups": [
+        "mixed_soak"
+      ],
+      "paths": [
+        "test/nativeResources.test.ts"
+      ],
+      "state": "verified: full1800-second gate passed"
+    },
+    {
+      "id": "D7.0,V22,EX07",
+      "requirement": "narrow/theme/keyboard and 100-switch UI; physical input separately manual",
+      "groups": [
+        "native_browser",
+        "native_host"
+      ],
+      "paths": [
+        "test/browser/ex07Narrow.cjs",
+        "test/browser/ex07States.cjs",
+        "test/host/ex07Host.cjs",
+        "test/host/pdfUiHost.cjs"
+      ],
+      "state": "verified: V20/V22 fresh-candidate evidence recorded in authoritative plan; installed package qualification remains separate"
+    },
+    {
+      "id": "D7.1-D7.4,V23",
+      "requirement": "native release workers, assets/licences, offline installed-profile workflows",
+      "groups": [
+        "package",
+        "packaged_workflows"
+      ],
+      "paths": [
+        "scripts/stage-vsix.sh",
+        "scripts/third_party_licenses.py",
+        "test/package.cjs",
+        "test/vsix_smoke"
+      ],
+      "state": "verified: all package and installed gates, manual user check complete"
+    }
+  ],
+  "manual_pending": [],
+  "completion": "V24 source/release remote readback pending; no real-profile installation by agent",
+  "manual_verified": [
+    "2026-11-07 Europe/Madrid: user reports PDF trackpad zoom smooth in packaged0.0.21 darwin-arm64 VSIX"
+  ]
+}

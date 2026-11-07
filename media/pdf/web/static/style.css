@@ -1,0 +1,918 @@
+/* PDF Studio application chrome.
+ *
+ * Every colour, size and spacing step used by the chrome is a token defined
+ * in the two theme blocks below; rules refer to tokens, never to literal
+ * colours (tests/browser/ui09_contrast.test.cjs measures the token pairs and
+ * rejects literal colours in rules). workspace.js sets data-theme to "light"
+ * or "dark" on <html>, resolving "System" from prefers-color-scheme.
+ *
+ * Two things never follow the theme: the PDF page (--paper, --paper-ink) and
+ * the overlays drawn over it, so page pixels, formulas, images and exports
+ * keep their own colours. Semantic colours (--ok, --warn, --danger) are kept
+ * distinct from tool selection (--accent), and selected/on states also change
+ * shape or weight, so colour is never the only signal.
+ *
+ * Type sizes are rem, so the browser's text-size preference enlarges the UI;
+ * controls have a minimum height and grow with their text instead of clipping.
+ */
+:root{
+  color-scheme:  light;
+  /* surfaces */
+  --chrome:      #f5f6f8;   /* toolbar, rail, panels */
+  --chrome-2:    #ffffff;   /* raised surfaces: cards, fields, dialogs */
+  --title:       #eceef1;
+  --hover:       #e6e8ec;
+  --pressed:     #d9dce2;
+  --panel-on:    #dde1e7;
+  --well:        #50545a;   /* the document background */
+  --well-edge:   #3f4247;
+  /* lines: --line separates, --control-line bounds a control (>= 3:1) */
+  --line:        #d9dce1;
+  --line-soft:   #e6e8ec;
+  --control-line:#7a818c;
+  /* text */
+  --ink:         #20242b;
+  --ink-dim:     #59616e;
+  --ink-disabled:#7a818c;
+  --disabled-bg: #e6e8ec;
+  /* tool selection and primary action */
+  --accent:      #2458c5;
+  --accent-dk:   #1d47a3;   /* primary hover */
+  --accent-soft: #e3ebfb;   /* engaged tool */
+  --accent-strong:#1d47a3;  /* text on --accent-soft */
+  --accent-line: #2458c5;   /* engaged-tool border and underline */
+  --on-accent:   #ffffff;
+  --focus:       #2458c5;
+  --overlay-rgb: 36 88 197; /* page overlays and selection rings */
+  /* semantic states, independent of selection */
+  --ok:          #157a3f;
+  --ok-soft:     #e8f5ee;
+  --ok-line:     #8cc7a5;
+  --warn:        #8a5a00;
+  --warn-soft:   #fff4dc;
+  --warn-line:   #e3c77e;
+  --warn-ink:    #6b4a00;
+  --danger:      #b42318;
+  --danger-soft: #fdecea;
+  --danger-line: #e8a79f;
+  /* inverse surfaces: toast and the floating editor bar over the page */
+  --inverse-bg:  #2a2e35;
+  --inverse-raised:#434852;
+  --inverse-hover:#535965;
+  --inverse-line:#8a919d;
+  --inverse-ink: #f3f5f7;
+  --inverse-warn:#ffcf6b;
+  --inverse-danger:#ffb4a8;
+  --toast-err:   #5a1a15;
+  --toast-ok:    #14402a;
+  /* fields drawn over the page (LaTeX source) */
+  --field-paper: #ffffff;
+  --field-ink:   #111317;
+  --mark-error:  rgb(255 72 48 / .32);
+  /* the page and its overlays: theme-invariant */
+  --paper:       #ffffff;
+  --paper-ink:   #000000;
+  --search-fill: #ffcc0060;
+  --search-line: #816700;
+  --search-current-fill:#ff800080;
+  --search-current-line:#a83d00;
+  --swatch-line: rgb(0 0 0 / .32);
+  --backdrop:    rgb(0 0 0 / .45);
+  --brand:       #2458c5;
+  --brand-ink:   #ffffff;
+  /* geometry */
+  --radius:      4px;
+  --space-1:     4px;
+  --space-2:     8px;
+  --space-3:     12px;
+  --space-4:     16px;
+  --control-h:   32px;
+  --icon:        18px;
+  /* panel widths: initial values; viewer.js sets the remembered ones on <main> */
+  --left-panel-w:  192px;
+  --right-panel-w: 304px;
+  /* type: rem, so the browser text size scales the chrome */
+  --font-ui:     -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --font-mono:   ui-monospace,SFMono-Regular,Menlo,monospace;
+  --text-ui:     .875rem;   /* 14px */
+  --text-meta:   .75rem;    /* 12px */
+  --text-mono:   .8125rem;  /* 13px */
+  --text-heading:1rem;
+}
+:root[data-theme="dark"]{
+  color-scheme:  dark;
+  --chrome:      #25282e;
+  --chrome-2:    #2e3239;
+  --title:       #1d2025;
+  --hover:       #343840;
+  --pressed:     #3e434c;
+  --panel-on:    #3a3f48;
+  --well:        #16181c;
+  --well-edge:   #0f1013;
+  --line:        #3e434c;
+  --line-soft:   #353a42;
+  --control-line:#858d99;
+  --ink:         #eceff3;
+  --ink-dim:     #aeb6c2;
+  --ink-disabled:#858d99;
+  --disabled-bg: #343840;
+  --accent:      #3d6fd9;
+  --accent-dk:   #2f5dc0;
+  --accent-soft: #22385e;
+  --accent-strong:#cfe0ff;
+  --accent-line: #8db4ff;
+  --on-accent:   #ffffff;
+  --focus:       #8db4ff;
+  --overlay-rgb: 36 88 197;
+  --ok:          #6fd49a;
+  --ok-soft:     #17352a;
+  --ok-line:     #3f8f65;
+  --warn:        #f0c35a;
+  --warn-soft:   #3d3218;
+  --warn-line:   #8a6d2a;
+  --warn-ink:    #f6d88e;
+  --danger:      #ff8a80;
+  --danger-soft: #4a1f1c;
+  --danger-line: #a0463f;
+  --inverse-bg:  #383d45;
+  --inverse-raised:#4a505a;
+  --inverse-hover:#5c6370;
+  --inverse-line:#909aa6;
+  --inverse-ink: #f3f5f7;
+  --inverse-warn:#ffcf6b;
+  --inverse-danger:#ffb4a8;
+  --toast-err:   #5a1a15;
+  --toast-ok:    #14402a;
+  --field-paper: #1b1e22;
+  --field-ink:   #eceff3;
+  --mark-error:  rgb(255 72 48 / .38);
+  --swatch-line: rgb(255 255 255 / .5);
+  --backdrop:    rgb(0 0 0 / .6);
+  --brand:       #3366cc;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--well); color:var(--ink);
+  font:var(--text-ui)/1.45 var(--font-ui);
+  display:flex; flex-direction:column; overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ----------------------------- title bar ----------------------------- */
+
+#titlebar{
+  flex:0 0 auto; display:flex; align-items:center; gap:var(--space-3);
+  min-height:40px; padding:var(--space-1) var(--space-3);
+  background:var(--title); border-bottom:1px solid var(--line);
+}
+.brand,.brandpad{display:flex; align-items:center; gap:var(--space-2); width:180px}
+.brandpad{width:180px}
+.brand span{font-weight:650; font-size:var(--text-ui); letter-spacing:.1px; white-space:nowrap}
+.logo{width:var(--icon); height:var(--icon); flex:0 0 auto}
+.logo rect{fill:var(--brand)}
+.logo path{fill:var(--brand-ink)}
+.docname{
+  flex:1 1 auto; min-width:0; text-align:center; font-size:var(--text-ui); color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;
+}
+
+/* ----------------------------- toolbar ----------------------------- */
+
+#toolbar{
+  flex:0 0 auto; display:flex; align-items:center; gap:var(--space-1);
+  height:42px; padding:0 var(--space-2);
+  background:var(--chrome); border-bottom:1px solid var(--line);
+  /* Every control keeps its size and the row scrolls if the window is too
+     narrow for all of them -- squashed buttons would still be unreadable. */
+  overflow-x:auto; overflow-y:hidden;
+}
+#toolbar .tbtn, #toolbar .tsep{flex:0 0 auto}
+.tgroup{display:flex; align-items:center; gap:2px}
+.tspacer{flex:1 1 auto}
+.tsep{width:1px; height:20px; background:var(--line); margin:0 var(--space-1)}
+
+.tbtn{
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--space-1);
+  min-height:var(--control-h); min-width:var(--control-h); padding:0 var(--space-2);
+  background:transparent; border:1px solid transparent; border-radius:var(--radius);
+  color:var(--ink); font:inherit; font-size:var(--text-ui); line-height:1.2; cursor:pointer;
+  transition:background .12s, border-color .12s;
+}
+.tbtn.wide{padding:0 var(--space-3)}
+.tbtn svg{width:var(--icon); height:var(--icon); fill:currentColor; flex:0 0 auto}
+.tbtn:hover:not(:disabled){background:var(--hover)}
+.tbtn:active:not(:disabled){background:var(--pressed)}
+.tbtn:focus-visible{outline:2px solid var(--focus); outline-offset:1px}
+/* Active tool: tinted, bordered and underlined, so the icon stays readable
+   and the state does not rest on colour alone. The accent tint is reserved
+   for an engaged TOOL. A panel toggle gets a neutral pressed state -- tinting
+   it too would put the loudest colour on the screen against a control that
+   is simply on by default. */
+.tbtn.on{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent-strong);
+  box-shadow:inset 0 -2px 0 var(--accent-line)}
+.tbtn.panel.on{background:var(--panel-on); border-color:var(--control-line); color:var(--ink);
+  box-shadow:inset 0 -2px 0 var(--ink-dim)}
+.tbtn.primary{
+  background:var(--accent); color:var(--on-accent); padding:0 var(--space-3); font-weight:600;
+}
+.tbtn.primary:hover{background:var(--accent-dk)}
+/* Disabled is a legible lighter ink, not a translucent control. */
+.tbtn:disabled{color:var(--ink-disabled); cursor:default}
+.tbtn.primary:disabled{background:var(--disabled-bg); color:var(--ink-disabled)}
+
+.zoom{gap:1px}
+#zoomlbl{
+  width:58px; min-width:0; text-align:center; font-size:var(--text-ui);
+  color:var(--ink-dim); font-variant-numeric:tabular-nums;
+}
+
+/* ----------------------------- warnings ----------------------------- */
+
+#warnings{flex:0 0 auto}
+.warn{
+  display:flex; gap:var(--space-2); padding:var(--space-2) var(--space-3); font-size:var(--text-meta);
+  background:var(--warn-soft); border-bottom:1px solid var(--warn-line); color:var(--warn-ink);
+}
+
+/* ----------------------------- body ----------------------------- */
+
+main{flex:1 1 auto; display:flex; min-height:0; position:relative}
+
+/* UI-02 panels. viewer.js's panel controller owns the state: `.hidden` is a
+   panel the user closed, `.panel-collapsed` one the layout has no room for,
+   `.panel-drawer` one shown over the document in a narrow window. Widths are
+   the remembered ones, set on <main> as custom properties. */
+#sidebar{
+  flex:0 0 var(--left-panel-w); width:var(--left-panel-w); min-width:0; display:flex; flex-direction:column;
+  background:var(--chrome); border-right:1px solid var(--line);
+}
+#sidebar.hidden, .panel-collapsed{display:none!important}
+.panel-drawer{
+  position:absolute!important; top:0; bottom:0; z-index:30; flex:none!important;
+  width:min(320px, calc(100vw - 48px))!important; box-shadow:0 0 16px #0005;
+}
+#sidebar.panel-drawer{left:0}
+#notes.panel-drawer{right:0}
+#properties.panel-drawer{right:0; z-index:60}
+.sidebar-head{display:flex; align-items:center; gap:var(--space-1); padding:var(--space-1) var(--space-2); border-bottom:1px solid var(--line)}
+#sidebar-tabs{display:flex; flex-wrap:wrap; gap:2px; flex:1 1 auto; min-width:0}
+#sidebar-tabs [role="tab"], #sidebar-close{
+  font:inherit; font-size:var(--text-ui); min-height:var(--control-h); padding:var(--space-1) var(--space-2);
+  color:var(--ink); background:transparent; border:1px solid transparent; border-radius:var(--radius); cursor:pointer;
+}
+#sidebar-tabs [role="tab"]:hover, #sidebar-close:hover{background:var(--hover)}
+#sidebar-tabs [role="tab"][aria-selected="true"]{font-weight:700; border-bottom:2px solid var(--focus); border-radius:var(--radius) var(--radius) 0 0}
+#sidebar-close{flex:0 0 auto; min-width:var(--control-h); font-size:1.125rem; line-height:1; padding-inline:var(--space-2)}
+#pages-panel{flex:1 1 auto; min-height:0; display:flex}
+#pages-panel[hidden], #outline-panel[hidden]{display:none}
+#outline-panel{flex:1 1 auto; min-height:0; overflow:auto; padding:var(--space-2); color:var(--ink); font-size:var(--text-ui)}
+#outline-panel input{font:inherit; width:100%; box-sizing:border-box; min-height:var(--control-h); padding:var(--space-1) var(--space-2); color:var(--ink); background:var(--chrome-2); border:1px solid var(--control-line); border-radius:var(--radius)}
+#outline-panel button{font:inherit; min-height:var(--control-h); color:var(--ink); background:var(--chrome-2); border:1px solid var(--control-line); border-radius:var(--radius); padding:var(--space-1) var(--space-2)}
+#outline-panel button:disabled{color:var(--ink-disabled); background:var(--disabled-bg)}
+#outline-panel .outline-rows button{display:flex; gap:var(--space-2); width:100%; text-align:left; margin:2px 0; background:transparent; border-color:transparent}
+#outline-panel .outline-rows button:hover{background:var(--hover)}
+#outline-panel .outline-title{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+#outline-panel .outline-page{flex:0 0 auto; color:var(--ink-dim); font-variant-numeric:tabular-nums}
+#outline-panel .outline-status{font-size:var(--text-meta); color:var(--ink-dim); margin:var(--space-2) 0}
+#outline-panel .outline-paging{display:flex; flex-wrap:wrap; gap:var(--space-1)}
+#outline-panel select{font:inherit;max-width:100%;min-height:var(--control-h);color:var(--ink);background:var(--chrome-2)}
+#outline-panel input[type="checkbox"]{width:auto;min-height:0}
+#outline-tree [role="treeitem"]{padding:var(--space-1);overflow-wrap:anywhere;cursor:pointer;min-height:var(--control-h);border-left:3px solid transparent}
+#outline-tree [role="treeitem"]:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+#outline-tree .outline-active{border-left-color:var(--focus);background:var(--hover);font-weight:700}
+.panel-resize{flex:0 0 6px; cursor:col-resize; touch-action:none; background:var(--line); outline-offset:-2px}
+.panel-resize:hover, .panel-resize:focus-visible, .panel-resize.dragging{background:var(--focus)}
+.panel-resize:focus-visible{outline:2px solid var(--focus)}
+
+#rail{flex:1 1 auto; min-width:0; overflow-y:auto; padding:var(--space-3) var(--space-2)}
+.thumb{margin-bottom:var(--space-3); cursor:pointer; text-align:center}
+/* The frame is sized from the page's proportions (viewer.js sets aspect-ratio
+   from the page's point size), not from its picture: the rail is virtualized
+   and most frames have no picture in them. content-box so the ratio is the
+   picture's own, inside the border. */
+.thumb .shot{
+  position:relative; border:2px solid transparent; border-radius:2px;
+  background:var(--paper); box-shadow:0 1px 4px rgba(0,0,0,.22); overflow:hidden;
+  box-sizing:content-box;
+}
+.thumb img{width:100%; height:100%; display:block}
+.thumb.sel .shot{border-color:var(--focus); box-shadow:0 0 0 2px rgb(var(--overlay-rgb) / .3)}
+.thumb .no{
+  display:block; margin-top:var(--space-1); font-size:var(--text-meta); color:var(--ink-dim);
+  font-variant-numeric:tabular-nums;
+}
+.thumb.sel .no{color:var(--ink); font-weight:700; text-decoration:underline; text-underline-offset:2px}
+
+/* Comments panel. Mirrors the thumbnail rail on the other side, so the
+   document keeps the middle and both panels can be closed. */
+#notes{
+  flex:0 0 var(--right-panel-w); width:var(--right-panel-w); min-width:0; box-sizing:border-box; overflow-y:auto; padding:10px var(--space-2) var(--space-4);
+  background:var(--chrome); border-left:1px solid var(--line);
+}
+#notes.hidden{display:none}
+/* A chunk of rows (see NOTES in viewer.js). Its own formatting context, so
+   the last row's margin stays inside it and its measured height is its real
+   one. */
+.nchunk{display:flow-root}
+.nhead{
+  font-size:var(--text-meta); font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+  color:var(--ink-dim); padding:var(--space-1) var(--space-1) var(--space-2); display:flex; gap:var(--space-2); align-items:center;
+}
+.ncount{
+  background:var(--line); color:var(--ink); border-radius:9px;
+  padding:0 6px; font-size:var(--text-meta); letter-spacing:0;
+}
+.nempty{font-size:var(--text-meta); color:var(--ink-dim); padding:6px var(--space-1); line-height:1.5}
+.note{
+  background:var(--chrome-2); border:1px solid var(--line); border-radius:var(--radius);
+  padding:var(--space-2); margin-bottom:var(--space-2); cursor:pointer;
+}
+.note:hover{border-color:var(--control-line)}
+.note.sel{border-color:var(--focus); box-shadow:0 0 0 2px rgb(var(--overlay-rgb) / .25)}
+.nrow{display:flex; align-items:center; gap:6px; margin-bottom:var(--space-1)}
+.ndot{width:9px; height:9px; border-radius:2px; flex:0 0 auto}
+.nkind{font-size:var(--text-meta); font-weight:600; color:var(--ink)}
+.npage{margin-left:auto; font-size:var(--text-meta); color:var(--ink-dim);
+  font-variant-numeric:tabular-nums}
+/* The quoted text is the point of the row, so it reads as the document's own
+   words: serif, and clipped rather than allowed to run for a paragraph. */
+.nquote{
+  font:var(--text-mono)/1.45 Georgia,"Times New Roman",serif; color:var(--ink);
+  border-left:2px solid var(--line); padding-left:7px;
+  display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.nbody{font-size:var(--text-meta); line-height:1.45; color:var(--ink); margin-top:5px;
+  white-space:pre-wrap}
+.nwho{font-size:var(--text-meta); color:var(--ink-dim); margin-top:5px}
+.nreply{margin-top:7px; padding-left:var(--space-2); border-left:2px solid var(--line-soft)}
+/* Actions stay out of the way until the row is worth acting on. */
+.nacts{display:none; gap:6px; margin-top:7px}
+.note:hover .nacts, .note.sel .nacts, .note:focus-within .nacts{display:flex}
+.nact{
+  background:transparent; border:1px solid var(--control-line); border-radius:var(--radius);
+  color:var(--ink); font-size:var(--text-meta); padding:3px var(--space-2); cursor:pointer;
+}
+.nact:hover{background:var(--hover)}
+.nact.danger:hover{border-color:var(--danger); color:var(--danger)}
+.nedit{margin-top:7px}
+.nedit textarea{
+  width:100%; font:var(--text-meta)/1.45 inherit; padding:6px 7px; border-radius:var(--radius);
+  border:1px solid var(--control-line); resize:vertical; background:var(--chrome-2); color:var(--ink);
+}
+.nedit .erow{margin-top:5px}
+.nedit .ebtn{font-size:var(--text-meta); padding:3px 9px}
+
+/* The well scrolls; it does NOT centre its contents with flexbox.
+ *
+ * It used to: `display:flex; justify-content:center`. A centred flex item that
+ * is wider than its container overflows both ways, and the half that overflows
+ * to the LEFT sits before scroll origin, where no scrollbar can reach it. That
+ * is the bug where a page at 270% could not be scrolled to its own left edge,
+ * and the same rule pulled the view back to the middle on every zoom step.
+ *
+ * So the centring is the child's job now: #pages is at least as wide as the
+ * well, and grows past it when a page is wider, which makes every pixel of the
+ * page part of the scrollable area. The padding moves onto #pages too -- a
+ * scroll container's own end padding is not reliably honoured against
+ * overflowing content, and losing it is how the page ends up flush against the
+ * right edge at high zoom.
+ */
+#stage{
+  flex:1 1 auto; overflow:auto; padding:0;
+  background:var(--well);
+  /* Scrolling is ours to handle, zooming is not the browser's to handle. */
+  touch-action:pan-x pan-y;
+  overscroll-behavior:contain;
+  /* A hair of inner shadow gives the well depth. */
+  box-shadow:inset 0 1px 6px rgba(0,0,0,.28);
+}
+/* Page geometry, not chrome spacing: viewer.js (pageIndex) reads this gap and
+   padding, so they stay in px and outside the spacing scale. */
+#pages{
+  display:flex; flex-direction:column; gap:22px; align-items:center;
+  width:max-content; min-width:100%; padding:24px;
+  /* No scroll anchoring: the browser adjusting the offset to "keep" content
+     while a sharper render is swapped in fights the zoom's own anchoring. */
+  overflow-anchor:none;
+}
+.page{
+  position:relative; background:var(--paper);
+  box-shadow:0 1px 3px rgba(0,0,0,.35), 0 6px 20px rgba(0,0,0,.3);
+}
+/* Height from the wrapper, never from the image: viewer.js sizes .page from
+   the page's true point size, and an image left to size itself would reflow
+   the document for a frame every time a new render arrived. */
+.page img{display:block; width:100%; height:100%}
+/* Sharp tiles over a page too large to draw whole at this zoom (viewer.js,
+   paintTiles). Placed in percentages of the page, above its own image and
+   under the text layer, and never in the pointer's way. */
+.page .tiles{position:absolute; inset:0; overflow:hidden; pointer-events:none}
+.page .tile{position:absolute}
+
+/* Two things live in this layer and they are not the same thing.
+ *
+ * SELECTING is always available, like it is in Preview -- there is no mode for
+ * it, so the layer always takes the pointer. The whole layer takes it, not only
+ * the boxes: a drag across a paragraph passes over the gaps between runs, and a
+ * layer that only listened on the runs would drop the gesture in every space
+ * between two words.
+ *
+ * EDITING is a mode, and `.on` is that mode. Only then are the run boxes drawn,
+ * because they mark exactly what the editor can address -- an affordance for
+ * clicking, which is meaningless when you are only dragging across words. */
+.tlayer{position:absolute; inset:0; pointer-events:auto; cursor:text}
+.tspan{
+  position:absolute; border-radius:1px; cursor:text;
+  pointer-events:none; background:transparent;
+  transition:background .1s;
+}
+.tlayer.on .tspan{
+  pointer-events:auto;
+  background:rgb(var(--overlay-rgb) / .13); box-shadow:inset 0 0 0 1px rgb(var(--overlay-rgb) / .42);
+}
+.tlayer.on .tspan:hover{
+  background:rgb(var(--overlay-rgb) / .26); box-shadow:inset 0 0 0 1px rgb(var(--overlay-rgb) / .75);
+}
+
+/* A drag-selection, drawn one band per line. Deliberately the colour a system
+   text selection is, and deliberately not the blue the editable-run boxes use:
+   they are both blue rectangles over text and they mean different things. */
+.selband{
+  position:absolute; pointer-events:none; border-radius:1px;
+  background:rgb(var(--overlay-rgb) / .34); mix-blend-mode:multiply;
+}
+
+/* ----------------------------- mark-up controls -----------------------------
+
+   In the toolbar beside Edit Text, not in a bar that appears over the
+   selection: see buildMarkGroup in viewer.js for why. They are ordinary .tbtn
+   toolbar buttons, so they inherit the hover, focus and disabled states of
+   every other control up there and only the coloured ones need anything here.
+
+   The swatches ARE the highlight control -- clicking one highlights what is
+   selected -- so they are actions, not settings, and have no selected state.
+   A hairline that contrasts with the chrome of either theme. */
+.tbtn.mswatch{
+  width:22px; min-width:22px; height:22px; min-height:22px; padding:0; border-radius:50%;
+  border:1px solid var(--swatch-line);
+}
+/* Text colour, and deliberately square where a highlight colour is round. Both
+   are small coloured buttons a few pixels apart in the same group, and the only
+   thing telling you that one paints behind the words and the other paints the
+   words themselves is the shape. */
+.tbtn.mtswatch{
+  width:17px; min-width:17px; height:17px; min-height:17px; padding:0; border-radius:3px;
+  border:1px solid var(--swatch-line);
+}
+/* A swatch's colour is the document's, so disabled can only be shown by fading. */
+.tbtn.mswatch:disabled, .tbtn.mtswatch:disabled{opacity:.4}
+.tbtn.mswatch:hover:not(:disabled),
+.tbtn.mtswatch:hover:not(:disabled){
+  box-shadow:0 0 0 2px var(--chrome), 0 0 0 3.5px var(--ink);
+}
+#markgroup{gap:3px}
+#markgroup b, #markgroup i{font-size:var(--text-ui); line-height:1}
+
+/* ----------------------------- status bar ----------------------------- */
+
+#statusbar{
+  flex:0 0 auto; display:flex; align-items:center; gap:10px;
+  height:26px; padding:0 var(--space-3);
+  background:var(--chrome); border-top:1px solid var(--line);
+  font-size:var(--text-meta); color:var(--ink-dim);
+}
+.ssep{width:1px; height:13px; background:var(--line)}
+.build{font-variant-numeric:tabular-nums}
+#safety{display:flex; align-items:center; gap:5px; color:var(--ok)}
+.shield{width:13px; height:13px; fill:currentColor}
+
+/* ----------------------------- text editor ----------------------------- */
+
+/* The floating panel, now the fallback: it opens only where the geometry
+   refuses to call the text a paragraph, so there is no column to type into on
+   the page. Everything else is edited in place -- see .inplace below. */
+#editor:not(.inplace){
+  position:fixed; z-index:60; width:min(480px,92vw);
+  background:var(--chrome-2); border:1px solid var(--line);
+  border-radius:6px; box-shadow:0 8px 32px rgba(0,0,0,.32);
+  padding:0; display:flex; flex-direction:column; overflow:hidden;
+}
+
+/* ----------------------------- editing on the page -----------------------------
+
+   Positioned in percentages of the page wrapper, like every other overlay, so
+   it tracks the paper at any zoom. The background is sampled paper: it has to
+   hide the words underneath, which is the whole illusion. */
+.inplace{
+  position:absolute; z-index:55; border-radius:2px;
+  box-shadow:0 0 0 1px rgb(var(--overlay-rgb) / .55), 0 4px 18px rgba(0,0,0,.18);
+}
+.iptext{
+  outline:0; white-space:pre-wrap; overflow-wrap:break-word;
+  color:var(--paper-ink); padding-bottom:2px;
+}
+/* Not fixed to the page's scale: this is chrome, and chrome that shrank with
+   the zoom would be unreadable on a page fitted to the window. */
+.ipbar{
+  position:absolute; left:0; top:100%; margin-top:6px;
+  display:flex; align-items:center; gap:var(--space-2); white-space:nowrap;
+  padding:5px 7px; background:var(--inverse-bg); color:var(--inverse-ink);
+  border-radius:7px; box-shadow:0 6px 22px rgba(0,0,0,.42);
+  font-size:var(--text-meta);
+}
+.ipbar .ebtn{font-size:var(--text-meta); padding:3px 10px}
+.ipbar .ebtn.ghost{background:var(--inverse-raised); color:var(--inverse-ink)}
+.ipbar .ebtn.ghost:hover{background:var(--inverse-hover)}
+.ipsep{width:1px; height:14px; background:var(--inverse-line)}
+.ipspacer{flex:1 1 auto; min-width:6px}
+.ipwas{opacity:.85}
+.iplines{font-variant-numeric:tabular-nums}
+.iplines.warn{color:var(--inverse-warn)}
+.ipgrow{display:flex; align-items:center; gap:var(--space-1); cursor:pointer}
+.ipgrow.hidden{display:none}
+/* Wraps rather than running off a narrow window; placeBar keeps it on screen. */
+.ipbar{flex-wrap:wrap; max-width:calc(100vw - 32px)}
+.ipstatus{max-width:32em; overflow:hidden; text-overflow:ellipsis}
+.ipstatus.bad{color:var(--inverse-danger)}
+.ipbar .ebtn.hidden{display:none}
+/* The server's rendering of the prepared edit, over the page and under the
+   editor; while it is current the draft's own text is drawn transparent and
+   only its caret shows. */
+.ippreview{position:absolute; z-index:54; pointer-events:none}
+.ippreview img{display:block; width:100%; height:100%}
+.ippreview.hidden{display:none}
+.inplace.previewing .iptext{color:transparent; caret-color:var(--paper-ink)}
+/* The width handle, on the editor's right edge. */
+.ipgrip{position:absolute; top:0; right:-5px; width:9px; height:100%;
+  cursor:ew-resize; background:linear-gradient(90deg,transparent 3px,rgb(var(--overlay-rgb) / .55) 3px,
+  rgb(var(--overlay-rgb) / .55) 6px,transparent 6px)}
+/* ----------------------------- LaTeX mode and formulas (8D.7) -----------------------------
+
+   The mode switch is a pair of buttons; the pressed one is the mode. LaTeX
+   source is typed in a plain field (a row of its own at the top of the bar),
+   so the offsets a refusal names are offsets into exactly what was typed.
+   The marks behind it are a backdrop holding the same text, transparent,
+   with the refused ranges highlighted: the caret and selection never move. */
+.ipmode{display:inline-flex; gap:1px}
+.ipmode .ebtn{border-radius:0; padding:3px 9px}
+.ipmode .ebtn:first-child{border-radius:var(--radius) 0 0 var(--radius)}
+.ipmode .ebtn:last-child{border-radius:0 var(--radius) var(--radius) 0}
+.ipbar .ipmode .ebtn.on{background:var(--inverse-ink); color:var(--inverse-bg); font-weight:700}
+.ipbar .ebtn.off{opacity:.65}
+.iptext.hidden,.ipsrc.hidden,.fxnew.hidden{display:none}
+.inplace.latex{background:transparent}
+.ipsrc{flex:1 0 100%; position:relative; min-width:min(34em, calc(100vw - 48px))}
+.ipsource,.ipsrcback{
+  box-sizing:border-box; width:100%; margin:0; padding:6px var(--space-2);
+  font:var(--text-mono)/1.5 var(--font-mono); letter-spacing:0;
+  white-space:pre-wrap; overflow-wrap:break-word; border:1px solid transparent;
+  border-radius:var(--radius);
+}
+.ipsrcback{position:absolute; inset:0; overflow:hidden; color:transparent; background:var(--field-paper)}
+.ipsrcback mark{color:transparent; background:var(--mark-error);
+  border-bottom:2px solid var(--danger); border-radius:2px}
+.ipsource{position:relative; display:block; background:transparent; color:var(--field-ink);
+  resize:vertical; min-height:4.6em; outline:none; caret-color:var(--field-ink)}
+.ipsource:focus{border-color:var(--focus)}
+/* Each formula of a current LaTeX preview, where the server laid it out. */
+.ipnode{position:absolute; z-index:55; pointer-events:none;
+  outline:1px dashed rgb(var(--overlay-rgb) / .7); outline-offset:1px}
+/* Formula blocks hold vectors, which no text trace finds: their own box is
+   what a click on them lands on (edit mode only, like the run boxes). */
+.tblock{position:absolute; cursor:text; pointer-events:none;
+  outline:1px dashed transparent}
+.tlayer.on .tblock{pointer-events:auto; outline-color:rgb(var(--overlay-rgb) / .55)}
+.tlayer.on .tblock:hover{background:rgb(var(--overlay-rgb) / .08)}
+/* Replacing a formula: the box being drawn, a refused selection and what
+   refused it, and the selected formula with its panel below. */
+#pages.boxing .page{cursor:crosshair}
+.fxband{position:absolute; z-index:56; pointer-events:none;
+  border:1.5px dashed var(--focus); background:rgb(var(--overlay-rgb) / .08)}
+.fxband.bad{border-color:var(--danger); background:var(--danger-soft)}
+.fxbad{position:absolute; z-index:56; pointer-events:none;
+  outline:2px solid var(--danger); background:var(--mark-error)}
+.inplace.formula{background:transparent; box-shadow:0 0 0 2px rgb(var(--overlay-rgb) / .75)}
+.fxpair{flex:1 0 100%; display:flex; gap:10px; align-items:flex-end}
+.fxpair figure{margin:0; display:flex; flex-direction:column; gap:3px; align-items:flex-start}
+.fxpair img{background:var(--paper); border-radius:2px; max-width:44vw; image-rendering:auto}
+.fxpair figcaption{font-size:var(--text-meta); opacity:.85}
+.ehead{
+  display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-3);
+  background:var(--chrome); border-bottom:1px solid var(--line-soft);
+}
+.ehead #eclose{margin-left:auto; min-width:var(--control-h); min-height:var(--control-h); padding:0}
+.ebody{padding:var(--space-3); display:flex; flex-direction:column; gap:var(--space-2)}
+#editor label{font-size:var(--text-meta); color:var(--ink-dim); font-weight:600;
+  text-transform:uppercase; letter-spacing:.35px}
+#editor textarea{
+  width:100%; background:var(--chrome-2); color:var(--ink);
+  border:1px solid var(--control-line); border-radius:var(--radius); padding:var(--space-2);
+  font:var(--text-mono)/1.55 var(--font-mono); resize:vertical;
+}
+#editor textarea:focus{outline:none; border-color:var(--focus);
+  box-shadow:0 0 0 2px rgb(var(--overlay-rgb) / .25)}
+.erow{display:flex; align-items:center; gap:10px; margin-top:2px}
+/* Selector carries #editor so it outranks the uppercase field-label rule
+   above; a plain `.erow label` loses to that rule's id and the checkbox
+   captions come out shouting. */
+#editor .erow label{
+  text-transform:none; letter-spacing:0; font-weight:400; font-size:var(--text-meta);
+  color:var(--ink); display:flex; align-items:center; gap:5px; cursor:pointer;
+}
+.ebtn{
+  background:var(--accent); color:var(--on-accent); border:0; border-radius:var(--radius);
+  padding:6px var(--space-3); font:inherit; font-size:var(--text-ui); font-weight:600; cursor:pointer;
+}
+.ebtn:hover{background:var(--accent-dk)}
+.ebtn.ghost{background:var(--hover); color:var(--ink)}
+.ebtn.ghost:hover{background:var(--pressed)}
+/* Save switched off after the text under an editor changed (keepDraft). */
+.ebtn:disabled{cursor:default; background:var(--disabled-bg); color:var(--ink-disabled)}
+/* The bold/italic/colour row that used to sit at the top of this panel is gone:
+   it styled the whole show operator under the caret, which is usually a whole
+   line. Those controls are on the selection bar now, where what they act on is
+   what you can see is selected. */
+
+.ereason{
+  font-size:var(--text-meta); color:var(--ink-dim); line-height:1.55;
+  border-left:3px solid var(--line); padding:var(--space-1) 0 var(--space-1) 10px;
+}
+
+/* Removing a bullet or a number. Shown only on lines that have one, so its
+   presence is itself the answer to "does this tool understand this is a list?" */
+.emarker{
+  gap:var(--space-2); padding:5px var(--space-2); border-radius:var(--radius);
+  background:var(--chrome-2);
+}
+.emarker .enote{flex:1 1 auto; font-style:normal}
+
+/* The badge is the guarantee, stated: green means this run keeps its own font
+   and every character you typed exists in it. Amber means it does not, and the
+   note beside it says which characters. */
+.badge{
+  font-size:var(--text-meta); padding:2px 9px; border-radius:11px; border:1px solid;
+  font-weight:650; white-space:nowrap;
+}
+.badge.ok  {color:var(--ok);     border-color:var(--ok-line);     background:var(--ok-soft)}
+.badge.warn{color:var(--warn);   border-color:var(--warn-line);   background:var(--warn-soft)}
+.badge.bad {color:var(--danger); border-color:var(--danger-line); background:var(--danger-soft)}
+.enote{font-size:var(--text-meta); color:var(--ink-dim)}
+/* A warning belongs beside the text while it is being typed, not after the
+   edit has been applied and refused. */
+.ebody .enote{line-height:1.45}
+.ebody .enote.warn{
+  border-left:2px solid var(--warn); padding-left:7px;
+  color:var(--ink); background:var(--warn-soft);
+  padding-top:var(--space-1); padding-bottom:var(--space-1); border-radius:0 3px 3px 0;
+}
+
+/* ----------------------------- toast ----------------------------- */
+
+#toast{
+  position:fixed; left:50%; bottom:44px; transform:translateX(-50%) translateY(70px);
+  max-width:74ch; padding:var(--space-3) var(--space-4);
+  background:var(--inverse-bg); color:var(--inverse-ink); border-radius:6px;
+  box-shadow:0 6px 26px rgba(0,0,0,.4);
+  opacity:0; transition:opacity .18s, transform .18s; pointer-events:none;
+  white-space:pre-wrap; font-size:var(--text-ui); line-height:1.5; z-index:70;
+}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+#toast.err{background:var(--toast-err); box-shadow:0 6px 26px rgba(0,0,0,.45)}
+#toast.ok{background:var(--toast-ok)}
+
+@media (max-width:760px){
+  .brand span,.brandpad{display:none}
+  .brand{width:auto}
+  .tbtn.wide span{display:none}
+}
+
+/* The paragraph is the primary editing surface; the single run is a fallback
+   folded away, because editing one line of a wrapped paragraph is almost never
+   what someone means by "edit this text". */
+.erun{margin-top:var(--space-1); border-top:1px solid var(--line-soft); padding-top:var(--space-2)}
+.erun summary{
+  font-size:var(--text-meta); color:var(--ink-dim); cursor:pointer; user-select:none;
+  padding:2px 0; list-style:none;
+}
+.erun summary::-webkit-details-marker{display:none}
+.erun summary::before{content:"▸ "; font-size:.625rem}
+.erun[open] summary::before{content:"▾ "}
+.erun summary:hover{color:var(--ink)}
+.erun textarea{margin-top:6px}
+
+/* Responsive document controls. The page bitmap always retains its own colours. */
+#toolbar {flex-wrap:wrap; height:auto; min-height:48px; flex-shrink:0; padding-top:var(--space-1); padding-bottom:var(--space-1)}
+#navigation {gap:5px}
+#page-number {width:4.5em}
+#navigation input, #navigation select, #theme, #zoomlbl {
+  min-height:var(--control-h);
+  background:var(--chrome-2); color:var(--ink); border:1px solid var(--control-line);
+  border-radius:var(--radius); padding:var(--space-1); font:inherit;
+}
+.brandpad {width:auto; min-width:100px; justify-content:flex-end}
+#save-state {white-space:nowrap}
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, .thumb:focus-visible {
+  outline:2px solid var(--focus); outline-offset:2px;
+}
+@media(max-width:800px) {
+  #toolbar {gap:1px; padding:5px}
+  #toolbar .tsep {display:none}
+  #toolbar .tbtn.wide span {display:none}
+  #navigation {order:2; flex-basis:100%; justify-content:center}
+  #statusbar .build, #statusbar #safety {display:none}
+}
+@media(prefers-reduced-motion:reduce) {* {scroll-behavior:auto!important; transition:none!important}}
+#document-finder {width:min(640px,94vw); max-height:85vh; overflow:auto; color:var(--ink); background:var(--chrome); border:1px solid var(--line); border-radius:8px; padding:20px}
+#document-finder::backdrop {background:var(--backdrop)}
+#document-finder form {display:flex; justify-content:space-between; margin-bottom:var(--space-4)}
+#document-finder button, #document-finder input {font:inherit; min-height:var(--control-h); padding:var(--space-1) var(--space-2); color:var(--ink); background:var(--chrome-2); border:1px solid var(--control-line); border-radius:var(--radius)}
+#document-finder button:disabled {color:var(--ink-disabled)}
+#find-results button, #document-outline button {display:block; text-align:left; width:100%; margin:var(--space-1) 0}
+.workspace-hidden {display:none!important}
+#workspace-mode {font:inherit; min-height:var(--control-h); color:var(--ink); background:var(--chrome-2); border:1px solid var(--control-line); border-radius:var(--radius); padding:var(--space-1)}
+@media(max-width:800px) {
+  .brand {width:auto}
+  .brandpad {display:flex; min-width:0}
+  #theme {max-width:108px; padding:3px}
+}
+
+#save-state.recovery-warning {color:var(--danger); white-space:normal; font-weight:600}
+
+/* Search remains beside the page so its highlighted result can be read. */
+#document-finder {position:fixed; inset:110px 18px auto auto; margin:0; width:min(380px,calc(100vw - 36px)); max-height:65vh; z-index:58; box-shadow:0 8px 28px #0004}
+.find-navigation {display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:10px}
+#find-query {max-width:100%; width:190px}
+#find-position {font-size:var(--text-meta)}
+.search-layer {position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2; overflow:hidden}
+.search-layer polygon {fill:var(--search-fill); stroke:var(--search-line); stroke-width:.5}
+.search-layer polygon.current {fill:var(--search-current-fill); stroke:var(--search-current-line); stroke-width:1.5}
+.link-layer {position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2; overflow:hidden}
+.link-layer rect {fill:transparent}
+#stage.over-link {cursor:pointer}
+#page-label {font-size:.75rem; white-space:nowrap}
+/* ENG-02 search options and result list (viewerSearch.js). */
+.find-options {display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin:8px 0}
+.find-options label {display:inline-flex; gap:4px; align-items:center}
+.find-options select {font:inherit; min-height:var(--control-h); color:var(--ink); background:var(--chrome-2); border:1px solid var(--control-line); border-radius:var(--radius)}
+.find-options input:disabled + *, .find-options label:has(input:disabled) {color:var(--ink-disabled)}
+.find-note {flex-basis:100%; font-size:var(--text-meta); color:var(--ink-dim)}
+#search-results button {display:block; text-align:left; width:100%; margin:var(--space-1) 0; overflow-wrap:anywhere}
+#search-results button.current {outline:2px solid var(--search-current-line); outline-offset:-2px}
+#search-results .search-where {font-weight:600}
+#search-results mark {background:var(--search-fill); color:inherit}
+.search-pager {display:flex; gap:6px}
+.search-pager[hidden] {display:none}
+#page-selection {width:min(460px,90vw); color:var(--ink); background:var(--chrome); border:1px solid var(--line); border-radius:8px; padding:20px}
+#page-selection::backdrop {background:var(--backdrop)}
+#page-selection form {display:flex; justify-content:space-between; margin-bottom:14px}
+#page-selection input, #page-selection button, #comment-filters input, #comment-filters select, #comment-filters button {font:inherit; min-height:var(--control-h); padding:var(--space-1) 6px; border:1px solid var(--control-line); border-radius:var(--radius); color:var(--ink); background:var(--chrome-2)}
+#page-range {width:140px}
+#page-range[aria-invalid="true"] {outline:2px solid var(--danger)}
+#page-range-help, #page-selection-status {font-size:var(--text-meta); line-height:1.5}
+.selection-presets {display:flex; flex-wrap:wrap; gap:6px}
+/* Keep filters persistent without covering every comment in a short drawer.
+   The controls retain their nodes/focus and scroll independently when needed. */
+#notes > .nhead {position:sticky; top:-10px; background:var(--chrome); z-index:3; flex-wrap:wrap; padding-top:10px; max-height:45%; overflow-y:auto; box-sizing:border-box; overscroll-behavior-y:contain}
+#comment-filters {display:flex; flex-wrap:wrap; gap:6px; width:100%; text-transform:none; letter-spacing:normal; font-weight:400}
+#comment-query {width:100%; min-width:0}
+#comment-filters select {max-width:100%; flex:1; min-width:85px}
+#comment-filter-count {font-size:var(--text-meta); width:100%}
+
+#export-size {margin-left:auto; font-size:var(--text-meta); overflow-wrap:anywhere}
+#statusbar {height:auto; min-height:26px; flex-wrap:wrap; padding-top:var(--space-1); padding-bottom:var(--space-1); gap:var(--space-1) 10px}
+#statusbar > span {flex-shrink:0; max-width:100%}
+#export-size {white-space:normal}
+#toast {max-width:min(74ch,calc(100vw - 32px)); overflow-wrap:anywhere}
+
+.repeat-mark-label {display:flex; align-items:center; gap:var(--space-1); font-size:var(--text-meta)}
+#repeat-mark, #repeat-mark-color {max-width:145px; min-height:var(--control-h); font:inherit; color:var(--ink); background:var(--chrome-2); border:1px solid var(--control-line); border-radius:var(--radius)}
+#repeat-mark-status {font-size:var(--text-meta); color:var(--ink); max-width:150px; white-space:normal}
+#markgroup {flex-wrap:wrap; max-width:100%; min-width:0}
+.repeat-mark-label {flex:0 0 auto; white-space:nowrap}
+
+/* Properties reuses the live draft's controls outside the zoomed PDF page. */
+#properties {flex:0 0 350px; width:350px; min-width:0; overflow:auto; color:var(--ink); background:var(--chrome); border-left:1px solid var(--line); padding:var(--space-3)}
+#properties.hidden {display:none}
+#properties header {display:flex; align-items:center; justify-content:space-between; gap:var(--space-2)}
+#properties h2 {font-size:var(--text-heading); margin:0}
+#properties-object {font-size:var(--text-meta); color:var(--ink-dim)}
+#properties-fields {border:0; padding:0; margin:0; min-width:0}
+#properties .ipbar {position:static; margin:0; padding:0; max-width:100%; min-width:0; box-shadow:none; background:transparent; color:var(--ink); white-space:normal; align-items:stretch; gap:10px}
+#properties .ipwas, #properties .iplines, #properties .ipstatus, #properties .ipmode, #properties .properties-width {flex:1 0 100%}
+#properties .ipsep, #properties .ipspacer {display:none}
+#properties .ipstatus {max-width:100%; overflow:visible; white-space:pre-wrap; overflow-wrap:anywhere; font-size:var(--text-ui); line-height:1.5}
+#properties .ipstatus.bad {color:var(--danger)}
+#properties .iplines.warn {color:var(--warn)}
+#properties .ipsrc {min-width:0; width:100%; flex-basis:100%}
+#properties .ipsource {max-height:40vh; overflow:auto}
+#properties .properties-width {display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); font-size:var(--text-ui)}
+#properties-width {width:100px; min-width:0}
+#properties button, #properties input {font:inherit; min-height:var(--control-h); border:1px solid var(--control-line); border-radius:var(--radius); padding:5px var(--space-2); background:var(--chrome-2); color:var(--ink)}
+#properties button:disabled {color:var(--ink-disabled); background:var(--disabled-bg); cursor:default}
+#properties .ipmode .ebtn.on {background:var(--accent-soft); color:var(--accent-strong); border-color:var(--accent-line); font-weight:700}
+#properties .properties-actions {display:flex; justify-content:flex-end; flex:1 0 100%; gap:var(--space-2); position:sticky; bottom:0; background:var(--chrome); padding:var(--space-2) 0}
+#properties #ipsave {background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
+#properties #ipsave:disabled {background:var(--disabled-bg); color:var(--ink-disabled); border-color:var(--control-line)}
+#properties .fxpair {min-width:0; flex-wrap:wrap}
+#properties .fxpair figure {max-width:100%}
+#properties .fxpair img {max-width:100%; height:auto}
+#properties .ipgrow {white-space:normal; align-items:flex-start}
+.sr-only {position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+
+#draft-recovery {width:min(650px,92vw); max-height:85vh; overflow:auto; color:var(--ink); background:var(--chrome); border:1px solid var(--line); border-radius:8px}
+#draft-recovery::backdrop {background:var(--backdrop)}
+#draft-recovery form {display:flex; justify-content:space-between; align-items:center}
+#draft-recovery textarea {display:block; width:100%; box-sizing:border-box; white-space:pre; overflow:auto; margin:var(--space-2) 0; color:var(--ink); background:var(--chrome-2); border:1px solid var(--control-line)}
+#draft-records {max-height:160px; overflow:auto; display:flex; flex-direction:column; gap:var(--space-1)}
+#draft-recovery button {min-height:var(--control-h); margin:2px; padding:var(--space-1) var(--space-2); font:inherit; color:var(--ink); background:var(--chrome-2); border:1px solid var(--control-line); border-radius:var(--radius)}
+#draft-recovery-error:empty {display:none}
+#draft-recovery-error {color:var(--danger); padding:6px; margin:0}
+#draft-recovery-status {font-size:var(--text-meta); margin-left:10px}
+
+#reading-view { width:min(760px,92vw); max-height:85vh; overflow:auto; color:var(--ink); background:var(--chrome-2); border:1px solid var(--line); border-radius:8px; padding:var(--space-4); }
+#reading-view::backdrop { background:var(--backdrop); }
+#reading-view form,#reading-view nav { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-2); }
+#reading-view h2 { margin:0; font-size:1.125rem; flex:1; }
+#reading-view button, #reading-view input { min-height:var(--control-h); font:inherit; color:var(--ink); background:var(--chrome); border:1px solid var(--control-line); border-radius:var(--radius); padding:var(--space-1) var(--space-2); }
+#reading-page { width:6em; }
+#reading-text { white-space:pre-wrap; overflow-wrap:anywhere; max-height:45vh; overflow:auto; padding:var(--space-3); border:1px solid var(--line); font:1rem/1.6 system-ui,sans-serif; }
+#reading-text:focus { outline:2px solid var(--focus); outline-offset:2px; }
+#reading-error { color:var(--danger); }
+
+#selection-actions { position:fixed; z-index:600; display:flex; flex-wrap:wrap; gap:var(--space-1); max-width:calc(100vw - 16px); padding:6px; border:1px solid var(--line); border-radius:6px; background:var(--chrome-2); box-shadow:0 3px 12px #0004; }
+#selection-actions[hidden] { display:none; }
+#selection-actions button { min-height:var(--control-h); padding:var(--space-1) 10px; font:inherit; color:var(--ink); background:var(--chrome); border:1px solid var(--control-line); border-radius:3px; }
+#selection-actions button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+/* Selection-linked comments retain readable source and reachable actions. */
+#selection-note { width: min(520px, calc(100vw - 48px)); max-height: calc(100vh - 48px); overflow: auto; color: var(--ink); background: var(--chrome-2); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
+#selection-note::backdrop { background: var(--backdrop); }
+#selection-note textarea { display: block; box-sizing: border-box; width: 100%; margin: var(--space-2) 0; padding: var(--space-2); resize: vertical; color: inherit; background: inherit; font: inherit; border: 1px solid var(--control-line); border-radius: var(--radius); }
+#selection-note > div { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+#selection-note button { min-height: var(--control-h); padding: 5px 10px; font: inherit; color: var(--ink); background: var(--chrome); border: 1px solid var(--control-line); border-radius: var(--radius); }
+#selection-note #selection-note-apply { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+#selection-note button:disabled { color: var(--ink-disabled); background: var(--disabled-bg); cursor: default; }
+#selection-note-status { white-space: normal; overflow-wrap: anywhere; }
+
+#comment-page-error:empty {display:none}
+#comment-page-error {color:var(--danger);overflow-wrap:anywhere}
+.ndraft-label {font-size:var(--text-meta);color:var(--ink-dim);margin-top:6px}
+
+#export-details {position:relative;max-width:100%;font-size:var(--text-meta)}
+#export-details[open] {padding:6px;border:1px solid var(--line);background:var(--chrome)}
+#export-details p {margin:var(--space-1) 0;overflow-wrap:anywhere;white-space:normal}
+#export-reconcile {font:inherit;min-height:var(--control-h);color:var(--ink);background:var(--chrome-2);border:1px solid var(--control-line);border-radius:var(--radius);padding:var(--space-1) var(--space-2)}
+
+/* Allow tool groups to wrap at enlarged text sizes without hiding actions. */
+#toolbar > .tgroup {flex-wrap:wrap; max-width:100%; min-width:0}
+@media(max-width:800px) {
+  #toolbar > .tgroup:not(#navigation):not(#workspace-tabs):not(.zoom) {display:contents}
+  #toolbar > .tspacer {display:none}
+  #toolbar .tbtn {padding-inline:var(--space-1)}
+}
+/* ---- UI-01: fixed actions, workspace tools and the More menu ---- */
+#toolbar {overflow:visible}
+#toolbar > .fixed-group {flex:0 0 auto; flex-wrap:wrap; max-width:100%; min-width:0}
+#workspace-tabs .wtab {padding:0 var(--space-2); font-weight:500}
+#workspace-tabs .wtab[aria-pressed="true"] {background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent-strong); box-shadow:inset 0 -2px 0 var(--accent-line); font-weight:700}
+#workspace-tools {order:10; flex:1 1 100%; min-width:0; display:flex; align-items:center; gap:var(--space-1); border-top:1px solid var(--line-soft); padding-top:var(--space-1)}
+#workspace-tools-bar {display:flex; flex-wrap:nowrap; align-items:center; gap:2px; min-width:0}
+#workspace-tools-bar > * {flex:0 0 auto}
+#workspace-tools-bar #markgroup, #workspace-tools-bar #stylegroup {flex-wrap:nowrap; max-width:none}
+#workspace-parking, #workspace-parking[hidden] {display:none}
+#tools-more[hidden] {display:none}
+#tools-more {flex:0 0 auto; border-color:var(--control-line)}
+#tools-more-list {position:fixed; z-index:45; display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-1);
+  width:max-content; max-width:calc(100vw - 16px); overflow:auto; padding:var(--space-2);
+  background:var(--chrome); color:var(--ink); border:1px solid var(--control-line); border-radius:var(--radius); box-shadow:0 6px 18px var(--backdrop)}
+#tools-more-list[hidden] {display:none}
+#tools-more-list #markgroup, #tools-more-list #stylegroup {flex-wrap:wrap; max-width:100%}
+
+/* ---- SAFE-01: leaving an editor with unapplied changes (begin) ---- */
+#editor-transition { width: min(460px, calc(100vw - 32px)); box-sizing: border-box; color: var(--ink); background: var(--chrome-2); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
+#editor-transition::backdrop { background: var(--backdrop); }
+#editor-transition h2 { margin: 0 0 10px; font-size: var(--text-heading); }
+#editor-transition p { margin: 0 0 10px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+#editor-transition p:empty { display: none; }
+#editor-transition .erow { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+#editor-transition button { min-height: 32px; padding: 5px 10px; font: inherit; color: var(--ink); background: var(--chrome); border: 1px solid var(--line); border-radius: var(--radius); }
+#editor-transition #editor-transition-apply { background: var(--accent); color: var(--on-accent); }
+#editor-transition button:disabled, #editor-transition #editor-transition-apply:disabled { opacity: 1; color: var(--ink-disabled); background: var(--disabled-bg); }
+#editor-transition button[hidden] { display: none; }
+#editor-transition button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* ---- SAFE-01 (end) ---- */
+
+#navigation-error {color:var(--warn-ink)}
+#page-label {max-width:8em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+#page-organizer {width:min(920px, calc(100vw - 48px)); max-height:calc(100vh - 48px); padding:16px; color:var(--ink); background:var(--chrome)}
+#page-organizer > form, .organize-controls {display:flex; flex-wrap:wrap; align-items:center; gap:8px}
+#page-organizer > form {justify-content:space-between}
+#organize-target {width:4em}
+#organize-grid {display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:12px; overflow:auto; max-height:calc(100vh - 240px); min-height:120px; padding:8px}
+#organize-grid .thumb {margin:0; padding:8px; min-width:0; cursor:grab}
+#organize-grid .shot {width:100%; max-height:200px}
+#organize-grid .thumb:focus-visible {outline:2px solid var(--focus); outline-offset:2px}

@@ -81,11 +81,11 @@ const SHAPES: [string, w.SheetSpec, string][] = [
       rows: w.withNotes(HEADER, BODY, { below: [['Source: internal']], blankBeforeBelow: false }),
     },
     // Measured: WITH a blank line the note is excluded; without one it becomes
-    // a fifth data row, `["Source: internal", null, null]`. That is not a
-    // defect -- nothing distinguishes a note from data when no blank line
-    // separates them -- but it is the boundary, and it is worth pinning which
-    // side of it the reader falls on.
-    'a note immediately under the last data row, with no blank line, is read AS a row of nulls',
+    // a fifth data row. Nothing distinguishes a note from data when no blank
+    // line separates them -- that is the boundary, and this pins which side of
+    // it the reader falls on. Since EX-05 the row keeps its text: the `id`
+    // column is shown as text with a notice instead of the note becoming NULL.
+    'a note immediately under the last data row, with no blank line, is read as a data row that keeps its text',
   ],
   [
     'missing_cells',
@@ -131,14 +131,11 @@ for (const [slug, sheet, note] of SHAPES) {
           [4, 'delta', 4.5],
         ]
       : slug === 'notes_below_no_blank_line'
-        // The note lands in the `id` column, which read_xlsx has typed numeric
-        // from the four rows above it, so the whole row reads as nulls -- and
-        // the sheet only opens AT ALL because of the lazy ignore_errors repair.
-        // Without it, `Could not convert string 'Source: internal' to DOUBLE`
-        // takes the entire sheet down. That repair was added for #DIV/0!; this
-        // shows it also rescues the far more common case of a note written
-        // under a table.
-        ? [...BODY, [null, null, null]]
+        // The note lands in the `id` column, which read_xlsx types numeric from
+        // the four rows above it; ignore_errors used to read it as NULL with no
+        // notice. EX-05 detects the lost value and keeps the column's exact
+        // text (with a notice naming A6), so the note survives as written.
+        ? [...BODY, ['Source: internal', null, null]]
         : BODY;
 
   registerCase({

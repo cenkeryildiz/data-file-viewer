@@ -1,0 +1,142 @@
+{
+  "schema": "dfv-resource-policy.v1",
+  "worker_admission": {
+    "maximum_processes": 8,
+    "scope": "One extension host, across table, PDF and MAT workers, including starting and stopping children",
+    "mechanism": "Reserve before spawn; release only failed spawn or actual child exit",
+    "basis": "Required two-PDF, four-dataset, one-MAT workload plus one slot of headroom"
+  },
+  "pdf_host": {
+    "maximum_pending_requests": 65,
+    "reserved_control_slots": 4,
+    "maximum_frame_bytes": 8388608,
+    "maximum_pending_serialized_bytes": 33554432,
+    "reserved_control_bytes": 8388608,
+    "read_watchdog_ms": 35000,
+    "read_watchdog_basis": "Native 30000ms cooperative read deadline plus 5000ms host grace; deferred while a mutation or untimed lifecycle operation is pending",
+    "mutation_watchdog_ms": null,
+    "accounting": "Wire request frames including newline, and serialized operations waiting in the host mutation queue; incoming frames separately capped at 8MiB",
+    "limitation": "Mutation/open/restore/close execution ceilings remain unqualified. Global RSS/IPC/CPU/temp qualification is separate."
+  },
+  "qualification": "Process admission is an operational bound. The budgets block is the frozen seven-document containment bound asserted by test/nativeResources.test.ts; it is not an OS sandbox, excludes Code/Chromium, and the 30-minute soak result is recorded separately.",
+  "budgets": {
+    "frozen_at": "2026-11-06T11:15+01:00, before the measurement run that asserts them",
+    "workload": "Seven-document: 1 CSV + 1 Parquet + 1 SQLite (200000 rows each), 1 XLSX (50 sheets/500 tables), 2 PDFs (12-page, 5-page image-heavy), 1 generated Level-5 MAT (1003 variables); 20 concurrent rounds plus a retained 100000-row diff",
+    "scope": "Native workers only (table, PDF, MAT children). Excludes VS Code, Chromium and the Node host; independent process peaks are compared per class, never summed except for the aggregate row.",
+    "rss_mib": {
+      "table_worker_each": {
+        "value": 1024,
+        "kind": "operational",
+        "basis": "512MB DuckDB memory_limit (duckdb.rs Config::max_memory) plus 256 MiB held-resource cap (resource.rs) plus 256 MiB headroom for allocator, Arrow and protocol buffers outside the DuckDB limit; spill is 0B (policy.rs max_temp_directory_size). Not an OS-enforced RSS limit.",
+        "revision": {
+          "date": "2026-11-07",
+          "approved_by": "user",
+          "previous": {
+            "value": 768,
+            "kind": "contract"
+          },
+          "reason": "The hostile-limits run measured one CSV table worker at 869.3 MiB, above the original 768 MiB. 768 summed two caps that do not bound process RSS, so it was a label error, not a ceiling the worker could honour. Revised after measurement, by explicit user decision, with a new operational value (measured peak plus DuckDB 512MB limit, 256 MiB held cap and 256 MiB headroom). Every other budget and pdf_host stay frozen."
+        }
+      },
+      "pdf_worker_each": {
+        "value": 512,
+        "kind": "operational",
+        "basis": "No contract number exists. Host-bounded 32 MiB pending bytes and 32 MiB resource reads plus engine page cache; chosen as a round ceiling, not a performance target"
+      },
+      "mat_worker": {
+        "value": 512,
+        "kind": "operational",
+        "basis": "256 MiB variable_bytes decode cap (mat types.rs) doubled for parse and index overhead; huge sparse data never densifies"
+      },
+      "aggregate_native": {
+        "value": 2048,
+        "kind": "operational",
+        "basis": "Host-owned total for the seven-worker workload; far below the sum of per-class ceilings (4352) because DuckDB engines do not all reach their cap at once"
+      },
+      "retained_delta_per_worker": {
+        "value": 64,
+        "kind": "contract",
+        "basis": "Existing PERF-02/03 retained RSS delta; applied to last-third versus middle-third maxima in the soak"
+      }
+    },
+    "cpu": {
+      "table_worker_cpu_per_wall_second": "reader_threads()+1",
+      "reader_threads": "cores/2, at least 1 (policy.rs)",
+      "pdf_and_mat_cpu_per_wall_second": 2,
+      "kind": "contract",
+      "basis": "DuckDB thread count from policy.rs plus the protocol thread; PDF and MAT run one engine thread plus I/O"
+    },
+    "ipc_bytes": {
+      "per_worker_pending": 33554432,
+      "kind": "contract",
+      "basis": "32 MiB frame/result and pending-byte cap shared by table, MAT and PDF hosts; PDF host pending bytes are enforced and tested in pdfHostBounds, not sampled"
+    },
+    "temporary_bytes": {
+      "native_scratch": "at most the CSV source size (one backup copy); engine spill is 0B",
+      "pdf_private_work": "at most 2 x the summed PDF source sizes (working copy plus one rewritten copy)",
+      "pdf_recovery": "at most 2 x the summed PDF source sizes",
+      "after_shutdown": "all zero",
+      "kind": "derived"
+    },
+    "handles": {
+      "open_file_descriptors_per_worker": 128,
+      "kind": "operational",
+      "basis": "Half the macOS default soft limit of 256 for GUI-launched processes"
+    },
+    "soak": {
+      "minutes": 30,
+      "worker_kill_each_class": "at least one per class",
+      "orphans_allowed": 0,
+      "source_hash_changes_allowed": 0
+    }
+  },
+  "measurements": {
+    "recorded_at": "2026-11-07T13:30+01:00",
+    "kind": "measured",
+    "note": "Records observed values only; the budgets above were not edited after this measurement (the one table_worker_each revision is the dated, user-approved record in budgets.rss_mib). Debug (unoptimised) dfv-table 4373174b38c48fa7, dfv-mat 1bab58cb2d4375ff, dfv-pdf af044680f79db92f on Apple M4 / 16 GiB, 100 ms ps sampling, excludes Code/Chromium. Sampling can miss shorter peaks. Supersedes the 2026-11-07T02:56 run on dfv-table a32e1c28 / dfv-mat 3709812f.",
+    "seven_document_run": {
+      "wall_seconds": 49.2,
+      "rounds": 20,
+      "samples": 494,
+      "rss_mib_peak": {
+        "table_csv": 447.4,
+        "table_parquet": 123.0,
+        "table_sqlite": 122.5,
+        "table_xlsx": 83.9,
+        "pdf_simple": 49.0,
+        "pdf_image_heavy": 191.0,
+        "mat": 67.8,
+        "node_test_host": 297.9
+      },
+      "simultaneous_native_rss_mib_peak": 825.3,
+      "simultaneous_native_and_node_rss_mib_peak": 1121.1,
+      "cpu_seconds_total": {
+        "table_csv": 55.0,
+        "table_parquet": 15.7,
+        "table_sqlite": 14.7,
+        "table_xlsx": 3.0,
+        "pdf_simple": 0.18,
+        "pdf_image_heavy": 0.64,
+        "mat": 1.35
+      },
+      "open_file_descriptors_peak_per_worker": 6,
+      "table_mat_encoded_ipc_peak_bytes": 5578041,
+      "temporary_peak_bytes": {
+        "native_scratch": 5266692,
+        "pdf_private_work": 15745896,
+        "pdf_recovery": 15747539
+      },
+      "after_shutdown": "native scratch empty, all seven workers reaped, no pinned worker process remained",
+      "earlier_run_2026-11-07_02:56_superseded": {
+        "workers": "dfv-table a32e1c28, dfv-mat 3709812f",
+        "simultaneous_native_rss_mib_peak": 826.5
+      }
+    },
+    "hostile_limits_run": {
+      "workers": "dfv-table 4373174b38c48fa7",
+      "table_worker_rss_mib_peak": 745.1,
+      "simultaneous_native_rss_mib_peak": 759.3,
+      "note": "Deadline, held-resource-quota, queue and 50 open/close cycles on one CSV worker, asserted against table_worker_each = 1024 (operational, revised 2026-11-07). The earlier a32e1c28 run peaked at 869.3 MiB, which exceeded the original 768 label."
+    }
+  }
+}

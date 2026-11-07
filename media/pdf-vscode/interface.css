@@ -1,0 +1,289 @@
+/* Layout only: the viewer still owns tools, panel state and the live draft. */
+body[class*="vscode-"] {
+  --ui-edge: color-mix(in srgb, var(--ink) 12%, transparent);
+  --ui-shadow: 0 2px 6px color-mix(in srgb, var(--ink) 4%, transparent),
+    0 16px 40px color-mix(in srgb, var(--ink) 7%, transparent);
+}
+body[class*="vscode-"] #titlebar {
+  min-height: 34px;
+  padding: 6px 20px;
+  border-bottom: 0;
+}
+body[class*="vscode-"] #titlebar .brand,
+body[class*="vscode-"] #titlebar .brandpad { display: none; }
+body[class*="vscode-"] #docname { text-align: start; font-size: var(--text-meta); }
+
+body[class*="vscode-"] #toolbar {
+  height: auto;
+  min-height: 60px;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom-color: var(--ui-edge);
+}
+body[class*="vscode-"] #toolbar .tbtn { border-radius: 9px; }
+body[class*="vscode-"] #workspace-tabs {
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid var(--ui-edge);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--chrome-2) 55%, var(--chrome));
+}
+body[class*="vscode-"] #workspace-tabs .wtab {
+  min-height: 32px;
+  padding-inline: 14px;
+  border-radius: 9px;
+  box-shadow: none;
+}
+body[class*="vscode-"] #workspace-tabs .wtab[aria-pressed="true"] {
+  background: var(--chrome-2);
+  color: var(--ink);
+  border-color: var(--ui-edge);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+body[class*="vscode-"] #workspace-tools {
+  padding-top: 10px;
+  gap: 8px;
+}
+body[class*="vscode-"] #workspace-tools-bar { gap: 6px; }
+body[class*="vscode-"] #navigation { gap: 4px; }
+body[class*="vscode-"] #navigation label { white-space: nowrap; }
+body[class*="vscode-"] #document-actions { gap: 6px; }
+body[class*="vscode-"] #export { padding-inline: 18px; }
+body[class*="vscode-"] #tools-more-list { border-radius: 16px; padding: 12px; box-shadow: var(--ui-shadow); }
+body[class*="vscode-"] .sidebar-head { padding: 10px; }
+body[class*="vscode-"] #sidebar-tabs [role="tab"] { padding: 6px 10px; }
+body[class*="vscode-"] #properties-toggle:disabled { display: none; }
+body[class*="vscode-"] #workspace-tools:has(#workspace-tools-bar:empty):has(#tools-more[hidden]) { display: none; }
+
+body[class*="vscode-"] #sidebar { background: var(--chrome); border-color: var(--ui-edge); }
+body[class*="vscode-"] .sidebar-head { gap: 4px; padding: 12px 8px; border-color: var(--ui-edge); }
+body[class*="vscode-"] #sidebar-tabs {
+  flex-wrap: nowrap;
+  padding: 3px;
+  border: 1px solid var(--ui-edge);
+  border-radius: 11px;
+  background: var(--chrome);
+}
+body[class*="vscode-"] #sidebar-tabs [role="tab"] {
+  flex: 1;
+  padding: 4px 7px;
+  font-size: var(--text-meta);
+  border-radius: 7px;
+}
+body[class*="vscode-"] #sidebar-tabs [aria-selected="true"] {
+  border: 1px solid var(--ui-edge);
+  background: var(--chrome-2);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+body[class*="vscode-"] #sidebar-close { min-width: 26px; padding-inline: 4px; border-radius: 8px; }
+body[class*="vscode-"] #rail { padding: 12px; }
+body[class*="vscode-"] #rail .thumb { padding: 12px; border-radius: 14px; margin-bottom: 10px; }
+body[class*="vscode-"] #rail .thumb.sel { background: var(--panel-on); }
+body[class*="vscode-"] #rail .shot { max-width: 128px; margin-inline: auto; border-radius: 4px; }
+body[class*="vscode-"] #rail .no { margin-top: 10px; text-decoration: none; }
+body[class*="vscode-"] .panel-resize { background: linear-gradient(90deg, transparent 2px, var(--ui-edge) 2px, var(--ui-edge) 3px, transparent 3px); }
+body[class*="vscode-"] .panel-resize:hover,
+body[class*="vscode-"] .panel-resize:focus-visible,
+body[class*="vscode-"] .panel-resize.dragging { background: var(--focus); }
+body[class*="vscode-"] #outline-panel { padding: 12px; }
+body[class*="vscode-"] #outline-panel input { border-radius: 10px; padding: 8px 10px; }
+body[class*="vscode-"] #outline-tree [role="treeitem"],
+body[class*="vscode-"] #outline-panel .outline-rows button { border-radius: 9px; padding: 10px; line-height: 1.5; }
+body[class*="vscode-"] #notes { padding: 16px; border-color: var(--ui-edge); }
+body[class*="vscode-"] .nhead { letter-spacing: 0; text-transform: none; font-size: 1rem; padding-bottom: 16px; }
+body[class*="vscode-"] .note { padding: 16px; border-color: var(--ui-edge); border-radius: 14px; margin-bottom: 12px; }
+body[class*="vscode-"] .nquote { padding-left: 12px; line-height: 1.6; }
+body[class*="vscode-"] .nbody { line-height: 1.6; margin-top: 10px; }
+body[class*="vscode-"] #comment-filters { gap: 8px; }
+body[class*="vscode-"] #comment-filters input,
+body[class*="vscode-"] #comment-filters select,
+body[class*="vscode-"] #comment-filters button { border-radius: 8px; }
+body[class*="vscode-"] .page { box-shadow: 0 2px 6px rgb(0 0 0 / .07), 0 12px 40px rgb(0 0 0 / .1); }
+body[class*="vscode-"] .page,
+body[class*="vscode-"] .thumb .shot { color-scheme: light; }
+body[class*="vscode-"] #statusbar { border-top-color: var(--ui-edge); padding-inline: 16px; }
+
+body[class*="vscode-"] #stage {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--well) 92%, var(--chrome-2)), var(--well));
+}
+
+/* The inset panel plus its margins still occupies the controller's 350px. */
+body[class*="vscode-"] #properties {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 0;
+  flex-basis: 326px;
+  width: 326px;
+  margin: 12px;
+  border: 1px solid var(--ui-edge);
+  border-radius: 20px;
+  background: var(--chrome-2);
+  box-shadow: var(--ui-shadow);
+}
+body[class*="vscode-"] #properties.hidden { display: none; }
+body[class*="vscode-"] #properties.panel-drawer {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: min(380px, calc(100vw - 32px)) !important;
+}
+body[class*="vscode-"] #editing-kicker {
+  margin: 24px 24px 8px;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  color: var(--ink-dim);
+}
+body[class*="vscode-"] #properties header { padding: 0 24px 10px; align-items: start; }
+body[class*="vscode-"] #properties h2 { font-size: 1.5rem; line-height: 1.15; letter-spacing: -.04em; font-weight: 600; }
+body[class*="vscode-"] #properties-hide { padding: 4px 8px; border-radius: 8px; font-size: var(--text-meta); }
+body[class*="vscode-"] #properties-object { margin: 0; padding: 0 24px; }
+body[class*="vscode-"] #editing-help {
+  margin: 14px 24px 24px;
+  color: var(--ink-dim);
+  font-size: var(--text-meta);
+  line-height: 1.6;
+}
+body[class*="vscode-"] #properties-fields {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 0 24px;
+  scrollbar-gutter: stable;
+}
+body[class*="vscode-"] #properties .ipbar {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 20px;
+  border-radius: 0;
+  flex: 1;
+  min-height: 0;
+}
+body[class*="vscode-"] #properties .ipbar > * {
+  flex: 0 0 auto;
+  width: 100%;
+}
+body[class*="vscode-"] #properties .ipmode {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--ui-edge);
+  border-radius: 12px;
+  background: var(--chrome);
+}
+body[class*="vscode-"] #properties .ipmode button {
+  flex: 1;
+  border-radius: 8px;
+  border-color: transparent;
+  white-space: normal;
+}
+body[class*="vscode-"] #properties .ipmode .ebtn.on {
+  background: var(--chrome-2);
+  color: var(--ink);
+  border-color: var(--ui-edge);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+body[class*="vscode-"] #properties .ipwas {
+  color: var(--ink-dim);
+  font-size: var(--text-meta);
+  opacity: 1;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--chrome);
+}
+body[class*="vscode-"] #properties .properties-width {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+body[class*="vscode-"] #properties-width { width: 88px; border-radius: 9px; text-align: end; font-variant-numeric: tabular-nums; }
+body[class*="vscode-"] #properties #properties-edit-text { width: 100%; border-radius: 10px; background: var(--chrome); border-color: var(--ui-edge); }
+body[class*="vscode-"] #properties .ipstatus:not(:empty) {
+  padding: 16px;
+  border: 1px solid var(--ui-edge);
+  border-radius: 14px;
+  background: var(--chrome);
+  font-size: var(--text-meta);
+  line-height: 1.65;
+}
+body[class*="vscode-"] #properties .ipstatus.bad { border-color: var(--danger); }
+body[class*="vscode-"] #properties .ipstatus:empty,
+body[class*="vscode-"] #properties .iplines:empty { display: none; }
+body[class*="vscode-"] #properties .properties-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-block: 20px;
+  border-top: 1px solid var(--ui-edge);
+  background: var(--chrome-2);
+  z-index: 1;
+}
+body[class*="vscode-"] #properties .properties-actions button {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  border-radius: 11px;
+  white-space: normal;
+}
+body[class*="vscode-"] #properties .ipgrow { line-height: 1.5; }
+body[class*="vscode-"] #properties .ipgrow input { flex-shrink: 0; }
+
+/* A quiet focus edge around real PDF geometry, with a larger drag target. */
+body[class*="vscode-"] .inplace {
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgb(var(--overlay-rgb) / .3), 0 6px 24px rgb(0 0 0 / .08);
+}
+body[class*="vscode-"] .ipgrip { width: 14px; right: -7px; background: transparent; }
+body[class*="vscode-"] .ipgrip::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 14px);
+  left: 5px;
+  width: 4px;
+  height: 28px;
+  border-radius: 4px;
+  background: rgb(var(--overlay-rgb) / .6);
+}
+
+body.vscode-high-contrast, body.vscode-high-contrast-light { --ui-edge: var(--vscode-contrastBorder, var(--focus)); --ui-shadow: none; }
+body.vscode-high-contrast #stage,
+body.vscode-high-contrast-light #stage { background: var(--well); }
+body.vscode-high-contrast #properties .ipmode .ebtn.on,
+body.vscode-high-contrast-light #properties .ipmode .ebtn.on,
+body.vscode-high-contrast #workspace-tabs .wtab[aria-pressed="true"],
+body.vscode-high-contrast-light #workspace-tabs .wtab[aria-pressed="true"] { border-color: var(--focus); box-shadow: inset 0 -2px var(--focus); }
+
+@media (max-width: 800px) {
+  body[class*="vscode-"] #toolbar { padding: 6px; gap: 6px; }
+  body[class*="vscode-"] #workspace-tabs .wtab { padding-inline: 8px; }
+  body[class*="vscode-"] #navigation { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[class*="vscode-"] .tbtn { transition: none; }
+}
+
+/* A paper-colored outer edge keeps keyboard focus visible on any page image. */
+body[class*="vscode-"] .ipgrip:focus-visible {
+  outline: 2px solid var(--paper-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--paper);
+}
+
+body[class*="vscode-"] #outline-panel > select {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 1px solid var(--control-line);
+  border-radius: 9px;
+}
+body[class*="vscode-"] #outline-panel > button { margin-block: 4px; border-radius: 9px; }
+body[class*="vscode-"] #outline-panel > label { display: flex; align-items: start; gap: 6px; line-height: 1.5; margin-block: 8px; }
+
+body[class*="vscode-"] #notes :is(.nbody, .nwho, .nquote) { overflow-wrap: anywhere; }
+body[class*="vscode-"] #notes :is(.nrow, .nacts) { flex-wrap: wrap; }

@@ -1,8 +1,10 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
 
 import {
   pickXAxis,
+  pickPlotAxis,
   plottableColumns,
   toSeriesPoints,
   toCategoryLabels,
@@ -62,6 +64,13 @@ test('Turkish and period headers use the detector’s shared date vocabulary', (
     kind: 'text',
   });
   assert.equal(pickXAxis(['Dönem', 'Değer'], ['other', 'numeric'])?.column, 'Dönem');
+  for (const name of ['TARİH', 'TARİHİ', 'tarıh', 'tarıhı', 'DÖNEMİ', 'PERİOD', 'PERıOD', 'ref_PERİOD', 'weeK', 'timeſtamp']) {
+    assert.deepEqual(pickXAxis(['label', name, 'value'], ['other', 'other', 'numeric']), {column: name, kind: 'text'}, name);
+  }
+  assert.deepEqual(pickXAxis(['YİL', 'value'], ['numeric', 'numeric']), {column:'YİL',kind:'category'});
+  for (const name of ['2019', 'TARİHLER', 'PERİODIC', 'tarİh_son', 'weeKly']) {
+    assert.equal(pickXAxis([name, 'value'], ['other', 'numeric']), undefined, name);
+  }
 });
 
 test('a numeric Year is a category axis, not a y candidate', () => {
@@ -105,8 +114,35 @@ test('every numeric column is plottable when there is an axis', () => {
   );
 });
 
-test('no axis means no plottable columns, however many numbers there are', () => {
-  assert.deepEqual(plottableColumns(['A', 'B'], ['numeric', 'numeric']), []);
+test('no date axis now means row numbers: every numeric column is plottable (PLOT-02)', () => {
+  // This used to be [] -- a numbers-only result was refused outright. It is
+  // plotted against the row's position instead; text columns still never are.
+  assert.deepEqual(plottableColumns(['A', 'B'], ['numeric', 'numeric']), ['A', 'B']);
+  assert.deepEqual(plottableColumns(['v'], ['numeric']), ['v']);
+  assert.deepEqual(plottableColumns(['name', 'n'], ['other', 'numeric']), ['n']);
+  assert.deepEqual(plottableColumns(['name', 'tag'], ['other', 'other']), []);
+  assert.deepEqual(plottableColumns([], []), []);
+});
+
+test('pickPlotAxis keeps a date axis and falls back to row numbers only without one', () => {
+  assert.deepEqual(pickPlotAxis(['Date', 'v'], ['datetime', 'numeric']), { column: 'Date', kind: 'datetime' });
+  assert.deepEqual(pickPlotAxis(['Year', 'v'], ['numeric', 'numeric']), { column: 'Year', kind: 'category' });
+  assert.deepEqual(pickPlotAxis(['A', 'B'], ['numeric', 'numeric']), { column: 'Row', kind: 'row' });
+  // Mismatched columns/kinds still produce nothing rather than guessing.
+  assert.equal(pickPlotAxis(['A', 'B'], ['numeric']), undefined);
+});
+
+test('the axis choice: Row numbers overrides a date column, a named column is read as dates (PLOT-03)', () => {
+  const cols = ['Date', 'opened', 'v'];
+  const kinds: Array<'datetime' | 'other' | 'numeric'> = ['datetime', 'other', 'numeric'];
+  assert.deepEqual(pickPlotAxis(cols, kinds, {}), { column: 'Date', kind: 'datetime' });
+  assert.deepEqual(pickPlotAxis(cols, kinds, { row: true }), { column: 'Row', kind: 'row' });
+  assert.deepEqual(pickPlotAxis(cols, kinds, { dateColumn: 'opened' }), { column: 'opened', kind: 'date' });
+  // The chosen column is the axis, so it is not offered as its own series, and a numeric one is dropped too.
+  assert.deepEqual(plottableColumns(['yr', 'v'], ['numeric', 'numeric'], { dateColumn: 'yr' }), ['v']);
+  assert.deepEqual(plottableColumns(cols, kinds, { row: true }), ['v']);
+  // A column the table lacks is the host's to refuse by name; it never silently falls back.
+  assert.deepEqual(pickPlotAxis(['v'], ['numeric'], { dateColumn: 'gone' }), { column: 'gone', kind: 'date' });
 });
 
 test('the x column is never offered as its own y', () => {
@@ -185,7 +221,7 @@ test('category values keep their positions, gaps included', () => {
 // --------------------------------------------------- ported from the R helpers
 // These pin numbers that exist in two languages in two repos: the originals are
 // compute_echarts_x_range, compute_echarts_y_range and get_forced_breaks in
-// Kod/R/Time_Series_Plotting/helpers/helpers_core.R. A test is the only thing
+// Kod/Projects/R/Time_Series_Plotting/helpers/helpers_core.R. A test is the only thing
 // that makes a divergence between them announce itself.
 
 test('the time axis is padded 2% before and 4% after', () => {
@@ -287,7 +323,7 @@ test('an unparseable instant labels as empty rather than "Invalid Date"', () => 
 
 // ------------------------------------------------------ the mark, either way
 // Also ported: the two arms of `raw_type` in
-// Kod/R/Time_Series_Plotting/long_run_3.R, which has had this line/scatter
+// Kod/Projects/R/Time_Series_Plotting/long_run_3.R, which has had this line/scatter
 // switch all along. 1.4 is `linewidth * 2` there and 7.2 is `point_size * 4`.
 
 test('a line is drawn at 1.4 with no symbols on its points', () => {
@@ -329,4 +365,26 @@ test('both marks take the colour they are given, so toggling changes only the ma
   assert.equal(seriesShape('line', colour).lineStyle?.color, colour);
   assert.equal(seriesShape('scatter', colour).itemStyle.color, colour);
   assert.equal(seriesShape('line', colour).itemStyle.color, colour);
+});
+
+
+test('native naive ISO timestamps keep UTC points across non-UTC viewer zones', () => {
+  const helper = require.resolve('../src/chartSpec');
+  const verify = `
+    const assert = require('node:assert/strict');
+    const {toEpochMs} = require(process.argv[1]);
+    const midnight = Date.UTC(2024,0,1);
+    for (const text of ['2024-01-01 00:00:00','2024-01-01T00:00:00','2024-01-01','2024-01-01T00:00:00Z'])
+      assert.equal(toEpochMs(text),midnight,text);
+    assert.equal(toEpochMs('2024-01-01 00:00:00.123456'),midnight+123);
+    assert.equal(toEpochMs('2024-01-01T00:00:00+02:00'),midnight-7200000);
+    assert.equal(toEpochMs('2024'),midnight);
+    assert.equal(toEpochMs('1704067200000'),undefined);
+    assert.equal(toEpochMs('not a date'),undefined);
+    assert.equal(toEpochMs('2024-99-01 00:00:00'),undefined);
+  `;
+  for (const zone of ['Europe/Madrid','America/New_York']) {
+    const result = spawnSync(process.execPath, ['-e',verify,helper], {env:{...process.env,TZ:zone},encoding:'utf8'});
+    assert.equal(result.status,0,`${zone}: ${result.stderr}`);
+  }
 });

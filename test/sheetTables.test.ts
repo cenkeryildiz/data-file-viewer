@@ -8,8 +8,20 @@ import {
   looksLikeFooter,
   splitRegions,
   wholeGrid,
+  isDateColumnName,
   type Cell,
 } from '../src/sheetTables';
+import { spanRowCount } from '../src/sheetRowMap';
+
+test('date header vocabulary preserves Python Unicode case folding without adding names', () => {
+  for (const name of ['TARİH', 'TARİHİ', 'tarıh', 'tarıhı', 'YİL', 'YıLLAR', 'DÖNEMİ', 'DÖNEMı',
+    'TİME', 'PERİOD', 'PERıOD', 'ref_PERİOD', 'end_DATETİME', 'tİme_start', 'weeK', 'çeyreK', 'timeſtamp', 'tſ']) {
+    assert.equal(isDateColumnName(` ${name} `), true, name);
+  }
+  for (const name of ['2019', '1999', 'TARİHLER', 'PERİODIC', 'tarİh_son', 'DÖNEMİ_extra', 'weeKly', 'ſtats']) {
+    assert.equal(isDateColumnName(name), false, name);
+  }
+});
 
 /**
  * The fixtures below are the real geometry of
@@ -379,4 +391,68 @@ test('a table with no header at all is named by its Excel column letters', () =>
   assert.equal(tables.length, 1);
   assert.deepEqual(tables[0].columns, ['B', 'C']);
   assert.equal(tables[0].headerRow, null);
+});
+
+/* ------------------------------------------------- EX-01 reproduced defects */
+
+// The repeated-header shape of test/fixtures/xlsx-corpus/repeated.xlsx, as the
+// verbatim all_varchar read hands it over.
+const REPEATED: Cell[][] = [
+  ['Name', 'Value'],
+  ['Alice', '1'],
+  [null, null],
+  ['Name', 'Value'],
+  ['Bob', '2'],
+];
+
+test('repeated header: one table, header at row 0, two data rows counted', () => {
+  const tables = detectTables(REPEATED);
+  assert.equal(tables.length, 1);
+  assert.equal(tables[0].headerRow, 0);
+  assert.deepEqual(tables[0].columns, ['Name', 'Value']);
+  assert.equal(tables[0].rowCount, 2);
+});
+
+test('repeated header: the table describes exactly which source rows are data', () => {
+  const [t] = detectTables(REPEATED);
+  // The source-row map, not the rectangle: rows 1 and 4 are data; row 2 is the
+  // blank separator and row 3 the repeated header.
+  assert.deepEqual(t.dataRows, [{ start: 1, end: 2 }, { start: 4, end: 5 }]);
+  assert.deepEqual(t.excludedRows, [{ row: 2, reason: 'blank' }, { row: 3, reason: 'header' }]);
+  assert.equal(spanRowCount(t.dataRows), t.rowCount);
+  const described: Cell[][] = [];
+  for (const span of t.dataRows) {
+    for (let r = span.start; r < span.end; r++) described.push(REPEATED[r].slice(t.region.left, t.region.right));
+  }
+  assert.deepEqual(described, [['Alice', '1'], ['Bob', '2']]);
+  // Every row of the rectangle below the header is either data or excluded, once.
+  const covered = described.length + t.excludedRows.length;
+  assert.equal(covered, t.region.bottom - t.region.top - 1);
+});
+
+test('mixed numeric/text column keeps its text in the grid detection sees', () => {
+  const grid: Cell[][] = [
+    ['Name', 'Value'],
+    ['Alice', '1'],
+    ['Bob', 'not numeric'],
+    ['Clara', '3'],
+  ];
+  const before = JSON.stringify(grid);
+  const [t] = detectTables(grid);
+  assert.equal(t.rowCount, 3);
+  assert.equal(JSON.stringify(grid), before);
+});
+
+test('adjacent tables without a blank column are one heuristic region (declared tables are EX-06)', () => {
+  // Heuristics alone cannot see the boundary between LeftData and RightData in
+  // explicit-adjacent.xlsx; only the workbook's table parts can. The corpus test
+  // tracks the declared-table defect; this pins the heuristic's own answer.
+  const grid: Cell[][] = [
+    ['Name', 'Value', 'Code', 'Amount'],
+    ['Alice', '1', 'X', '2'],
+    ['Bob', '3', 'Y', '4'],
+  ];
+  const tables = detectTables(grid);
+  assert.equal(tables.length, 1);
+  assert.deepEqual(tables[0].region, { top: 0, bottom: 3, left: 0, right: 4 });
 });

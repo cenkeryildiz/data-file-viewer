@@ -17,17 +17,17 @@ export interface QueryTargetGroup {
 export function groupQueryTargets(targets: Iterable<QueryTarget>, openSheet?: string): QueryTargetGroup[] {
   const all = [...targets];
   const raw = openSheet === undefined ? undefined : all.find((t) => t.rawWorksheet && t.name === openSheet);
-  if (raw) {
-    const prefix = `${raw.name} · `;
+  if (openSheet !== undefined && all.some((t) => t.rawWorksheet || t.worksheet !== undefined)) {
+    const prefix = `${openSheet} · `;
     const tables = all
-      .filter((t) => !t.rawWorksheet && t.worksheet === raw.name)
+      .filter((t) => !t.rawWorksheet && t.worksheet === openSheet)
       .map((t) => {
         const name = t.name.startsWith(prefix) ? t.name.slice(prefix.length) : t.name;
         return { id: t.id, label: `${name}${t.range ? ` — ${t.range}` : ''}` };
       });
-    const groups: QueryTargetGroup[] = [
+    const groups: QueryTargetGroup[] = raw ? [
       { label: 'Worksheet', options: [{ id: raw.id, label: `${raw.name} — whole sheet (A, B, C…)` }] },
-    ];
+    ] : [];
     if (tables.length > 0) groups.push({ label: 'Tables', options: tables });
     return groups;
   }

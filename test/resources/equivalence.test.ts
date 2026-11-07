@@ -91,7 +91,8 @@ test('EQUIVALENCE: observable behaviour per file matches the recorded baseline',
   assert.ok(existsSync(join(profileDir, 'wide.csv')), 'build the corpus first: conda run -n myproject python test/resources/build_profile_corpus.py');
   const dir = await mkdtemp(join(tmpdir(), 'dfv-equiv-'));
   const user = join(homedir(), 'Desktop', 'scatter');
-  const userHash = existsSync(join(user, 'YieldCurve_Data.xlsx')) ? sha(await readFile(join(user, 'YieldCurve_Data.xlsx'))) : undefined;
+  const syntheticOnly = process.env.DFV_BASELINE_SYNTHETIC === '1';
+  const userHash = !syntheticOnly && existsSync(join(user, 'YieldCurve_Data.xlsx')) ? sha(await readFile(join(user, 'YieldCurve_Data.xlsx'))) : undefined;
   const copy = async (p: string) => { const d = join(dir, basename(p)); await copyFile(p, d); return d; };
   const results: Record<string, unknown> = {};
   try {
@@ -101,7 +102,7 @@ test('EQUIVALENCE: observable behaviour per file matches the recorded baseline',
     ]);
     const cases: [string, string, Edit?][] = [
       ...(userHash ? [['YieldCurve.xlsx', await copy(join(user, 'YieldCurve_Data.xlsx')), { table: 'Raw_Data*', column: 'BETA0', value: 1.5 }] as [string, string, Edit]] : []),
-      ...(existsSync(join(user, 'YieldCurve_Data.duckdb')) ? [['YieldCurve.duckdb', await copy(join(user, 'YieldCurve_Data.duckdb'))] as [string, string]] : []),
+      ...(!syntheticOnly && existsSync(join(user, 'YieldCurve_Data.duckdb')) ? [['YieldCurve.duckdb', await copy(join(user, 'YieldCurve_Data.duckdb'))] as [string, string]] : []),
       ['strings.xlsx', await copy(join(profileDir, 'strings.xlsx')), { table: 'Data*', column: 'score', value: 99.5 }],
       ['hostile.xlsx', hostile, { table: "Sheet 'q\"*", column: 'n', value: 7 }],
       ['openpyxl-trailing-notes.xlsx', await copy(join(foreignDir, 'openpyxl-trailing-notes.xlsx'))],

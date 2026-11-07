@@ -48,7 +48,7 @@ const WRITE_KEYWORD_RE = new RegExp(`\\b(${WRITE_KEYWORDS.join('|')})\\b`, 'i');
  * Quoted identifiers go too, so a column that is legitimately named "update"
  * can't look like a write statement.
  */
-function stripCommentsAndLiterals(sql: string): string {
+export function stripCommentsAndLiterals(sql: string): string {
   let out = '';
   let i = 0;
   while (i < sql.length) {

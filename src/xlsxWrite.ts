@@ -46,10 +46,18 @@
  * for the cell's -- which in that codebase nulled 182,000 cells in one sheet.
  */
 
-import { createHash } from 'node:crypto';
-import { readFile, writeFile, rename, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { createHash, randomBytes } from 'node:crypto';
+import { link, lstat, open, readFile, readdir, rename, rm, stat, unlink } from 'node:fs/promises';
+import { hostname } from 'node:os';
+import { basename, dirname, join } from 'node:path';
+import { performance } from 'node:perf_hooks';
+import { promisify } from 'node:util';
+import * as zlib from 'node:zlib';
 import { unzipSync, zipSync, strFromU8, strToU8 } from 'fflate';
-import { indexZip, readMember, rewriteZip } from './zipPatch';
+import { crc32, indexZip, readMember, rewriteZip, type ZipIndex } from './zipPatch';
+
+const execFileAsync = promisify(execFile);
 
 /** A1 column letters -> 0-based index. "A" -> 0, "Z" -> 25, "AA" -> 26. */
 export function columnIndexOf(letters: string): number {
@@ -430,22 +438,46 @@ function holdsExpectedValue(
   return Math.abs(value - serial) * DAY_MS < 1;
 }
 
+/** The edit worked out in memory: the candidate package and what it must contain. */
+interface PatchPlan {
+  bytes: Buffer;
+  sheetPath: string;
+  /** The worksheet XML before and after the edit. */
+  sheetXml: string;
+  intendedSheet: Uint8Array;
+  target: RowBlock;
+  ref: string;
+  letters: string;
+  sharedStrings: string[];
+  /** What the edited cell must read back as, and the style it must keep. */
+  expectedText: string;
+  expectedStyle: number | undefined;
+  /** The source's central directory, when it was patched through zipPatch. */
+  sourceIndex?: ZipIndex;
+  /** Otherwise every source member, inflated. */
+  sourceFiles?: Record<string, Uint8Array>;
+}
+
+/** The text a cell built by buildCell(value, keepText) reads back as. */
+function storedTextOf(value: unknown, keepText: boolean): string {
+  if (value === null || value === undefined || value === '') return '';
+  if (typeof value === 'boolean') return value ? '1' : '0';
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value === 'bigint') return value.toString();
+  const text = String(value);
+  return !keepText && NUMBER_TEXT.test(text.trim()) ? text.trim() : text;
+}
+
 /**
- * Rewrite one cell in place. Throws rather than guessing when the sheet's
- * shape does not support the mapping -- a refused edit is recoverable, a
- * misplaced one is not.
+ * Work out the edit against `original`. Throws rather than guessing when the
+ * sheet's shape does not support the mapping -- a refused edit is
+ * recoverable, a misplaced one is not.
  */
-export async function patchCell(request: PatchCellRequest): Promise<void> {
-  const { filePath, sheetPath, columnName, columnNames, rowOrdinal, expectedCurrent, newValue } =
-    request;
+function planPatch(original: Buffer, request: PatchCellRequest): PatchPlan {
+  const { sheetPath, columnName, columnNames, rowOrdinal, expectedCurrent, newValue } = request;
 
   // Only the parts this function reads are inflated when the archive is in
   // zipPatch's scope; otherwise every member, as before.
-  const original = await readFile(filePath);
-  if (request.expectedSha256 !== undefined &&
-      createHash('sha256').update(original).digest('hex') !== request.expectedSha256) {
-    throw new Error('The workbook changed after it was read, so the cell was not changed. Refresh before editing.');
-  }
   const index = indexZip(original);
   const files: Record<string, Uint8Array> = index
     ? Object.fromEntries(
@@ -599,7 +631,9 @@ export async function patchCell(request: PatchCellRequest): Promise<void> {
   const patched = spliceCell(target.xml, ref, letters, value, storedAsText);
 
   const updatedSheet = sheetXml.slice(0, target.start) + patched + sheetXml.slice(target.end);
-  files[sheetPath] = strToU8(updatedSheet);
+  const sourceFiles = index ? undefined : { ...files };
+  const intendedSheet = strToU8(updatedSheet);
+  files[sheetPath] = intendedSheet;
 
   // The central directory has to be rebuilt when any member's compressed size
   // changes. With zipPatch, only the edited sheet is re-encoded and every other
@@ -608,21 +642,751 @@ export async function patchCell(request: PatchCellRequest): Promise<void> {
   // encryption, other methods) keeps the old path, which inflates and
   // re-deflates every member; the member contents are identical either way.
   const bytes = index
-    ? rewriteZip(index, new Map([[sheetPath, files[sheetPath]]]))
+    ? rewriteZip(index, new Map([[sheetPath, intendedSheet]]))
     : Buffer.from(zipSync(files));
 
-  // Written beside the file and moved into place, never over it.
-  //
-  // `writeFile` to the workbook's own path truncates it first, so an
-  // interruption between truncate and write leaves the user with a zero-length
-  // or half-written workbook -- their data, destroyed by a one-cell edit. The
-  // Feather path already does it this way and records the same reasoning.
-  const temp = `${filePath}.dfv-tmp-${process.pid}-${Date.now()}`;
-  try {
-    await writeFile(temp, bytes);
-    await rename(temp, filePath);
-  } catch (err) {
-    await rm(temp, { force: true }).catch(() => {});
-    throw err;
+  return {
+    bytes,
+    sheetPath,
+    sheetXml,
+    intendedSheet,
+    target,
+    ref,
+    letters,
+    sharedStrings,
+    expectedText: storedTextOf(value, storedAsText),
+    expectedStyle: cell.style,
+    sourceIndex: index,
+    sourceFiles,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Publication (SAFE-X2)
+// ---------------------------------------------------------------------------
+//
+// The edit is written to an exclusively created sibling, flushed, read back
+// from disk and checked on its own terms -- the intended cell, every other
+// member unchanged -- and only then renamed over the workbook. Concurrent
+// writers in other processes (two VS Code windows) coordinate through a lock
+// file beside the workbook, held from the first read of the source through the
+// rename, and the source's identity and bytes are checked once more right
+// before the rename, which also catches programs that ignore the lock. The
+// lock is created atomically and never rewritten; what is about to be
+// published goes in a separate intent file. A lock is abandoned only when its
+// process is certainly gone: dead, from an earlier boot, or its id now held by
+// a process that started at another time.
+//
+// Every failure is reported with what it left on disk: `not-published` (the
+// workbook is exactly as it was), or `unknown` (an error after the rename was
+// attempted, and the workbook now matches neither side). An error after a
+// rename that did land is reconciled by re-reading the workbook and returned
+// as the save it was. Nothing is ever retried automatically.
+//
+// Limits, stated rather than implied: fsync is the platform's (macOS fsync
+// does not force the drive cache; F_FULLFSYNC is not used), the directory is
+// synced only where a directory can be opened for it (not on Windows), and a
+// program that ignores the lock can still replace the workbook between the
+// final check and the rename. Nothing here is a guarantee against power loss.
+
+/** What a save did. Only ever returned for a workbook that now holds the edit. */
+export interface PatchCellReceipt {
+  outcome: 'published';
+  /** The A1 reference of the edited cell. */
+  cell: string;
+  filePath: string;
+  /** SHA-256 of the workbook the edit was made from. */
+  sourceSha256: string;
+  /** SHA-256 of the verified candidate that is now the workbook. */
+  publishedSha256: string;
+  /** True when the rename reported an error and publication was established by re-reading the workbook. */
+  reconciled: boolean;
+  /** Whether the directory entry was flushed after the rename. */
+  directorySync: 'synced' | 'unsupported' | 'failed';
+  /** Debris of earlier interrupted saves that was cleaned up first. */
+  recovered: RecoveredSave[];
+}
+
+export interface RecoveredSave {
+  kind: 'stage' | 'lock';
+  name: string;
+  /** For a lock: what became of the save it protected, judged from the workbook on disk now. */
+  outcome?: 'published' | 'not-published' | 'unknown';
+}
+
+/**
+ * A save that did not complete. `outcome` says what is on disk:
+ * `not-published` -- the workbook was not changed; `unknown` -- the workbook
+ * matches neither the original nor the edit and was left alone.
+ */
+export class XlsxPublishError extends Error {
+  constructor(message: string, readonly outcome: 'not-published' | 'unknown', options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'XlsxPublishError';
   }
+}
+
+const STAGE_MARK = '.dfv-tmp-';
+const LOCK_SUFFIX = '.dfv-lock';
+/** Beside the lock: only the holder of this may remove another save's abandoned lock. */
+const TAKEOVER_SUFFIX = '.takeover';
+/** Beside the lock: what the holder was about to publish, written right before the rename. */
+const INTENT_MARK = '.intent-';
+/** A lock's contents are written here first and then linked into place, so a lock is never seen half-written. */
+const NEW_MARK = '.new-';
+const LOCK_WAIT_MS = 5_000;
+const LOCK_POLL_MS = 25;
+/** A lock that cannot be read (written by something else, or damaged) is abandoned this long after it last changed. */
+const UNREADABLE_LOCK_STALE_MS = 30_000;
+/** Stages named by the earlier writer carry no host, so they are only removed once this old. */
+const LEGACY_STAGE_STALE_MS = 60_000;
+const MAX_RECOVERED_STAGES = 32;
+/** Which computer a lock or stage belongs to; a process id means nothing on another one. */
+const HOST_TAG = createHash('sha256').update(hostname()).digest('hex').slice(0, 8);
+
+const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+const errorCode = (error: unknown) => (error as NodeJS.ErrnoException | undefined)?.code;
+const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** True unless the process is known to be gone. Unknown counts as alive: nothing is removed on a guess. */
+function processAlive(pid: number): boolean {
+  if (!Number.isSafeInteger(pid) || pid <= 0 || pid === process.pid) return true;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return errorCode(error) !== 'ESRCH';
+  }
+}
+
+// A process id alone does not identify a process: after a reboot, or once ids
+// wrap, the id in an old lock can belong to anything (even this process), and
+// the lock would then look live forever. So a lock also records which boot it
+// was made in and its process's start, both read from the kernel and compared
+// for exact equality (never as clock times, so a clock change cannot make a
+// live lock look old). Where the platform offers neither, the mark is absent
+// and only the process id is used, as before.
+
+/** This boot's identity: macOS kern.bootsessionuuid, Linux boot_id. Undefined elsewhere. */
+let bootIdentity: Promise<string | undefined> | undefined;
+function currentBoot(): Promise<string | undefined> {
+  bootIdentity ??= (async () => {
+    try {
+      if (process.platform === 'darwin') {
+        const { stdout } = await execFileAsync('sysctl', ['-n', 'kern.bootsessionuuid'], { timeout: 2_000 });
+        return stdout.trim() || undefined;
+      }
+      if (process.platform === 'linux') return (await readFile('/proc/sys/kernel/random/boot_id', 'utf8')).trim() || undefined;
+    } catch {
+      // Unknown: the boot is simply not compared.
+    }
+    return undefined;
+  })();
+  return bootIdentity;
+}
+
+/**
+ * The kernel's record of when `pid` started, as an opaque string compared only
+ * for equality. `null`: no such process. `undefined`: cannot tell.
+ */
+async function processStart(pid: number): Promise<string | null | undefined> {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return undefined;
+  try {
+    if (process.platform === 'linux') {
+      const stat = await readFile(`/proc/${pid}/stat`, 'utf8');
+      // Field 22, starttime (clock ticks after boot); the name in field 2 may hold spaces.
+      return stat.slice(stat.lastIndexOf(')') + 2).split(' ')[19] || undefined;
+    }
+    if (process.platform === 'darwin') {
+      const { stdout } = await execFileAsync('ps', ['-o', 'lstart=', '-p', String(pid)], {
+        timeout: 2_000, env: { ...process.env, LC_ALL: 'C', TZ: 'UTC' },
+      });
+      return stdout.trim() || null;
+    }
+  } catch (error) {
+    if (errorCode(error) === 'ENOENT' && process.platform === 'linux') return null;
+    // ps exits 1, printing nothing, for a process that does not exist.
+    if (process.platform === 'darwin' && (error as { code?: unknown }).code === 1 && !String((error as { stdout?: unknown }).stdout ?? '').trim()) return null;
+  }
+  return undefined;
+}
+
+let ownStart: Promise<string | undefined> | undefined;
+const currentStart = () => (ownStart ??= processStart(process.pid).then((mark) => mark ?? undefined));
+
+interface LockRecord {
+  version: 1;
+  token: string;
+  pid: number;
+  host: string;
+  created: string;
+  /** The boot the lock was made in, where the platform identifies one. */
+  boot?: string;
+  /** The holder's start, as processStart reads it. */
+  start?: string;
+}
+
+/** What the holder was about to publish, recorded beside its lock right before the rename. */
+interface IntentRecord {
+  sourceSha256: string;
+  candidateSha256: string;
+}
+
+interface HeldLock {
+  path: string;
+  record: LockRecord;
+  dev: number;
+  ino: number;
+  /** Set once the intent file exists, so it is removed with the lock. */
+  intent?: string;
+}
+
+interface FoundLock {
+  raw: Buffer;
+  record?: LockRecord;
+  mtimeMs: number;
+  dev: number;
+  ino: number;
+}
+
+const intentPath = (lockPath: string, record: Pick<LockRecord, 'pid' | 'host' | 'token'>) =>
+  `${lockPath}${INTENT_MARK}${record.pid}-${record.host}-${record.token}`;
+
+async function newRecord(): Promise<LockRecord> {
+  const [boot, start] = await Promise.all([currentBoot(), currentStart()]);
+  return {
+    version: 1,
+    token: randomBytes(16).toString('hex'),
+    pid: process.pid,
+    host: HOST_TAG,
+    created: new Date().toISOString(),
+    ...(boot ? { boot } : {}),
+    ...(start ? { start } : {}),
+  };
+}
+
+async function readLock(path: string): Promise<FoundLock | undefined> {
+  let raw: Buffer;
+  let info;
+  try {
+    [raw, info] = await Promise.all([readFile(path), lstat(path)]);
+  } catch (error) {
+    if (errorCode(error) === 'ENOENT') return undefined;
+    throw error;
+  }
+  let record: LockRecord | undefined;
+  try {
+    const parsed = JSON.parse(raw.toString('utf8'));
+    if (parsed?.version === 1 && typeof parsed.token === 'string' && typeof parsed.pid === 'number' &&
+        typeof parsed.host === 'string') record = parsed;
+  } catch {
+    record = undefined;
+  }
+  return { raw, record, mtimeMs: info.mtimeMs, dev: info.dev, ino: info.ino };
+}
+
+/**
+ * Whether the save that made this lock is certainly over. Unknown counts as
+ * not over: a lock is never removed on a guess.
+ */
+async function lockAbandoned(found: FoundLock, starts: Map<number, Promise<string | null | undefined>>): Promise<boolean> {
+  const record = found.record;
+  if (!record) return Date.now() - found.mtimeMs > UNREADABLE_LOCK_STALE_MS;
+  if (record.host !== HOST_TAG) return false;
+  const boot = await currentBoot();
+  if (record.boot && boot && record.boot !== boot) return true; // every process of that boot is gone
+  if (!processAlive(record.pid)) return true;
+  if (record.start === undefined) return false;
+  if (!starts.has(record.pid)) starts.set(record.pid, record.pid === process.pid ? currentStart() : processStart(record.pid));
+  const now = await starts.get(record.pid)!;
+  if (now === null) return true;
+  return now !== undefined && now !== record.start; // the id now belongs to another process
+}
+
+/**
+ * Create `path` holding `record`, atomically and only if nothing is there:
+ * the contents are written and flushed in a private file first, then linked
+ * into place (link never replaces an existing name). Undefined: `path` exists.
+ */
+async function createExclusive(path: string, record: LockRecord): Promise<HeldLock | undefined> {
+  const temp = `${path}${NEW_MARK}${process.pid}-${HOST_TAG}-${randomBytes(8).toString('hex')}`;
+  const body = JSON.stringify(record);
+  let handle = await open(temp, 'wx');
+  let identity;
+  try {
+    await handle.writeFile(body);
+    await handle.sync();
+    identity = await handle.stat();
+  } catch (error) {
+    await handle.close().catch(() => {});
+    await unlink(temp).catch(() => {});
+    throw error;
+  }
+  await handle.close();
+  try {
+    await link(temp, path);
+    return { path, record, dev: identity.dev, ino: identity.ino };
+  } catch (error) {
+    if (errorCode(error) === 'EEXIST') return undefined;
+    if (!['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'ENOSYS', 'EMLINK'].includes(errorCode(error) ?? '')) throw error;
+  } finally {
+    await unlink(temp).catch(() => {});
+  }
+  // A filesystem without hard links: create in place. A reader can then see
+  // the lock empty for a moment, and an empty lock is only ever treated as
+  // abandoned once it is UNREADABLE_LOCK_STALE_MS old.
+  try {
+    handle = await open(path, 'wx');
+  } catch (error) {
+    if (errorCode(error) === 'EEXIST') return undefined;
+    throw error;
+  }
+  try {
+    await handle.writeFile(body);
+    await handle.sync();
+    identity = await handle.stat();
+  } catch (error) {
+    await handle.close().catch(() => {});
+    await unlink(path).catch(() => {});
+    throw error;
+  }
+  await handle.close();
+  return { path, record, dev: identity.dev, ino: identity.ino };
+}
+
+/** True when `path` is still exactly this lock: the same file, holding this token. */
+async function lockStillHeld(held: HeldLock): Promise<boolean> {
+  const found = await readLock(held.path).catch(() => undefined);
+  return !!found && found.dev === held.dev && found.ino === held.ino && found.record?.token === held.record.token;
+}
+
+/**
+ * Remove a lock this save holds. Safe without an atomic compare: once it is
+ * confirmed ours, nothing else removes a live lock -- other saves only remove
+ * a lock judged abandoned, under the takeover lock.
+ */
+async function releaseLock(held: HeldLock): Promise<void> {
+  if (await lockStillHeld(held)) await unlink(held.path).catch(() => {});
+  if (held.intent) await unlink(held.intent).catch(() => {});
+}
+
+/** Remove a dead takeover holder's lock without removing a newer one put there meanwhile. */
+async function clearDeadTakeover(path: string, found: FoundLock): Promise<void> {
+  const aside = `${path}.stale-${randomBytes(8).toString('hex')}`;
+  try {
+    await rename(path, aside);
+  } catch {
+    return;
+  }
+  const moved = await lstat(aside).catch(() => undefined);
+  if (moved && (moved.dev !== found.dev || moved.ino !== found.ino)) await link(aside, path).catch(() => {});
+  await unlink(aside).catch(() => {});
+}
+
+async function readIntent(lockPath: string, record: LockRecord | undefined): Promise<{ path?: string; intent?: IntentRecord }> {
+  if (!record) return {};
+  const path = intentPath(lockPath, record);
+  try {
+    const parsed = JSON.parse(await readFile(path, 'utf8'));
+    const intent = typeof parsed?.sourceSha256 === 'string' && typeof parsed?.candidateSha256 === 'string' ? parsed : undefined;
+    return { path, intent };
+  } catch {
+    // Missing: no rename began. Unreadable: its write never completed, so no rename began either.
+    return { path };
+  }
+}
+
+interface TakenLock {
+  name: string;
+  intent?: IntentRecord;
+}
+
+/**
+ * Remove a lock judged abandoned, without ever removing a live one. Only the
+ * holder of the takeover lock may do this, and it judges the lock again
+ * first: the same file, the same bytes, still abandoned. Since a lock is only
+ * ever removed by its own holder or under the takeover lock, the lock judged
+ * there is still the one removed.
+ */
+async function takeAbandonedLock(lockPath: string, found: FoundLock,
+  starts: Map<number, Promise<string | null | undefined>>): Promise<TakenLock | undefined> {
+  const takeoverPath = lockPath + TAKEOVER_SUFFIX;
+  const takeover = await createExclusive(takeoverPath, await newRecord());
+  if (!takeover) {
+    const other = await readLock(takeoverPath);
+    if (other && await lockAbandoned(other, starts)) await clearDeadTakeover(takeoverPath, other);
+    return undefined;
+  }
+  try {
+    const again = await readLock(lockPath);
+    if (!again || again.dev !== found.dev || again.ino !== found.ino || !again.raw.equals(found.raw) ||
+        !(await lockAbandoned(again, starts))) return undefined;
+    const { path: intentFile, intent } = await readIntent(lockPath, again.record);
+    await unlink(lockPath);
+    if (intentFile) await unlink(intentFile).catch(() => {});
+    return { name: basename(lockPath), intent };
+  } finally {
+    await releaseLock(takeover);
+  }
+}
+
+function busyMessage(lockPath: string, found: FoundLock | undefined): string {
+  const record = found?.record;
+  if (found && !record) {
+    return `Another save to this workbook may be in progress: its lock file ${lockPath} cannot be read. ` +
+      `The workbook was not changed. It is cleared automatically ${UNREADABLE_LOCK_STALE_MS / 1000} s after it last ` +
+      `changed; if no other window or program is saving this workbook, you can delete ${lockPath} and save again.`;
+  }
+  const where = record && record.host !== HOST_TAG ? ' on another computer' : '';
+  return `Another save to this workbook is in progress${where} (process ${record?.pid ?? 'unknown'}, lock file ${lockPath}). ` +
+    `The workbook was not changed. Try again once it has finished. If no other window, computer or program is ` +
+    `saving this workbook -- for example after a crash -- delete ${lockPath} and save again.`;
+}
+
+async function acquireLock(filePath: string): Promise<{ held: HeldLock; abandoned: TakenLock[] }> {
+  const path = filePath + LOCK_SUFFIX;
+  const abandoned: TakenLock[] = [];
+  const starts = new Map<number, Promise<string | null | undefined>>();
+  const deadline = performance.now() + LOCK_WAIT_MS;
+  try {
+    const record = await newRecord();
+    for (;;) {
+      let held;
+      try {
+        held = await createExclusive(path, record);
+      } catch (error) {
+        throw new XlsxPublishError(
+          `The save could not start: the lock file ${path} could not be written (${messageOf(error)}). The workbook was not changed.`,
+          'not-published', { cause: error });
+      }
+      if (held) return { held, abandoned };
+      const found = await readLock(path);
+      if (found && await lockAbandoned(found, starts)) {
+        const taken = await takeAbandonedLock(path, found, starts);
+        if (taken) {
+          abandoned.push(taken);
+          continue;
+        }
+      }
+      if (performance.now() >= deadline) throw new XlsxPublishError(busyMessage(path, found), 'not-published');
+      await delay(LOCK_POLL_MS);
+    }
+  } catch (error) {
+    if (error instanceof XlsxPublishError) throw error;
+    throw new XlsxPublishError(
+      `The workbook's folder cannot be used for a safe save (${messageOf(error)}). The workbook was not changed.`,
+      'not-published', { cause: error });
+  }
+}
+
+/**
+ * Record, beside the lock, the publication about to happen, so a later save
+ * can reconcile it if this process dies. A new file of this save's own,
+ * created exclusively: the lock itself is never rewritten, so no failure here
+ * can leave it unreadable, and nothing written here can land in another
+ * save's lock.
+ */
+async function recordIntent(held: HeldLock, intent: IntentRecord): Promise<void> {
+  const path = intentPath(held.path, held.record);
+  const handle = await open(path, 'wx');
+  held.intent = path;
+  try {
+    await handle.writeFile(JSON.stringify(intent));
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+}
+
+/** What became of the save an abandoned lock was protecting, from the workbook's bytes now. */
+function abandonedOutcome(intent: IntentRecord | undefined, currentSha256: string): RecoveredSave['outcome'] {
+  // Intent is recorded right before the rename; without it, no rename began.
+  if (!intent) return 'not-published';
+  if (intent.candidateSha256 === currentSha256) return 'published';
+  if (intent.sourceSha256 === currentSha256) return 'not-published';
+  return 'unknown';
+}
+
+/**
+ * Remove staging files abandoned by writers that are gone. Only names this
+ * writer makes, only regular files, only for a process known to be dead on this
+ * computer, and a bounded number per save. Never published: an unfinished
+ * stage was never verified against the workbook as it is now.
+ */
+async function recoverStages(filePath: string): Promise<RecoveredSave[]> {
+  const folder = dirname(filePath);
+  const prefix = basename(filePath) + STAGE_MARK;
+  let names: string[];
+  try {
+    names = await readdir(folder);
+  } catch {
+    return [];
+  }
+  // The lock's own debris, from a writer that died between two steps: a lock
+  // or takeover lock not yet linked into place, or an intent whose lock was
+  // already removed. Never published, never a lock anyone holds.
+  const lockBase = basename(filePath) + LOCK_SUFFIX;
+  const lockDebris = [lockBase + NEW_MARK, lockBase + TAKEOVER_SUFFIX + NEW_MARK, lockBase + INTENT_MARK];
+  const out: RecoveredSave[] = [];
+  for (const name of names) {
+    if (out.length >= MAX_RECOVERED_STAGES) break;
+    const debris = lockDebris.find((mark) => name.startsWith(mark));
+    if (!debris && !name.startsWith(prefix)) continue;
+    const tag = name.slice((debris ?? prefix).length);
+    const current = debris
+      ? /^(\d+)-([0-9a-f]{8})-(?:[0-9a-f]{16}|[0-9a-f]{32})$/.exec(tag)
+      : /^(\d+)-([0-9a-f]{8})-[0-9a-f]{16}$/.exec(tag);
+    const legacy = debris ? null : /^(\d+)-(\d{10,})$/.exec(tag);
+    if (!current && !legacy) continue;
+    if (current && current[2] !== HOST_TAG) continue;
+    if (processAlive(Number((current ?? legacy)![1]))) continue;
+    const path = join(folder, name);
+    const info = await lstat(path).catch(() => undefined);
+    if (!info?.isFile()) continue;
+    if (legacy && Date.now() - info.mtimeMs < LEGACY_STAGE_STALE_MS) continue;
+    try {
+      await unlink(path);
+      out.push({ kind: debris ? 'lock' : 'stage', name });
+    } catch {
+      // Left for a later save.
+    }
+  }
+  return out;
+}
+
+interface FileIdentity {
+  dev: number;
+  ino: number;
+  size: number;
+  mtimeMs: number;
+}
+
+const sameIdentity = (a: FileIdentity, b: FileIdentity) =>
+  a.dev === b.dev && a.ino === b.ino && a.size === b.size && a.mtimeMs === b.mtimeMs;
+
+/** A member's stored (compressed) bytes, from its local header. */
+function storedBytes(index: ZipIndex, entry: ZipIndex['entries'][number]): Buffer {
+  const { bytes } = index;
+  const header = entry.localOffset;
+  const data = header + 30 + bytes.readUInt16LE(header + 26) + bytes.readUInt16LE(header + 28);
+  return bytes.subarray(data, data + entry.compressedSize);
+}
+
+/**
+ * Check the staged package as read back from disk, on its own terms: the
+ * archive parses, every member other than the edited sheet is unchanged, the
+ * edited sheet decodes (CRC-checked) to the intended XML, everything outside the
+ * edited row is the original XML, and the edited cell reads back as the value
+ * with its style, no formula, and every other cell of the row unchanged.
+ */
+function verifyCandidate(staged: Buffer, plan: PatchPlan): void {
+  const fail = (why: string): never => {
+    throw new XlsxPublishError(
+      `The edited workbook failed verification before it was saved (${why}). The workbook was not changed.`,
+      'not-published');
+  };
+  if (!staged.equals(plan.bytes)) fail('the staged copy on disk differs from what was written');
+
+  let sheet: Uint8Array | undefined;
+  if (plan.sourceIndex) {
+    const index = indexZip(staged) ?? fail('the staged archive does not parse');
+    const before = plan.sourceIndex.entries;
+    const after = index.entries;
+    if (before.length !== after.length) fail('the number of parts changed');
+    for (let i = 0; i < before.length; i++) {
+      const [a, b] = [before[i], after[i]];
+      if (a.name !== b.name) fail(`part ${a.name} is missing or moved`);
+      if (a.name === plan.sheetPath) continue;
+      if (a.method !== b.method || a.crc !== b.crc || a.size !== b.size || a.compressedSize !== b.compressedSize ||
+          !storedBytes(plan.sourceIndex, a).equals(storedBytes(index, b))) fail(`part ${a.name} changed`);
+    }
+    const entry = after.find((e) => e.name === plan.sheetPath) ?? fail('the edited sheet is missing');
+    const stored = storedBytes(index, entry);
+    try {
+      sheet = entry.method === 0
+        ? stored
+        : zlib.inflateRawSync(stored, { maxOutputLength: Math.max(1, plan.intendedSheet.length) });
+    } catch {
+      fail('the edited sheet does not decode');
+    }
+    if (sheet!.length !== entry.size) fail('the edited sheet does not match its declared size');
+    // zipPatch's crc32 falls back to its own table where zlib.crc32 is missing
+    // (Node before 20.15/22.2, which VS Code 1.85 ships), so this always runs.
+    if (crc32(sheet!) !== entry.crc >>> 0) fail('the edited sheet fails its CRC');
+  } else {
+    let files: Record<string, Uint8Array> = {};
+    try {
+      files = unzipSync(new Uint8Array(staged));
+    } catch {
+      fail('the staged archive does not parse');
+    }
+    const source = plan.sourceFiles!;
+    const names = Object.keys(source);
+    if (Object.keys(files).length !== names.length) fail('the number of parts changed');
+    for (const name of names) {
+      if (!files[name]) fail(`part ${name} is missing`);
+      if (name !== plan.sheetPath && !Buffer.from(files[name]).equals(Buffer.from(source[name]))) fail(`part ${name} changed`);
+    }
+    sheet = files[plan.sheetPath];
+  }
+  if (!sheet || !Buffer.from(sheet).equals(Buffer.from(plan.intendedSheet))) fail('the edited sheet is not the intended XML');
+
+  const xml = strFromU8(sheet!);
+  const tail = plan.sheetXml.length - plan.target.end;
+  if (xml.slice(0, plan.target.start) !== plan.sheetXml.slice(0, plan.target.start) ||
+      xml.slice(xml.length - tail) !== plan.sheetXml.slice(plan.target.end)) {
+    fail('content outside the edited row changed');
+  }
+  const rowXml = xml.slice(plan.target.start, xml.length - tail);
+  const rows = readRows(rowXml);
+  if (rows.length !== 1 || rows[0].number !== plan.target.number || rows[0].xml !== rowXml) fail('the edited row is malformed');
+  const cell = storedCellOf(rowXml, plan.letters, plan.sharedStrings);
+  if (cell.formula !== undefined) fail(`cell ${plan.ref} still holds a formula`);
+  if (cell.text !== plan.expectedText) fail(`cell ${plan.ref} does not read back as the new value`);
+  if (cell.style !== plan.expectedStyle) fail(`cell ${plan.ref} lost its style`);
+  const beforeCells = cellTextsOf(plan.target.xml, plan.sharedStrings);
+  const afterCells = cellTextsOf(rowXml, plan.sharedStrings);
+  for (const [letters, text] of beforeCells) {
+    if (letters !== plan.letters && afterCells.get(letters) !== text) fail(`cell ${letters}${plan.target.number} changed`);
+  }
+  for (const letters of afterCells.keys()) {
+    if (letters !== plan.letters && !beforeCells.has(letters)) fail(`cell ${letters}${plan.target.number} appeared`);
+  }
+}
+
+/** Flush the directory entry the rename changed, where the platform allows opening a directory to do so. */
+async function syncDirectory(folder: string): Promise<PatchCellReceipt['directorySync']> {
+  if (process.platform === 'win32') return 'unsupported';
+  const unsupported = new Set(['EISDIR', 'EPERM', 'EACCES', 'EINVAL', 'ENOTSUP', 'EOPNOTSUPP', 'EBADF']);
+  let handle;
+  try {
+    handle = await open(folder, 'r');
+  } catch (error) {
+    return unsupported.has(errorCode(error) ?? '') ? 'unsupported' : 'failed';
+  }
+  try {
+    await handle.sync();
+    return 'synced';
+  } catch (error) {
+    return errorCode(error) === 'EINVAL' || errorCode(error) === 'ENOTSUP' ? 'unsupported' : 'failed';
+  } finally {
+    await handle.close().catch(() => {});
+  }
+}
+
+/**
+ * Write one cell of a workbook on disk, and say truthfully what happened.
+ *
+ * Resolves only when the workbook now holds the verified edit (including when
+ * the rename reported an error but the edit is there). Rejects with an
+ * XlsxPublishError whose `outcome` says what is on disk otherwise.
+ */
+export async function patchCell(request: PatchCellRequest): Promise<PatchCellReceipt> {
+  const { filePath } = request;
+  const { held, abandoned } = await acquireLock(filePath);
+  try {
+    const recovered = await recoverStages(filePath);
+    const identity = await stat(filePath);
+    const original = await readFile(filePath);
+    if (!sameIdentity(identity, await stat(filePath)) || identity.size !== original.length) {
+      throw new XlsxPublishError(
+        'The workbook was being changed while it was read, so the cell was not changed. Refresh before editing.',
+        'not-published');
+    }
+    const sourceSha256 = sha256(original);
+    for (const lock of abandoned) {
+      recovered.push({ kind: 'lock', name: lock.name, outcome: abandonedOutcome(lock.intent, sourceSha256) });
+    }
+    if (request.expectedSha256 !== undefined && sourceSha256 !== request.expectedSha256) {
+      throw new XlsxPublishError(
+        'The workbook changed after it was read, so the cell was not changed. Refresh before editing.',
+        'not-published');
+    }
+    const plan = planPatch(original, request);
+    return await publish(filePath, plan, identity, sourceSha256, held, recovered);
+  } catch (error) {
+    if (error instanceof XlsxPublishError) throw error;
+    throw new XlsxPublishError(messageOf(error), 'not-published', { cause: error });
+  } finally {
+    await releaseLock(held);
+  }
+}
+
+async function publish(
+  filePath: string,
+  plan: PatchPlan,
+  identity: FileIdentity,
+  sourceSha256: string,
+  held: HeldLock,
+  recovered: RecoveredSave[]
+): Promise<PatchCellReceipt> {
+  const publishedSha256 = sha256(plan.bytes);
+  const receipt = (reconciled: boolean, directorySync: PatchCellReceipt['directorySync']): PatchCellReceipt => ({
+    outcome: 'published', cell: plan.ref, filePath, sourceSha256, publishedSha256, reconciled, directorySync, recovered,
+  });
+
+  // Written beside the file and moved into place, never over it: writing the
+  // workbook's own path truncates it first. The name is unpredictable and
+  // created exclusively, so it can never be a backup or another writer's file.
+  const stage = `${filePath}${STAGE_MARK}${process.pid}-${HOST_TAG}-${randomBytes(8).toString('hex')}`;
+  try {
+    const handle = await open(stage, 'wx');
+    try {
+      await handle.writeFile(plan.bytes);
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    verifyCandidate(await readFile(stage), plan);
+
+    // The final check, as late as possible: still this save's turn, and the
+    // workbook still the very file and bytes the edit was made from.
+    const lost = () => new XlsxPublishError(
+      'Another save took over this workbook, so the cell was not changed. Refresh before editing.', 'not-published');
+    if (!(await lockStillHeld(held))) throw lost();
+    const now = await stat(filePath);
+    if (!sameIdentity(identity, now) || sha256(await readFile(filePath)) !== sourceSha256) {
+      throw new XlsxPublishError(
+        'The workbook was changed by another program during the save, so the cell was not changed. Refresh before editing.',
+        'not-published');
+    }
+    // Ownership once more, after the source re-read and around the intent,
+    // so a save whose lock was lost meanwhile never publishes.
+    if (!(await lockStillHeld(held))) throw lost();
+    await recordIntent(held, { sourceSha256, candidateSha256: publishedSha256 });
+    if (!(await lockStillHeld(held))) throw lost();
+  } catch (error) {
+    await rm(stage, { force: true }).catch(() => {});
+    if (error instanceof XlsxPublishError) throw error;
+    throw new XlsxPublishError(
+      `The edited workbook could not be saved (${messageOf(error)}). The workbook was not changed.`,
+      'not-published', { cause: error });
+  }
+
+  try {
+    await rename(stage, filePath);
+  } catch (error) {
+    // The acknowledgement is lost, not the answer: read what is there now.
+    // Never retried -- a second rename could overwrite whatever has since
+    // replaced the workbook.
+    let onDisk: string | undefined;
+    try {
+      onDisk = sha256(await readFile(filePath));
+    } catch {
+      onDisk = undefined;
+    }
+    await rm(stage, { force: true }).catch(() => {});
+    if (onDisk === publishedSha256) return receipt(true, await syncDirectory(dirname(filePath)));
+    if (onDisk === sourceSha256) {
+      throw new XlsxPublishError(
+        `The edited workbook could not be moved into place (${messageOf(error)}). The workbook was not changed.`,
+        'not-published', { cause: error });
+    }
+    throw new XlsxPublishError(
+      `Saving reported an error (${messageOf(error)}), and the workbook on disk now matches neither the original ` +
+        `nor the edit -- another program may have changed it. Nothing was retried; reopen the file to see what it holds.`,
+      'unknown', { cause: error });
+  }
+  return receipt(false, await syncDirectory(dirname(filePath)));
 }

@@ -1,0 +1,1637 @@
+{
+  "fixture_version": 1,
+  "task": "D1.9",
+  "schema": "schema/common.v1.schema.json#/$defs/value",
+  "$comment": "Hand-written expectations: `expect` describes the value with exact parts as strings, independent of the decoder. schema_rejects=false marks range/consistency checks only the decoder can make.",
+  "valid": [
+    {
+      "name": "null",
+      "wire": null,
+      "expect": null
+    },
+    {
+      "name": "true",
+      "wire": true,
+      "expect": {
+        "bool": true
+      }
+    },
+    {
+      "name": "false",
+      "wire": false,
+      "expect": {
+        "bool": false
+      }
+    },
+    {
+      "name": "empty string",
+      "wire": "",
+      "expect": {
+        "utf8": ""
+      }
+    },
+    {
+      "name": "digit string stays text",
+      "wire": "123",
+      "expect": {
+        "utf8": "123"
+      }
+    },
+    {
+      "name": "string null is text",
+      "wire": "null",
+      "expect": {
+        "utf8": "null"
+      }
+    },
+    {
+      "name": "string NaN is text, not float",
+      "wire": "NaN",
+      "expect": {
+        "utf8": "NaN"
+      }
+    },
+    {
+      "name": "unicode text",
+      "wire": "İstanbul \u0000 😀",
+      "expect": {
+        "utf8": "İstanbul \u0000 😀"
+      }
+    },
+    {
+      "name": "int8 min",
+      "wire": {
+        "$t": "int8",
+        "v": "-128"
+      },
+      "expect": {
+        "int8": "-128"
+      }
+    },
+    {
+      "name": "int8 max",
+      "wire": {
+        "$t": "int8",
+        "v": "127"
+      },
+      "expect": {
+        "int8": "127"
+      }
+    },
+    {
+      "name": "int16 min",
+      "wire": {
+        "$t": "int16",
+        "v": "-32768"
+      },
+      "expect": {
+        "int16": "-32768"
+      }
+    },
+    {
+      "name": "int16 max",
+      "wire": {
+        "$t": "int16",
+        "v": "32767"
+      },
+      "expect": {
+        "int16": "32767"
+      }
+    },
+    {
+      "name": "int32 min",
+      "wire": {
+        "$t": "int32",
+        "v": "-2147483648"
+      },
+      "expect": {
+        "int32": "-2147483648"
+      }
+    },
+    {
+      "name": "int32 max",
+      "wire": {
+        "$t": "int32",
+        "v": "2147483647"
+      },
+      "expect": {
+        "int32": "2147483647"
+      }
+    },
+    {
+      "name": "int64 min",
+      "wire": {
+        "$t": "int64",
+        "v": "-9223372036854775808"
+      },
+      "expect": {
+        "int64": "-9223372036854775808"
+      }
+    },
+    {
+      "name": "int64 max",
+      "wire": {
+        "$t": "int64",
+        "v": "9223372036854775807"
+      },
+      "expect": {
+        "int64": "9223372036854775807"
+      }
+    },
+    {
+      "name": "int128 min",
+      "wire": {
+        "$t": "int128",
+        "v": "-170141183460469231731687303715884105728"
+      },
+      "expect": {
+        "int128": "-170141183460469231731687303715884105728"
+      }
+    },
+    {
+      "name": "int128 max",
+      "wire": {
+        "$t": "int128",
+        "v": "170141183460469231731687303715884105727"
+      },
+      "expect": {
+        "int128": "170141183460469231731687303715884105727"
+      }
+    },
+    {
+      "name": "uint8 min",
+      "wire": {
+        "$t": "uint8",
+        "v": "0"
+      },
+      "expect": {
+        "uint8": "0"
+      }
+    },
+    {
+      "name": "uint8 max",
+      "wire": {
+        "$t": "uint8",
+        "v": "255"
+      },
+      "expect": {
+        "uint8": "255"
+      }
+    },
+    {
+      "name": "uint16 min",
+      "wire": {
+        "$t": "uint16",
+        "v": "0"
+      },
+      "expect": {
+        "uint16": "0"
+      }
+    },
+    {
+      "name": "uint16 max",
+      "wire": {
+        "$t": "uint16",
+        "v": "65535"
+      },
+      "expect": {
+        "uint16": "65535"
+      }
+    },
+    {
+      "name": "uint32 min",
+      "wire": {
+        "$t": "uint32",
+        "v": "0"
+      },
+      "expect": {
+        "uint32": "0"
+      }
+    },
+    {
+      "name": "uint32 max",
+      "wire": {
+        "$t": "uint32",
+        "v": "4294967295"
+      },
+      "expect": {
+        "uint32": "4294967295"
+      }
+    },
+    {
+      "name": "uint64 min",
+      "wire": {
+        "$t": "uint64",
+        "v": "0"
+      },
+      "expect": {
+        "uint64": "0"
+      }
+    },
+    {
+      "name": "uint64 max",
+      "wire": {
+        "$t": "uint64",
+        "v": "18446744073709551615"
+      },
+      "expect": {
+        "uint64": "18446744073709551615"
+      }
+    },
+    {
+      "name": "uint128 min",
+      "wire": {
+        "$t": "uint128",
+        "v": "0"
+      },
+      "expect": {
+        "uint128": "0"
+      }
+    },
+    {
+      "name": "uint128 max",
+      "wire": {
+        "$t": "uint128",
+        "v": "340282366920938463463374607431768211455"
+      },
+      "expect": {
+        "uint128": "340282366920938463463374607431768211455"
+      }
+    },
+    {
+      "name": "int64 9007199254740992 beyond 2^53",
+      "wire": {
+        "$t": "int64",
+        "v": "9007199254740992"
+      },
+      "expect": {
+        "int64": "9007199254740992"
+      },
+      "note": "Number() would round this"
+    },
+    {
+      "name": "int64 9007199254740993 beyond 2^53",
+      "wire": {
+        "$t": "int64",
+        "v": "9007199254740993"
+      },
+      "expect": {
+        "int64": "9007199254740993"
+      },
+      "note": "Number() would round this"
+    },
+    {
+      "name": "int64 -9007199254740993 beyond 2^53",
+      "wire": {
+        "$t": "int64",
+        "v": "-9007199254740993"
+      },
+      "expect": {
+        "int64": "-9007199254740993"
+      },
+      "note": "Number() would round this"
+    },
+    {
+      "name": "int64 9223372036854775806 beyond 2^53",
+      "wire": {
+        "$t": "int64",
+        "v": "9223372036854775806"
+      },
+      "expect": {
+        "int64": "9223372036854775806"
+      },
+      "note": "Number() would round this"
+    },
+    {
+      "name": "uint64 2^64-1 beyond 2^53",
+      "wire": {
+        "$t": "uint64",
+        "v": "18446744073709551615"
+      },
+      "expect": {
+        "uint64": "18446744073709551615"
+      }
+    },
+    {
+      "name": "int64 zero",
+      "wire": {
+        "$t": "int64",
+        "v": "0"
+      },
+      "expect": {
+        "int64": "0"
+      }
+    },
+    {
+      "name": "float64 NaN",
+      "wire": {
+        "$t": "float64",
+        "v": "NaN"
+      },
+      "expect": {
+        "float64": "NaN"
+      }
+    },
+    {
+      "name": "float64 Infinity",
+      "wire": {
+        "$t": "float64",
+        "v": "Infinity"
+      },
+      "expect": {
+        "float64": "Infinity"
+      }
+    },
+    {
+      "name": "float64 -Infinity",
+      "wire": {
+        "$t": "float64",
+        "v": "-Infinity"
+      },
+      "expect": {
+        "float64": "-Infinity"
+      }
+    },
+    {
+      "name": "float64 -0",
+      "wire": {
+        "$t": "float64",
+        "v": "-0"
+      },
+      "expect": {
+        "float64": "-0"
+      }
+    },
+    {
+      "name": "float64 0",
+      "wire": {
+        "$t": "float64",
+        "v": "0"
+      },
+      "expect": {
+        "float64": "0"
+      }
+    },
+    {
+      "name": "float64 0.1",
+      "wire": {
+        "$t": "float64",
+        "v": "0.1"
+      },
+      "expect": {
+        "float64": "0.1"
+      }
+    },
+    {
+      "name": "float64 5e-324",
+      "wire": {
+        "$t": "float64",
+        "v": "5e-324"
+      },
+      "expect": {
+        "float64": "5e-324"
+      }
+    },
+    {
+      "name": "float64 1.7976931348623157e+308",
+      "wire": {
+        "$t": "float64",
+        "v": "1.7976931348623157e+308"
+      },
+      "expect": {
+        "float64": "1.7976931348623157e+308"
+      }
+    },
+    {
+      "name": "float64 1e+21",
+      "wire": {
+        "$t": "float64",
+        "v": "1e+21"
+      },
+      "expect": {
+        "float64": "1e+21"
+      }
+    },
+    {
+      "name": "float64 -2.5",
+      "wire": {
+        "$t": "float64",
+        "v": "-2.5"
+      },
+      "expect": {
+        "float64": "-2.5"
+      }
+    },
+    {
+      "name": "float32 NaN",
+      "wire": {
+        "$t": "float32",
+        "v": "NaN"
+      },
+      "expect": {
+        "float32": "NaN"
+      }
+    },
+    {
+      "name": "float32 -0",
+      "wire": {
+        "$t": "float32",
+        "v": "-0"
+      },
+      "expect": {
+        "float32": "-0"
+      }
+    },
+    {
+      "name": "float32 0.5",
+      "wire": {
+        "$t": "float32",
+        "v": "0.5"
+      },
+      "expect": {
+        "float32": "0.5"
+      }
+    },
+    {
+      "name": "decimal -123.4500 (9,4)",
+      "wire": {
+        "$t": "decimal",
+        "v": "-123.4500",
+        "precision": 9,
+        "scale": 4
+      },
+      "expect": {
+        "decimal": {
+          "unscaled": "-1234500",
+          "precision": 9,
+          "scale": 4
+        }
+      }
+    },
+    {
+      "name": "decimal 0.00 (3,2)",
+      "wire": {
+        "$t": "decimal",
+        "v": "0.00",
+        "precision": 3,
+        "scale": 2
+      },
+      "expect": {
+        "decimal": {
+          "unscaled": "0",
+          "precision": 3,
+          "scale": 2
+        }
+      }
+    },
+    {
+      "name": "decimal 99999999999999999999999999999999999999 (38,0)",
+      "wire": {
+        "$t": "decimal",
+        "v": "99999999999999999999999999999999999999",
+        "precision": 38,
+        "scale": 0
+      },
+      "expect": {
+        "decimal": {
+          "unscaled": "99999999999999999999999999999999999999",
+          "precision": 38,
+          "scale": 0
+        }
+      }
+    },
+    {
+      "name": "decimal -0.00000000000000000000000000000000000001 (38,38)",
+      "wire": {
+        "$t": "decimal",
+        "v": "-0.00000000000000000000000000000000000001",
+        "precision": 38,
+        "scale": 38
+      },
+      "expect": {
+        "decimal": {
+          "unscaled": "-1",
+          "precision": 38,
+          "scale": 38
+        }
+      }
+    },
+    {
+      "name": "decimal 9007199254740993.5 (17,1)",
+      "wire": {
+        "$t": "decimal",
+        "v": "9007199254740993.5",
+        "precision": 17,
+        "scale": 1
+      },
+      "expect": {
+        "decimal": {
+          "unscaled": "90071992547409935",
+          "precision": 17,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "name": "decimal 12 (2,0)",
+      "wire": {
+        "$t": "decimal",
+        "v": "12",
+        "precision": 2,
+        "scale": 0
+      },
+      "expect": {
+        "decimal": {
+          "unscaled": "12",
+          "precision": 2,
+          "scale": 0
+        }
+      }
+    },
+    {
+      "name": "date epoch",
+      "wire": {
+        "$t": "date",
+        "v": "0"
+      },
+      "expect": {
+        "date": "0"
+      }
+    },
+    {
+      "name": "date 0001-01-01",
+      "wire": {
+        "$t": "date",
+        "v": "-719162"
+      },
+      "expect": {
+        "date": "-719162"
+      }
+    },
+    {
+      "name": "date 9999-12-31",
+      "wire": {
+        "$t": "date",
+        "v": "2932896"
+      },
+      "expect": {
+        "date": "2932896"
+      }
+    },
+    {
+      "name": "date int32 limits",
+      "wire": {
+        "$t": "date",
+        "v": "-2147483648"
+      },
+      "expect": {
+        "date": "-2147483648"
+      }
+    },
+    {
+      "name": "time us end of day",
+      "wire": {
+        "$t": "time",
+        "v": "86399999999",
+        "unit": "us"
+      },
+      "expect": {
+        "time": {
+          "count": "86399999999",
+          "unit": "us"
+        }
+      }
+    },
+    {
+      "name": "timestamp us tz=UTC",
+      "wire": {
+        "$t": "timestamp",
+        "v": "1700000000123456",
+        "unit": "us",
+        "tz": "UTC"
+      },
+      "expect": {
+        "timestamp": {
+          "count": "1700000000123456",
+          "unit": "us",
+          "tz": "UTC"
+        }
+      }
+    },
+    {
+      "name": "timestamp ns tz=None",
+      "wire": {
+        "$t": "timestamp",
+        "v": "-9223372036854775808",
+        "unit": "ns",
+        "tz": null
+      },
+      "expect": {
+        "timestamp": {
+          "count": "-9223372036854775808",
+          "unit": "ns",
+          "tz": null
+        }
+      }
+    },
+    {
+      "name": "timestamp ns tz=UTC",
+      "wire": {
+        "$t": "timestamp",
+        "v": "9223372036854775807",
+        "unit": "ns",
+        "tz": "UTC"
+      },
+      "expect": {
+        "timestamp": {
+          "count": "9223372036854775807",
+          "unit": "ns",
+          "tz": "UTC"
+        }
+      }
+    },
+    {
+      "name": "timestamp ms tz=+03:00",
+      "wire": {
+        "$t": "timestamp",
+        "v": "1700000000123",
+        "unit": "ms",
+        "tz": "+03:00"
+      },
+      "expect": {
+        "timestamp": {
+          "count": "1700000000123",
+          "unit": "ms",
+          "tz": "+03:00"
+        }
+      }
+    },
+    {
+      "name": "timestamp s tz=Europe/Istanbul",
+      "wire": {
+        "$t": "timestamp",
+        "v": "1700000000",
+        "unit": "s",
+        "tz": "Europe/Istanbul"
+      },
+      "expect": {
+        "timestamp": {
+          "count": "1700000000",
+          "unit": "s",
+          "tz": "Europe/Istanbul"
+        }
+      }
+    },
+    {
+      "name": "timestamp us tz=-05:30",
+      "wire": {
+        "$t": "timestamp",
+        "v": "0",
+        "unit": "us",
+        "tz": "-05:30"
+      },
+      "expect": {
+        "timestamp": {
+          "count": "0",
+          "unit": "us",
+          "tz": "-05:30"
+        }
+      }
+    },
+    {
+      "name": "timestamp ns tz=America/Argentina/Buenos_Aires",
+      "wire": {
+        "$t": "timestamp",
+        "v": "1700000000123456789",
+        "unit": "ns",
+        "tz": "America/Argentina/Buenos_Aires"
+      },
+      "expect": {
+        "timestamp": {
+          "count": "1700000000123456789",
+          "unit": "ns",
+          "tz": "America/Argentina/Buenos_Aires"
+        }
+      }
+    },
+    {
+      "name": "interval",
+      "wire": {
+        "$t": "interval",
+        "months": "-14",
+        "days": "3",
+        "nanos": "9223372036854775807"
+      },
+      "expect": {
+        "interval": {
+          "months": "-14",
+          "days": "3",
+          "nanos": "9223372036854775807"
+        }
+      }
+    },
+    {
+      "name": "binary empty",
+      "wire": {
+        "$t": "binary",
+        "encoding": "base64",
+        "v": ""
+      },
+      "expect": {
+        "binary_hex": ""
+      }
+    },
+    {
+      "name": "binary bytes",
+      "wire": {
+        "$t": "binary",
+        "encoding": "base64",
+        "v": "AP8A/w=="
+      },
+      "expect": {
+        "binary_hex": "00ff00ff"
+      }
+    },
+    {
+      "name": "uuid",
+      "wire": {
+        "$t": "uuid",
+        "v": "123e4567-e89b-12d3-a456-426614174000"
+      },
+      "expect": {
+        "uuid": "123e4567-e89b-12d3-a456-426614174000"
+      }
+    },
+    {
+      "name": "list mixed nulls",
+      "wire": {
+        "$t": "list",
+        "v": [
+          null,
+          {
+            "$t": "int64",
+            "v": "9007199254740993"
+          },
+          "x",
+          {
+            "$t": "float64",
+            "v": "NaN"
+          }
+        ]
+      },
+      "expect": {
+        "list": [
+          null,
+          {
+            "int64": "9007199254740993"
+          },
+          {
+            "utf8": "x"
+          },
+          {
+            "float64": "NaN"
+          }
+        ]
+      }
+    },
+    {
+      "name": "struct",
+      "wire": {
+        "$t": "struct",
+        "v": [
+          [
+            "a",
+            {
+              "$t": "int32",
+              "v": "1"
+            }
+          ],
+          [
+            "b",
+            null
+          ],
+          [
+            "c",
+            {
+              "$t": "list",
+              "v": []
+            }
+          ]
+        ]
+      },
+      "expect": {
+        "struct": [
+          [
+            "a",
+            {
+              "int32": "1"
+            }
+          ],
+          [
+            "b",
+            null
+          ],
+          [
+            "c",
+            {
+              "list": []
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "name": "map",
+      "wire": {
+        "$t": "map",
+        "v": [
+          [
+            "k",
+            {
+              "$t": "uint64",
+              "v": "18446744073709551615"
+            }
+          ],
+          [
+            {
+              "$t": "int8",
+              "v": "-1"
+            },
+            false
+          ]
+        ]
+      },
+      "expect": {
+        "map": [
+          [
+            {
+              "utf8": "k"
+            },
+            {
+              "uint64": "18446744073709551615"
+            }
+          ],
+          [
+            {
+              "int8": "-1"
+            },
+            {
+              "bool": false
+            }
+          ]
+        ]
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "bare integer",
+      "wire": 1,
+      "code": "bare_number",
+      "schema_rejects": true
+    },
+    {
+      "name": "bare float",
+      "wire": 1.5,
+      "code": "bare_number",
+      "schema_rejects": true
+    },
+    {
+      "name": "bare 2^53+1 already rounded by JSON.parse",
+      "wire": 9007199254740993,
+      "code": "bare_number",
+      "schema_rejects": true
+    },
+    {
+      "name": "bare -0",
+      "wire": -0.0,
+      "code": "bare_number",
+      "schema_rejects": true
+    },
+    {
+      "name": "bare array",
+      "wire": [
+        1
+      ],
+      "code": "bare_array",
+      "schema_rejects": true
+    },
+    {
+      "name": "untagged object",
+      "wire": {
+        "v": "1"
+      },
+      "code": "missing_tag",
+      "schema_rejects": true
+    },
+    {
+      "name": "tag not a string",
+      "wire": {
+        "$t": 5,
+        "v": "1"
+      },
+      "code": "missing_tag",
+      "schema_rejects": true
+    },
+    {
+      "name": "unknown tag",
+      "wire": {
+        "$t": "int63",
+        "v": "1"
+      },
+      "code": "unknown_tag",
+      "schema_rejects": true
+    },
+    {
+      "name": "unknown tag case",
+      "wire": {
+        "$t": "INT64",
+        "v": "1"
+      },
+      "code": "unknown_tag",
+      "schema_rejects": true
+    },
+    {
+      "name": "missing v",
+      "wire": {
+        "$t": "int64"
+      },
+      "code": "missing_key",
+      "schema_rejects": true
+    },
+    {
+      "name": "extra key",
+      "wire": {
+        "$t": "int64",
+        "v": "1",
+        "w": "2"
+      },
+      "code": "unexpected_key",
+      "schema_rejects": true
+    },
+    {
+      "name": "int64 as JSON number",
+      "wire": {
+        "$t": "int64",
+        "v": 123
+      },
+      "code": "exact_not_string",
+      "schema_rejects": true
+    },
+    {
+      "name": "int64 as JSON number beyond 2^53",
+      "wire": {
+        "$t": "int64",
+        "v": 9007199254740993
+      },
+      "code": "exact_not_string",
+      "schema_rejects": true
+    },
+    {
+      "name": "int64 overflow",
+      "wire": {
+        "$t": "int64",
+        "v": "9223372036854775808"
+      },
+      "code": "exact_out_of_range",
+      "schema_rejects": false
+    },
+    {
+      "name": "int64 underflow",
+      "wire": {
+        "$t": "int64",
+        "v": "-9223372036854775809"
+      },
+      "code": "exact_out_of_range",
+      "schema_rejects": false
+    },
+    {
+      "name": "int8 overflow",
+      "wire": {
+        "$t": "int8",
+        "v": "128"
+      },
+      "code": "exact_out_of_range",
+      "schema_rejects": false
+    },
+    {
+      "name": "uint64 overflow",
+      "wire": {
+        "$t": "uint64",
+        "v": "18446744073709551616"
+      },
+      "code": "exact_out_of_range",
+      "schema_rejects": false
+    },
+    {
+      "name": "uint64 negative",
+      "wire": {
+        "$t": "uint64",
+        "v": "-1"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "uint8 negative zero",
+      "wire": {
+        "$t": "uint8",
+        "v": "-0"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "int64 negative zero",
+      "wire": {
+        "$t": "int64",
+        "v": "-0"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "leading zeros",
+      "wire": {
+        "$t": "int64",
+        "v": "007"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "plus sign",
+      "wire": {
+        "$t": "int64",
+        "v": "+1"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "exponent integer",
+      "wire": {
+        "$t": "int64",
+        "v": "1e3"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "fractional integer",
+      "wire": {
+        "$t": "int32",
+        "v": "1.0"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "empty integer",
+      "wire": {
+        "$t": "int64",
+        "v": ""
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "whitespace integer",
+      "wire": {
+        "$t": "int64",
+        "v": " 1"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "hex integer",
+      "wire": {
+        "$t": "int64",
+        "v": "0x10"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "float lowercase nan",
+      "wire": {
+        "$t": "float64",
+        "v": "nan"
+      },
+      "code": "float_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "float Inf",
+      "wire": {
+        "$t": "float64",
+        "v": "Inf"
+      },
+      "code": "float_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "float trailing dot",
+      "wire": {
+        "$t": "float64",
+        "v": "1."
+      },
+      "code": "float_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "float unsigned exponent",
+      "wire": {
+        "$t": "float64",
+        "v": "1e5"
+      },
+      "code": "float_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "float as JSON number",
+      "wire": {
+        "$t": "float64",
+        "v": 0.5
+      },
+      "code": "float_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "float32 not representable",
+      "wire": {
+        "$t": "float32",
+        "v": "0.1"
+      },
+      "code": "float_not_representable",
+      "schema_rejects": false
+    },
+    {
+      "name": "decimal scale mismatch",
+      "wire": {
+        "$t": "decimal",
+        "v": "1.5",
+        "precision": 5,
+        "scale": 2
+      },
+      "code": "decimal_scale_mismatch",
+      "schema_rejects": false
+    },
+    {
+      "name": "decimal precision overflow",
+      "wire": {
+        "$t": "decimal",
+        "v": "123.45",
+        "precision": 4,
+        "scale": 2
+      },
+      "code": "decimal_precision_overflow",
+      "schema_rejects": false
+    },
+    {
+      "name": "decimal precision 39",
+      "wire": {
+        "$t": "decimal",
+        "v": "1",
+        "precision": 39,
+        "scale": 0
+      },
+      "code": "bad_parameter",
+      "schema_rejects": true
+    },
+    {
+      "name": "decimal scale above precision",
+      "wire": {
+        "$t": "decimal",
+        "v": "0.123",
+        "precision": 2,
+        "scale": 3
+      },
+      "code": "bad_parameter",
+      "schema_rejects": false
+    },
+    {
+      "name": "decimal negative zero",
+      "wire": {
+        "$t": "decimal",
+        "v": "-0.00",
+        "precision": 3,
+        "scale": 2
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": false
+    },
+    {
+      "name": "decimal as JSON number",
+      "wire": {
+        "$t": "decimal",
+        "v": 1.5,
+        "precision": 5,
+        "scale": 1
+      },
+      "code": "exact_not_string",
+      "schema_rejects": true
+    },
+    {
+      "name": "decimal exponent",
+      "wire": {
+        "$t": "decimal",
+        "v": "1e2",
+        "precision": 5,
+        "scale": 0
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "decimal missing scale",
+      "wire": {
+        "$t": "decimal",
+        "v": "1",
+        "precision": 5
+      },
+      "code": "missing_key",
+      "schema_rejects": true
+    },
+    {
+      "name": "timestamp missing unit",
+      "wire": {
+        "$t": "timestamp",
+        "v": "0",
+        "tz": "UTC"
+      },
+      "code": "missing_key",
+      "schema_rejects": true
+    },
+    {
+      "name": "timestamp missing tz",
+      "wire": {
+        "$t": "timestamp",
+        "v": "0",
+        "unit": "us"
+      },
+      "code": "missing_key",
+      "schema_rejects": true
+    },
+    {
+      "name": "timestamp bad unit",
+      "wire": {
+        "$t": "timestamp",
+        "v": "0",
+        "unit": "minutes",
+        "tz": "UTC"
+      },
+      "code": "bad_unit",
+      "schema_rejects": true
+    },
+    {
+      "name": "timestamp tz offset out of range",
+      "wire": {
+        "$t": "timestamp",
+        "v": "0",
+        "unit": "us",
+        "tz": "+25:00"
+      },
+      "code": "bad_timezone",
+      "schema_rejects": true
+    },
+    {
+      "name": "timestamp tz empty",
+      "wire": {
+        "$t": "timestamp",
+        "v": "0",
+        "unit": "us",
+        "tz": ""
+      },
+      "code": "bad_timezone",
+      "schema_rejects": true
+    },
+    {
+      "name": "timestamp tz Z shorthand",
+      "wire": {
+        "$t": "timestamp",
+        "v": "0",
+        "unit": "us",
+        "tz": "Z"
+      },
+      "code": "bad_timezone",
+      "schema_rejects": true
+    },
+    {
+      "name": "timestamp overflow",
+      "wire": {
+        "$t": "timestamp",
+        "v": "9223372036854775808",
+        "unit": "ns",
+        "tz": null
+      },
+      "code": "exact_out_of_range",
+      "schema_rejects": false
+    },
+    {
+      "name": "timestamp ISO text",
+      "wire": {
+        "$t": "timestamp",
+        "v": "2024-01-01T00:00:00Z",
+        "unit": "us",
+        "tz": "UTC"
+      },
+      "code": "exact_not_canonical",
+      "schema_rejects": true
+    },
+    {
+      "name": "date overflow int32",
+      "wire": {
+        "$t": "date",
+        "v": "2147483648"
+      },
+      "code": "exact_out_of_range",
+      "schema_rejects": false
+    },
+    {
+      "name": "binary hex encoding",
+      "wire": {
+        "$t": "binary",
+        "encoding": "hex",
+        "v": "00ff"
+      },
+      "code": "bad_encoding",
+      "schema_rejects": true
+    },
+    {
+      "name": "binary unpadded",
+      "wire": {
+        "$t": "binary",
+        "encoding": "base64",
+        "v": "AP8"
+      },
+      "code": "bad_base64",
+      "schema_rejects": true
+    },
+    {
+      "name": "binary url-safe",
+      "wire": {
+        "$t": "binary",
+        "encoding": "base64",
+        "v": "AP-_"
+      },
+      "code": "bad_base64",
+      "schema_rejects": true
+    },
+    {
+      "name": "uuid uppercase",
+      "wire": {
+        "$t": "uuid",
+        "v": "123E4567-E89B-12D3-A456-426614174000"
+      },
+      "code": "bad_uuid",
+      "schema_rejects": true
+    },
+    {
+      "name": "list not array",
+      "wire": {
+        "$t": "list",
+        "v": "x"
+      },
+      "code": "bad_container",
+      "schema_rejects": true
+    },
+    {
+      "name": "list with bare number",
+      "wire": {
+        "$t": "list",
+        "v": [
+          1
+        ]
+      },
+      "code": "bare_number",
+      "schema_rejects": true
+    },
+    {
+      "name": "struct duplicate field",
+      "wire": {
+        "$t": "struct",
+        "v": [
+          [
+            "a",
+            null
+          ],
+          [
+            "a",
+            null
+          ]
+        ]
+      },
+      "code": "duplicate_field",
+      "schema_rejects": false
+    },
+    {
+      "name": "struct pair not array",
+      "wire": {
+        "$t": "struct",
+        "v": [
+          {
+            "a": null
+          }
+        ]
+      },
+      "code": "bad_container",
+      "schema_rejects": true
+    },
+    {
+      "name": "map entry wrong arity",
+      "wire": {
+        "$t": "map",
+        "v": [
+          [
+            "k"
+          ]
+        ]
+      },
+      "code": "bad_container",
+      "schema_rejects": true
+    }
+  ],
+  "columns": [
+    {
+      "name": "dictionary utf8 column",
+      "column": {
+        "name": "city",
+        "type": {
+          "id": "utf8"
+        },
+        "nullable": true,
+        "source_type": "DICTIONARY<INT32, UTF8>",
+        "dictionary": {
+          "index_type": "int32",
+          "ordered": false
+        }
+      },
+      "valid": true,
+      "rows": [
+        "Ankara",
+        null,
+        "Ankara"
+      ],
+      "note": "rows carry decoded values, never dictionary indices"
+    },
+    {
+      "name": "ordered dictionary uint8",
+      "column": {
+        "name": "grade",
+        "type": {
+          "id": "utf8"
+        },
+        "nullable": false,
+        "source_type": "DICTIONARY<UINT8, UTF8, ordered>",
+        "dictionary": {
+          "index_type": "uint8",
+          "ordered": true
+        }
+      },
+      "valid": true,
+      "rows": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "name": "decimal column",
+      "column": {
+        "name": "amount",
+        "type": {
+          "id": "decimal",
+          "precision": 18,
+          "scale": 4
+        },
+        "nullable": true,
+        "source_type": "DECIMAL(18,4)"
+      },
+      "valid": true,
+      "rows": [
+        {
+          "$t": "decimal",
+          "v": "-123.4500",
+          "precision": 18,
+          "scale": 4
+        },
+        null
+      ]
+    },
+    {
+      "name": "tz timestamp column",
+      "column": {
+        "name": "at",
+        "type": {
+          "id": "timestamp",
+          "unit": "us",
+          "tz": "UTC"
+        },
+        "nullable": true,
+        "source_type": "TIMESTAMP WITH TIME ZONE"
+      },
+      "valid": true,
+      "rows": [
+        {
+          "$t": "timestamp",
+          "v": "1700000000123456",
+          "unit": "us",
+          "tz": "UTC"
+        }
+      ]
+    },
+    {
+      "name": "naive timestamp column",
+      "column": {
+        "name": "local",
+        "type": {
+          "id": "timestamp",
+          "unit": "ns",
+          "tz": null
+        },
+        "nullable": true,
+        "source_type": "TIMESTAMP_NS"
+      },
+      "valid": true,
+      "rows": [
+        {
+          "$t": "timestamp",
+          "v": "-9223372036854775808",
+          "unit": "ns",
+          "tz": null
+        }
+      ]
+    },
+    {
+      "name": "sqlite undeclared column keeps storage class per value",
+      "column": {
+        "name": "mixed",
+        "type": {
+          "id": "utf8"
+        },
+        "nullable": true,
+        "source_type": "SQLITE:undeclared"
+      },
+      "valid": true,
+      "rows": [
+        "İ",
+        null
+      ]
+    },
+    {
+      "name": "dictionary float index refused",
+      "column": {
+        "name": "c",
+        "type": {
+          "id": "utf8"
+        },
+        "nullable": true,
+        "source_type": "x",
+        "dictionary": {
+          "index_type": "float64",
+          "ordered": false
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "dictionary missing ordered",
+      "column": {
+        "name": "c",
+        "type": {
+          "id": "utf8"
+        },
+        "nullable": true,
+        "source_type": "x",
+        "dictionary": {
+          "index_type": "int32"
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "unknown type id",
+      "column": {
+        "name": "c",
+        "type": {
+          "id": "int63"
+        },
+        "nullable": true,
+        "source_type": "x"
+      },
+      "valid": false
+    },
+    {
+      "name": "missing nullable",
+      "column": {
+        "name": "c",
+        "type": {
+          "id": "int64"
+        },
+        "source_type": "BIGINT"
+      },
+      "valid": false
+    }
+  ]
+}

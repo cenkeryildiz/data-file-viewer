@@ -1,0 +1,41 @@
+[package]
+name = "dfv-table-engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+dfv-table-xlsx = { path = "../xlsx" }
+dfv-table-xlsx-ops = { path = "../xlsx-ops" }
+dfv-table-protocol.workspace = true
+serde_json.workspace = true
+dfv-table-duckdb = { path = "../duckdb-query" }
+dfv-table-sqlite = { path = "../sqlite" }
+dfv-table-kdb = { path = "../kdb" }
+dfv-table-arrow-ipc = { path = "../arrow-ipc" }
+dfv-table-dta = { path = "../dta" }
+dta = "=0.6.0"
+duckdb = { version = "=1.10505.0", features = ["bundled", "parquet", "json", "appender-arrow"] }
+sha2 = "=0.11.0"
+dfv-table-publication = { path = "../publication" }
+dfv-table-backup-diff = { path = "../backup-diff" }
+dfv-table-db-write = { path = "../db-write" }
+dfv-table-csv-write = { path = "../csv-write" }
+dfv-table-arrow-write = { path = "../arrow-write" }
+dfv-table-parquet-write = { path = "../parquet-write" }
+dfv-table-xlsx-patch = { path = "../xlsx-patch" }
+libc.workspace = true
+tempfile = "=3.27.0"
+
+[features]
+# Test-only document engine for the D3.3 lifecycle tests. Never a default; adds no formats.
+test-doc = []
+test-detection-failure = ["dfv-table-xlsx-ops/test-detection-failure"]
+
+[dev-dependencies]
+rusqlite = { version = "=0.40.2", features = ["bundled"] }
+# SAFE-X4 hostile-archive builder (same pins as dfv-table-xlsx-patch).
+crc32fast = "=1.5.3"
+flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }

@@ -1,0 +1,11 @@
+# D3.11 kdb+ file reader (read-only). Standalone: no path deps; the workspace picks it up via crates/*.
+[package]
+name = "dfv-table-kdb"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+path = "src/lib.rs"

@@ -1,0 +1,30 @@
+# D3.12 publication primitive (atomic sibling-staged replace + durable receipt). Standalone; workspace picks it up via crates/*.
+[package]
+name = "dfv-table-publication"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+# Kill/fail/pause fault hooks and the probe binary; never a default, absent from production builds.
+test-mutations = []
+
+[dependencies]
+libc = "=0.2.189"
+serde_json = "=1.0.151"
+sha2 = "=0.11.0"
+
+[[bin]]
+name = "pub_probe"
+path = "src/bin/pub_probe.rs"
+required-features = ["test-mutations"]
+
+[[test]]
+name = "publication"
+path = "tests/publication.rs"
+required-features = ["test-mutations"]

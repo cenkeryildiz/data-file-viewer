@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/error.v1.schema.json",
+  "title": "Operation error",
+  "$comment": "Typed refusal/failure. message is user-safe text (never raw engine errors, SQL excerpts or values). mutation_outcome is required: null for reads, otherwise what is on disk.",
+  "x-dfv-version": 1,
+  "type": "object",
+  "properties": {
+    "code": {
+      "enum": [
+        "malformed_request",
+        "malformed_value",
+        "unknown_method",
+        "not_open",
+        "already_open",
+        "policy_refused",
+        "read_only",
+        "stale_source",
+        "queue_full",
+        "runtime_busy",
+        "cancelled",
+        "deadline_exceeded",
+        "worker_failed",
+        "query_failed",
+        "resource_limit",
+        "ambiguous_row",
+        "no_matching_row",
+        "table_changed",
+        "mutation_not_published",
+        "mutation_unknown",
+        "unsupported"
+      ]
+    },
+    "category": {
+      "enum": [
+        "blocked",
+        "cancelled",
+        "column",
+        "conversion",
+        "resource",
+        "syntax",
+        "type",
+        "unknown"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "mutation_outcome": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "enum": [
+            "not-published",
+            "published",
+            "unknown"
+          ]
+        }
+      ]
+    },
+    "line": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    }
+  },
+  "required": [
+    "code",
+    "category",
+    "message",
+    "retryable",
+    "mutation_outcome"
+  ],
+  "additionalProperties": false
+}

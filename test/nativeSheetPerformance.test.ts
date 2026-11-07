@@ -1,0 +1,53 @@
+import { test } from 'node:test';
+import * as assert from 'node:assert/strict';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { NativeDocument } from '../src/backend/nativeDocument';
+import { xlsxFile } from './stress/generators/_write';
+
+test('PERF-X1 actual worker lazily prepares every SQL read path without discovering unselected tables', async () => {
+  const worker=process.env.DFV_TABLE_WORKER;
+  assert.ok(worker && fs.existsSync(worker),'DFV_TABLE_WORKER must name the actual worker');
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'dfv-native-sheet-perf-'));
+  const source=path.join(dir,'book.xlsx');
+  const sheets=Array.from({length:12},(_,i)=>String.fromCharCode(65+i));
+  await xlsxFile(source,sheets.map(name=>({name,rows:[['id','value'],[1,2],[3,4]]})));
+  const original=fs.readFileSync(source);
+  const doc=await NativeDocument.open({executable:worker,env:{...process.env,DFV_TABLE_STATE_DIR:path.join(dir,'state')}},source);
+  const sql=(sheet:string)=>`select cast(A as bigint) as id,cast(B as double) as value from "${sheet}" where rowid>0`;
+  try {
+    assert.equal(doc.getPreparationMetrics().cachedObjects,0);
+    assert.equal(doc.getPreparationMetrics().detectorCalls,0);
+    assert.ok(doc.getPreparationMetrics().phases.workbookPreflight);
+    assert.equal(doc.getPreparationMetrics().phases.sheetParse,undefined);
+    assert.deepEqual(await doc.listTables(),sheets);
+    assert.equal((await doc.getQueryCatalog()).length,12);
+    assert.equal(doc.getPreparationMetrics().cachedObjects,0,'catalog fabricates no materialized raw sheet');
+    assert.equal((await doc.runQuery(sql('A'))).rows.length,2);
+    assert.equal((await doc.runSortedQuery(sql('B'),'id','desc')).rows[0][0],'3');
+    assert.equal((await doc.runChartQuery(sql('C'),'Row',['value'],false,10,false,true)).rows.length,2);
+    assert.equal(await doc.countMatchingRows(sql('D')),2);
+    assert.equal((await doc.getColumnTopValues(sql('E'),'value')).distinctCount,2);
+    assert.equal((await doc.getColumnDescriptiveStats(sql('F'),'value','numeric')).totalRows,2);
+    assert.equal((await doc.checkEditableSelect('select * from G')).editable,true);
+    assert.deepEqual((await doc.getQueryColumns('memory','main','H')).map(c=>c.name),['A','B']);
+    const actual=await doc.runQuery(sql('I'));
+    await doc.createBackup();
+    const diff=await doc.diffQueryAgainstBackup(sql('I'),actual.columns,actual.rows);
+    assert.ok(diff===null || diff.cellChanged.every(row=>row.every(cell=>!cell)));
+    assert.deepEqual((await doc.runQuery('select count(*) as n from J cross join K')).rows,[['9']]);
+    const compared=await doc.compareToBackup();
+    assert.deepEqual(Object.keys(compared).sort(),sheets);
+    assert.ok(Object.values(compared).every(v=>v==='unchanged'));
+    await doc.runQuery('select * from A',0,'A');
+    const metrics=doc.getPreparationMetrics();
+    assert.equal(metrics.detectorCalls,1);
+    assert.equal(doc.getSheetPreparation('L')?.state,'pending');
+    assert.equal(metrics.cacheMaxBytes,64*1024*1024);
+    assert.equal(metrics.cacheAccounting,'decoded-payload-v1');
+    assert.ok(metrics.cacheEstimatedBytes>metrics.cachedCells*8);
+    assert.ok(metrics.phases.sheetParse && metrics.phases.readGrid && metrics.phases.detection && metrics.phases.derivedPreparation && metrics.phases.catalog);
+    assert.deepEqual(fs.readFileSync(source),original);
+  } finally {await doc.close();fs.rmSync(dir,{recursive:true,force:true});}
+});

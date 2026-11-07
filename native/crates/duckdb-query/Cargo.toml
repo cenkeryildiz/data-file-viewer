@@ -1,0 +1,16 @@
+# D3.5/D3.6 DuckDB-backed catalog, query paging and CSV/Parquet reads. Not accepted: depends on D3.3/D3.4 acceptance.
+[package]
+name = "dfv-table-duckdb"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+# `bundled` compiles DuckDB's amalgamation with cc (no cmake on this machine); parquet/json are in the amalgamation.
+duckdb = { version = "=1.10505.0", features = ["bundled", "parquet", "json"] }
+dfv-table-policy = { path = "../policy" }
+serde_json.workspace = true
+regex = { version = "=1.13.1", default-features = false, features = ["std", "perf"] }
+base64 = "=0.22.1"

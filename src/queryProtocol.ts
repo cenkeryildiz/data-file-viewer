@@ -1,4 +1,4 @@
-import type { DuckDbFile, DetectedSheetTable, FileKind, TextDecisionCache } from './duckdbConnection';
+import type { DuckDbFile, DetectedSheetTable, FileKind, PreparationMetrics, SheetPreparationStatus, TextDecisionCache } from './duckdbConnection';
 
 export const READ_METHODS = [
   'listTables', 'listSidebarTables', 'listSiblingTables', 'getCombinableTableNames',
@@ -8,6 +8,8 @@ export const READ_METHODS = [
   'getColumnTopValues', 'getColumnDescriptiveStats',
   'compareToBackup', 'diffQueryAgainstBackup',
   'getQueryCatalog', 'getQueryColumns', 'locateXlsxEdit',
+  // SAFE-X1 (D1.7): reader-side re-preparation of one worksheet; writes nothing.
+  'retrySheetPreparation',
 ] as const;
 export type ReadMethod = typeof READ_METHODS[number];
 
@@ -19,6 +21,10 @@ export interface ReadMetadata {
   hasPendingSheets: boolean;
   worksheets: string[];
   detectedTables: DetectedSheetTable[];
+  /** SAFE-X1 per-worksheet discovery status; absent from older workers. */
+  sheetPreparation?: SheetPreparationStatus[];
+  /** PERF-X1 timings/counters; absent from older workers. */
+  preparationMetrics?: PreparationMetrics;
   openWarnings: readonly string[];
   warnings: string[];
   numberLocale: DuckDbFile['numberLocale'];

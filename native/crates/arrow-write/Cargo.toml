@@ -1,0 +1,19 @@
+[package]
+name = "dfv-table-arrow-write"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+
+# Exact pins: only crates already in the offline registry cache are used.
+[dependencies]
+arrow-array = "=58.4.0"
+arrow-cast = "=58.4.0"
+arrow-data = "=58.4.0"
+arrow-ipc = { version = "=58.4.0", features = ["lz4", "zstd"] }
+arrow-schema = "=58.4.0"
+arrow-select = "=58.4.0"
+dfv-table-arrow-ipc = { path = "../arrow-ipc" }
+
+[dev-dependencies]
+serde_json = "=1.0.151"

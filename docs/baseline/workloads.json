@@ -1,0 +1,177 @@
+{
+  "evidence_directory": "test/stress/_work/migration-baseline",
+  "artifact_globs": [
+    "*.vsix",
+    "test/stress/_work/report*",
+    "test/stress/_work/results*",
+    "test/stress/_work/profile/*",
+    "test/stress/_work/foreign/*",
+    "test/stress/_work/equivalence/*",
+    "test/stress/_work/corpus/**/*"
+  ],
+  "workloads": {
+    "install": {
+      "argv": [
+        "npm",
+        "ci"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "typecheck": {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "test": {
+      "argv": [
+        "npm",
+        "run",
+        "test"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "test:security": {
+      "argv": [
+        "npm",
+        "run",
+        "test:security"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "test:browser": {
+      "argv": [
+        "npm",
+        "run",
+        "test:browser"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "test:host": {
+      "argv": [
+        "npm",
+        "run",
+        "test:host"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "package": {
+      "argv": [
+        "npm",
+        "run",
+        "package"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "test:package": {
+      "argv": [
+        "npm",
+        "run",
+        "test:package"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "stress": {
+      "argv": [
+        "npm",
+        "run",
+        "stress"
+      ],
+      "timeout_seconds": 1200,
+      "cwd": "."
+    },
+    "test:fuzz": {
+      "argv": [
+        "npm",
+        "run",
+        "test:fuzz",
+        "--",
+        "--seed",
+        "538030117",
+        "--runs",
+        "20000"
+      ],
+      "timeout_seconds": 600,
+      "cwd": "."
+    },
+    "test:resources": {
+      "argv": [
+        "npm",
+        "run",
+        "test:resources"
+      ],
+      "timeout_seconds": 1200,
+      "cwd": ".",
+      "env": {
+        "DFV_BASELINE_SYNTHETIC": "1"
+      }
+    },
+    "profile-fixtures": {
+      "argv": [
+        "{python}",
+        "test/resources/build_profile_corpus.py"
+      ],
+      "timeout_seconds": 300
+    },
+    "foreign-fixtures": {
+      "argv": [
+        "{python}",
+        "docs/baseline/build_foreign.py"
+      ],
+      "timeout_seconds": 300
+    },
+    "resource-record": {
+      "argv": [
+        "npm",
+        "run",
+        "test:resources"
+      ],
+      "timeout_seconds": 1200,
+      "cwd": ".",
+      "env": {
+        "DFV_BASELINE_SYNTHETIC": "1",
+        "DFV_EQUIV_RECORD": "1"
+      }
+    },
+    "runner-tests": {
+      "argv": [
+        "{python}",
+        "docs/baseline/test_runner.py"
+      ],
+      "timeout_seconds": 60
+    }
+  },
+  "python_packages": [
+    "psutil",
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "openpyxl",
+    "duckdb",
+    "polars",
+    "pyreadstat"
+  ],
+  "comparison_contract": {
+    "warmups": 2,
+    "measured_normal_runs": 7,
+    "measured_large_runs_minimum": 3,
+    "latency_median_regression_fraction": 0.1,
+    "latency_p95_regression_fraction": 0.2,
+    "rust_time_benefit_fraction": 0.2,
+    "rust_tree_rss_benefit_fraction": 0.25,
+    "status": "Plan targets pinned; calibration and default resource capacities still pending",
+    "native_target": "macOS ARM64 only for this run",
+    "other_native_targets": "unverified",
+    "cache_policy": "No forced eviction; fresh process plus existing OS cache"
+  }
+}

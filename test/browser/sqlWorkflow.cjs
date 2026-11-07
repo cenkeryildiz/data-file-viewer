@@ -6,11 +6,12 @@ const { chromium } = require('playwright');
 const esbuild = require('esbuild');
 const vscode = require('../../out-test/test/stress/stubs/vscode').default;
 const { DuckDBDocument, DuckDBEditorProvider } = require('../../out-test/src/duckdbEditorProvider');
-const { ViewerFile } = require('../../out-test/src/viewerFile');
+const { selectBackend } = require('../../out-test/src/backend/nativeSelect');
 const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
 
 (async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'dfv-browser-sql-'));
+  const backend = selectBackend(process.cwd(), { ...process.env, DFV_BACKEND: process.env.DFV_BACKEND ?? 'reference', DFV_TABLE_STATE_DIR: path.join(dir, 'state') });
   const browser = await chromium.launch({ channel: process.env.CI ? undefined : 'chrome', headless: true });
   let document;
   try {
@@ -20,9 +21,10 @@ const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
       ...Array.from({ length: 300 }, (_, i) => [null, new Date(Date.UTC(1989, 6, 1 + i)).toISOString().slice(0, 10), i]),
     ] }]);
     const original = await fs.readFile(source);
-    const file = await ViewerFile.open(source);
-    document = new DuckDBDocument(vscode.Uri.file(source), file);
-    const provider = new DuckDBEditorProvider({ extensionUri: vscode.Uri.file(process.cwd()) });
+    const file = await backend.open(source);
+    if (process.env.DFV_BACKEND === 'native') assert.equal(file.constructor.name, 'NativeDocument');
+    document = new DuckDBDocument(vscode.Uri.file(source), file, undefined, undefined, backend);
+    const provider = new DuckDBEditorProvider({ extensionUri: vscode.Uri.file(process.cwd()) }, backend);
     const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
     const errors = [], requests = [], responses = [], outbound = [];
     page.on('pageerror', error => errors.push(String(error)));
@@ -44,7 +46,10 @@ const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
     }, bundle: true, write: false, format: 'iife', globalName: 'sqlTest', platform: 'browser' });
     await page.addScriptTag({ content: bundle.outputFiles[0].text });
     await page.waitForFunction(() => document.querySelectorAll('.sheet-table-sql').length === 2);
-    await page.waitForFunction(() => [...document.querySelectorAll('#query-target option')].some(option => option.textContent.includes('Table 2')));
+    await page.waitForFunction(() => [...document.querySelectorAll('#query-target option')].some(option => option.textContent.includes('Table 2'))).catch(error => {
+      console.error(JSON.stringify({ backend: process.env.DFV_BACKEND ?? 'reference', responses: responses.filter(m => ['queryCatalog', 'error', 'queryDiagnostic'].includes(m.command)) }));
+      throw error;
+    });
     const editor = page.locator('.cm-content');
     await editor.fill('SELECT 42 AS saved_draft;');
     const choices = await page.locator('#query-target option').evaluateAll(options => options.map(option => ({ value: option.value, label: option.textContent })));
@@ -89,7 +94,10 @@ const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
     // A raw-sheet error explains target selection and discovery survives failure.
     await editor.fill('SELECT * FROM "Raw_Data" WHERE "Date" >= 1990 LIMIT 100;');
     await page.locator('#run-btn').click();
-    await page.waitForFunction(() => document.querySelector('.error')?.textContent.includes('detected table'));
+    await page.waitForFunction(() => document.querySelector('.error')?.textContent.includes('detected table')).catch(error => {
+      console.error(JSON.stringify({ backend: process.env.DFV_BACKEND ?? 'reference', errors: responses.filter(m => m.command === 'error').slice(-2) }));
+      throw error;
+    });
     await page.waitForFunction(() => [...document.querySelectorAll('#query-target option')].some(option => option.textContent.includes('Table 2')));
 
     // Schema metadata is text, including hostile markup, and cannot fetch resources.
@@ -107,5 +115,5 @@ const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
     assert.ok(responses.some(message => message.command === 'error' && message.message.includes('expired')));
     assert.deepEqual(await fs.readFile(source), original);
     console.log('SQL browser workflow passed: real provider/worker, target types, draft restoration, inline SQL, exact date filter, failed-query discovery, and safe metadata rendering.');
-  } finally { document?.dispose(); await browser.close(); await fs.rm(dir, { recursive: true, force: true }); }
+  } finally { await document?.session.close(); await browser.close(); await fs.rm(dir, { recursive: true, force: true }); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

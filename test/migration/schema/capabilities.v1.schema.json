@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/capabilities.v1.schema.json",
+  "title": "Worker capabilities",
+  "$comment": "Advertised once after start. A method or format not listed is refused with unknown_method/unsupported; nothing is inferred.",
+  "x-dfv-version": 1,
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "$ref": "common.v1.schema.json#/$defs/protocol"
+    },
+    "version": {
+      "$ref": "common.v1.schema.json#/$defs/version"
+    },
+    "kind": {
+      "const": "capabilities"
+    },
+    "engine": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "methods": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][A-Za-z0-9]*$"
+      },
+      "minItems": 1
+    },
+    "formats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file_kind": {
+            "$ref": "common.v1.schema.json#/$defs/fileKind"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "write": {
+            "enum": [
+              "none",
+              "transactional",
+              "cell_patch",
+              "table_rewrite"
+            ]
+          },
+          "backup": {
+            "type": "boolean"
+          },
+          "compression": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "file_kind",
+          "read",
+          "write",
+          "backup",
+          "compression"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "value_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "time_units": {
+      "type": "array",
+      "items": {
+        "$ref": "common.v1.schema.json#/$defs/timeUnit"
+      }
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "max_frame_bytes": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "sql_bytes": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "result_bytes": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "cell_bytes": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "queued_requests": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "deadline_ms": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        }
+      },
+      "required": [
+        "max_frame_bytes",
+        "sql_bytes",
+        "result_bytes",
+        "cell_bytes",
+        "queued_requests",
+        "deadline_ms"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "protocol",
+    "version",
+    "kind",
+    "engine",
+    "methods",
+    "formats",
+    "value_tags",
+    "time_units",
+    "limits"
+  ],
+  "additionalProperties": false
+}

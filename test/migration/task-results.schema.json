@@ -1,0 +1,214 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^D[0-9]+\\.[0-9]+[a-z]?$"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "pending",
+              "running",
+              "blocked",
+              "passed"
+            ]
+          },
+          "input_commits": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "minItems": 1
+          },
+          "output_commits": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          },
+          "dirty_disposition": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "exit_code": {
+                  "type": "integer"
+                },
+                "log": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "command",
+                "exit_code",
+                "log"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "fixtures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "evidence_paths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "skips": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "platform": {
+            "type": "object",
+            "properties": {
+              "runner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tested": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "claimed": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "runner",
+              "tested",
+              "claimed"
+            ],
+            "additionalProperties": false
+          },
+          "rollback_ref": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[0-9a-f]{40}$"
+          }
+        },
+        "required": [
+          "task_id",
+          "status",
+          "input_commits",
+          "output_commits",
+          "dirty_disposition",
+          "commands",
+          "fixtures",
+          "artifacts",
+          "evidence_paths",
+          "failures",
+          "skips",
+          "blockers",
+          "platform",
+          "rollback_ref"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "tasks"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -1,0 +1,27 @@
+[package]
+name = "dfv-table"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "dfv-table"
+path = "src/main.rs"
+
+[dependencies]
+dfv-table-protocol.workspace = true
+dfv-table-engine.workspace = true
+libc.workspace = true
+
+[features]
+test-doc = ["dfv-table-engine/test-doc"]
+
+[[test]]
+name = "lifecycle"
+required-features = ["test-doc"]
+
+[dev-dependencies]
+serde_json.workspace = true
+duckdb = { version = "=1.10505.0", features = ["bundled", "parquet", "json"] }

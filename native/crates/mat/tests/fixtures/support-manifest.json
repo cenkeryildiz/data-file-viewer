@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "scope": "Synthetic redistributable MATLAB Level-5 codec fixtures; no user input data.",
+  "producer": {
+    "application": "MATLAB",
+    "release": "R2026b",
+    "application_version": "26.2.0.3386108",
+    "runtime_options": [
+      "-nodisplay",
+      "-nojvm"
+    ],
+    "generation_note": "Single authorized no-JVM run completed in18.63seconds, DFV_READY then generator completion. Supplied -nosplash was reported unrecognized and ignored. No licence or ServiceHost change."
+  },
+  "generator": "create_support_fixtures.m",
+  "oracle": "MATLAB load + mat_dump with num2hex/integer decimal/UTF16 and scalar struct member dumps",
+  "files": [
+    {
+      "path": "create_support_fixtures.m",
+      "bytes": 1809,
+      "sha256": "25e94b86af5b678e2305948c4dbe1fcf9d91d0a76464733ee526a2e31e3a1b40"
+    },
+    {
+      "path": "mat_dump.m",
+      "bytes": 1337,
+      "sha256": "6583a55496be147f7a2e1af2ded88c9a52054fb203e4b505a0232cc86185c30b"
+    },
+    {
+      "path": "support_v6.mat",
+      "bytes": 2872,
+      "sha256": "4c4d81e7dd906149c1dbb51365503ca8d6d616f35e7f254d6830da5eb57065ad"
+    },
+    {
+      "path": "support_v6.oracle.json",
+      "bytes": 2879,
+      "sha256": "345d5d243513d39d5543d98a0072b10d418f67aabc8d8f247961b6af6343eb6f"
+    },
+    {
+      "path": "support_v6.struct_members.oracle.json",
+      "bytes": 1193,
+      "sha256": "b0f0abf38e7f6a15ab849852456ad1c61da2b1564e66901dda3e19d55808d6fd"
+    },
+    {
+      "path": "support_v7.mat",
+      "bytes": 1409,
+      "sha256": "2caf2b04579b4ce7da8746904c03df688f109f1bef2dcd780f1875f2fda5638d"
+    },
+    {
+      "path": "support_v7.oracle.json",
+      "bytes": 2879,
+      "sha256": "345d5d243513d39d5543d98a0072b10d418f67aabc8d8f247961b6af6343eb6f"
+    },
+    {
+      "path": "support_v7.struct_members.oracle.json",
+      "bytes": 1193,
+      "sha256": "b0f0abf38e7f6a15ab849852456ad1c61da2b1564e66901dda3e19d55808d6fd"
+    }
+  ]
+}

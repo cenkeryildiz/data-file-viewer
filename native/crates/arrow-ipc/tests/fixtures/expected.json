@@ -1,0 +1,1307 @@
+{
+ "dict-delta.arrows": {
+  "rows": 6,
+  "columns": [
+   {
+    "name": "d",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "b",
+     "c",
+     "a",
+     "x",
+     "y"
+    ]
+   }
+  ],
+  "schema_metadata": {}
+ },
+ "dict-replace.arrows": {
+  "rows": 6,
+  "columns": [
+   {
+    "name": "d",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "b",
+     "c",
+     "a",
+     "x",
+     "y"
+    ]
+   }
+  ],
+  "schema_metadata": {}
+ },
+ "empty.arrows": {
+  "rows": 0,
+  "columns": [
+   {
+    "name": "i64",
+    "type": "int64",
+    "nullable": false,
+    "metadata": {
+     "unit": "count"
+    },
+    "values": []
+   },
+   {
+    "name": "u64",
+    "type": "uint64",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "str",
+    "type": "string",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "lstr",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "dec",
+    "type": "decimal128(21, 4)",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "ts_utc",
+    "type": "timestamp[us, tz=UTC]",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "ts_off",
+    "type": "timestamp[ms, tz=+05:30]",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "flag",
+    "type": "bool",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "nul",
+    "type": "int32",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "cat",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   }
+  ],
+  "schema_metadata": {
+   "origin": "d3-9-fixture"
+  }
+ },
+ "polars-view.arrows": {
+  "rows": 3,
+  "columns": [
+   {
+    "name": "n",
+    "type": "int64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "9007199254740993",
+     null
+    ]
+   },
+   {
+    "name": "s",
+    "type": "string_view",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İ",
+     null
+    ]
+   },
+   {
+    "name": "c",
+    "type": "dictionary<values=string_view, indices=uint32, ordered=0>",
+    "nullable": true,
+    "metadata": {
+     "_PL_CATEGORICAL2": "0;0;u32;"
+    },
+    "values": [
+     "u",
+     "v",
+     "u"
+    ]
+   }
+  ],
+  "schema_metadata": {}
+ },
+ "wide-lz4.arrows": {
+  "rows": 6,
+  "columns": [
+   {
+    "name": "i64",
+    "type": "int64",
+    "nullable": false,
+    "metadata": {
+     "unit": "count"
+    },
+    "values": [
+     "9007199254740993",
+     "9223372036854775807",
+     "-9223372036854775808",
+     "0",
+     "-9007199254740993",
+     "7"
+    ]
+   },
+   {
+    "name": "u64",
+    "type": "uint64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "18446744073709551615",
+     "9223372036854775808",
+     "9007199254740993",
+     "1",
+     "0",
+     "3"
+    ]
+   },
+   {
+    "name": "str",
+    "type": "string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İstanbul",
+     "σ😀",
+     "",
+     null,
+     "z"
+    ]
+   },
+   {
+    "name": "lstr",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "x",
+     "y",
+     null,
+     "longlonglong",
+     "q",
+     "r"
+    ]
+   },
+   {
+    "name": "dec",
+    "type": "decimal128(21, 4)",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "123.4500",
+     "-0.0001",
+     "99999999999999999.9999",
+     "0.0000",
+     "1.0000",
+     "2.5000"
+    ]
+   },
+   {
+    "name": "ts_utc",
+    "type": "timestamp[us, tz=UTC]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "2",
+     null,
+     "4",
+     "5",
+     "6"
+    ]
+   },
+   {
+    "name": "ts_off",
+    "type": "timestamp[ms, tz=+05:30]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "10",
+     "20",
+     "30",
+     null,
+     "50",
+     "60"
+    ]
+   },
+   {
+    "name": "flag",
+    "type": "bool",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "true",
+     "false",
+     null,
+     "true",
+     "false",
+     "true"
+    ]
+   },
+   {
+    "name": "nul",
+    "type": "int32",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "name": "cat",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue"
+    ]
+   }
+  ],
+  "schema_metadata": {
+   "origin": "d3-9-fixture"
+  }
+ },
+ "wide-zstd.arrows": {
+  "rows": 6,
+  "columns": [
+   {
+    "name": "i64",
+    "type": "int64",
+    "nullable": false,
+    "metadata": {
+     "unit": "count"
+    },
+    "values": [
+     "9007199254740993",
+     "9223372036854775807",
+     "-9223372036854775808",
+     "0",
+     "-9007199254740993",
+     "7"
+    ]
+   },
+   {
+    "name": "u64",
+    "type": "uint64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "18446744073709551615",
+     "9223372036854775808",
+     "9007199254740993",
+     "1",
+     "0",
+     "3"
+    ]
+   },
+   {
+    "name": "str",
+    "type": "string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İstanbul",
+     "σ😀",
+     "",
+     null,
+     "z"
+    ]
+   },
+   {
+    "name": "lstr",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "x",
+     "y",
+     null,
+     "longlonglong",
+     "q",
+     "r"
+    ]
+   },
+   {
+    "name": "dec",
+    "type": "decimal128(21, 4)",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "123.4500",
+     "-0.0001",
+     "99999999999999999.9999",
+     "0.0000",
+     "1.0000",
+     "2.5000"
+    ]
+   },
+   {
+    "name": "ts_utc",
+    "type": "timestamp[us, tz=UTC]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "2",
+     null,
+     "4",
+     "5",
+     "6"
+    ]
+   },
+   {
+    "name": "ts_off",
+    "type": "timestamp[ms, tz=+05:30]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "10",
+     "20",
+     "30",
+     null,
+     "50",
+     "60"
+    ]
+   },
+   {
+    "name": "flag",
+    "type": "bool",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "true",
+     "false",
+     null,
+     "true",
+     "false",
+     "true"
+    ]
+   },
+   {
+    "name": "nul",
+    "type": "int32",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "name": "cat",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue"
+    ]
+   }
+  ],
+  "schema_metadata": {
+   "origin": "d3-9-fixture"
+  }
+ },
+ "wide.arrows": {
+  "rows": 6,
+  "columns": [
+   {
+    "name": "i64",
+    "type": "int64",
+    "nullable": false,
+    "metadata": {
+     "unit": "count"
+    },
+    "values": [
+     "9007199254740993",
+     "9223372036854775807",
+     "-9223372036854775808",
+     "0",
+     "-9007199254740993",
+     "7"
+    ]
+   },
+   {
+    "name": "u64",
+    "type": "uint64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "18446744073709551615",
+     "9223372036854775808",
+     "9007199254740993",
+     "1",
+     "0",
+     "3"
+    ]
+   },
+   {
+    "name": "str",
+    "type": "string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İstanbul",
+     "σ😀",
+     "",
+     null,
+     "z"
+    ]
+   },
+   {
+    "name": "lstr",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "x",
+     "y",
+     null,
+     "longlonglong",
+     "q",
+     "r"
+    ]
+   },
+   {
+    "name": "dec",
+    "type": "decimal128(21, 4)",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "123.4500",
+     "-0.0001",
+     "99999999999999999.9999",
+     "0.0000",
+     "1.0000",
+     "2.5000"
+    ]
+   },
+   {
+    "name": "ts_utc",
+    "type": "timestamp[us, tz=UTC]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "2",
+     null,
+     "4",
+     "5",
+     "6"
+    ]
+   },
+   {
+    "name": "ts_off",
+    "type": "timestamp[ms, tz=+05:30]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "10",
+     "20",
+     "30",
+     null,
+     "50",
+     "60"
+    ]
+   },
+   {
+    "name": "flag",
+    "type": "bool",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "true",
+     "false",
+     null,
+     "true",
+     "false",
+     "true"
+    ]
+   },
+   {
+    "name": "nul",
+    "type": "int32",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "name": "cat",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue"
+    ]
+   }
+  ],
+  "schema_metadata": {
+   "origin": "d3-9-fixture"
+  }
+ },
+ "empty.feather": {
+  "rows": 0,
+  "columns": [
+   {
+    "name": "i64",
+    "type": "int64",
+    "nullable": false,
+    "metadata": {
+     "unit": "count"
+    },
+    "values": []
+   },
+   {
+    "name": "u64",
+    "type": "uint64",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "str",
+    "type": "string",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "lstr",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "dec",
+    "type": "decimal128(21, 4)",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "ts_utc",
+    "type": "timestamp[us, tz=UTC]",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "ts_off",
+    "type": "timestamp[ms, tz=+05:30]",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "flag",
+    "type": "bool",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "nul",
+    "type": "int32",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   },
+   {
+    "name": "cat",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": []
+   }
+  ],
+  "schema_metadata": {
+   "origin": "d3-9-fixture"
+  }
+ },
+ "polars-lz4.feather": {
+  "rows": 3,
+  "columns": [
+   {
+    "name": "n",
+    "type": "int64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "9007199254740993",
+     null
+    ]
+   },
+   {
+    "name": "s",
+    "type": "string_view",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İ",
+     null
+    ]
+   },
+   {
+    "name": "c",
+    "type": "dictionary<values=string_view, indices=uint32, ordered=0>",
+    "nullable": true,
+    "metadata": {
+     "_PL_CATEGORICAL2": "0;0;u32;"
+    },
+    "values": [
+     "u",
+     "v",
+     "u"
+    ]
+   }
+  ],
+  "schema_metadata": {}
+ },
+ "polars-oldest.feather": {
+  "rows": 3,
+  "columns": [
+   {
+    "name": "n",
+    "type": "int64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "9007199254740993",
+     null
+    ]
+   },
+   {
+    "name": "s",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İ",
+     null
+    ]
+   },
+   {
+    "name": "c",
+    "type": "dictionary<values=large_string, indices=uint32, ordered=0>",
+    "nullable": true,
+    "metadata": {
+     "_PL_CATEGORICAL2": "0;0;u32;"
+    },
+    "values": [
+     "u",
+     "v",
+     "u"
+    ]
+   }
+  ],
+  "schema_metadata": {}
+ },
+ "polars-view.feather": {
+  "rows": 3,
+  "columns": [
+   {
+    "name": "n",
+    "type": "int64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "9007199254740993",
+     null
+    ]
+   },
+   {
+    "name": "s",
+    "type": "string_view",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İ",
+     null
+    ]
+   },
+   {
+    "name": "c",
+    "type": "dictionary<values=string_view, indices=uint32, ordered=0>",
+    "nullable": true,
+    "metadata": {
+     "_PL_CATEGORICAL2": "0;0;u32;"
+    },
+    "values": [
+     "u",
+     "v",
+     "u"
+    ]
+   }
+  ],
+  "schema_metadata": {}
+ },
+ "polars-zstd.feather": {
+  "rows": 3,
+  "columns": [
+   {
+    "name": "n",
+    "type": "int64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "9007199254740993",
+     null
+    ]
+   },
+   {
+    "name": "s",
+    "type": "string_view",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İ",
+     null
+    ]
+   },
+   {
+    "name": "c",
+    "type": "dictionary<values=string_view, indices=uint32, ordered=0>",
+    "nullable": true,
+    "metadata": {
+     "_PL_CATEGORICAL2": "0;0;u32;"
+    },
+    "values": [
+     "u",
+     "v",
+     "u"
+    ]
+   }
+  ],
+  "schema_metadata": {}
+ },
+ "wide-lz4.feather": {
+  "rows": 6,
+  "columns": [
+   {
+    "name": "i64",
+    "type": "int64",
+    "nullable": false,
+    "metadata": {
+     "unit": "count"
+    },
+    "values": [
+     "9007199254740993",
+     "9223372036854775807",
+     "-9223372036854775808",
+     "0",
+     "-9007199254740993",
+     "7"
+    ]
+   },
+   {
+    "name": "u64",
+    "type": "uint64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "18446744073709551615",
+     "9223372036854775808",
+     "9007199254740993",
+     "1",
+     "0",
+     "3"
+    ]
+   },
+   {
+    "name": "str",
+    "type": "string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İstanbul",
+     "σ😀",
+     "",
+     null,
+     "z"
+    ]
+   },
+   {
+    "name": "lstr",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "x",
+     "y",
+     null,
+     "longlonglong",
+     "q",
+     "r"
+    ]
+   },
+   {
+    "name": "dec",
+    "type": "decimal128(21, 4)",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "123.4500",
+     "-0.0001",
+     "99999999999999999.9999",
+     "0.0000",
+     "1.0000",
+     "2.5000"
+    ]
+   },
+   {
+    "name": "ts_utc",
+    "type": "timestamp[us, tz=UTC]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "2",
+     null,
+     "4",
+     "5",
+     "6"
+    ]
+   },
+   {
+    "name": "ts_off",
+    "type": "timestamp[ms, tz=+05:30]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "10",
+     "20",
+     "30",
+     null,
+     "50",
+     "60"
+    ]
+   },
+   {
+    "name": "flag",
+    "type": "bool",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "true",
+     "false",
+     null,
+     "true",
+     "false",
+     "true"
+    ]
+   },
+   {
+    "name": "nul",
+    "type": "int32",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "name": "cat",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue"
+    ]
+   }
+  ],
+  "schema_metadata": {
+   "origin": "d3-9-fixture"
+  }
+ },
+ "wide-zstd.feather": {
+  "rows": 6,
+  "columns": [
+   {
+    "name": "i64",
+    "type": "int64",
+    "nullable": false,
+    "metadata": {
+     "unit": "count"
+    },
+    "values": [
+     "9007199254740993",
+     "9223372036854775807",
+     "-9223372036854775808",
+     "0",
+     "-9007199254740993",
+     "7"
+    ]
+   },
+   {
+    "name": "u64",
+    "type": "uint64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "18446744073709551615",
+     "9223372036854775808",
+     "9007199254740993",
+     "1",
+     "0",
+     "3"
+    ]
+   },
+   {
+    "name": "str",
+    "type": "string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İstanbul",
+     "σ😀",
+     "",
+     null,
+     "z"
+    ]
+   },
+   {
+    "name": "lstr",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "x",
+     "y",
+     null,
+     "longlonglong",
+     "q",
+     "r"
+    ]
+   },
+   {
+    "name": "dec",
+    "type": "decimal128(21, 4)",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "123.4500",
+     "-0.0001",
+     "99999999999999999.9999",
+     "0.0000",
+     "1.0000",
+     "2.5000"
+    ]
+   },
+   {
+    "name": "ts_utc",
+    "type": "timestamp[us, tz=UTC]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "2",
+     null,
+     "4",
+     "5",
+     "6"
+    ]
+   },
+   {
+    "name": "ts_off",
+    "type": "timestamp[ms, tz=+05:30]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "10",
+     "20",
+     "30",
+     null,
+     "50",
+     "60"
+    ]
+   },
+   {
+    "name": "flag",
+    "type": "bool",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "true",
+     "false",
+     null,
+     "true",
+     "false",
+     "true"
+    ]
+   },
+   {
+    "name": "nul",
+    "type": "int32",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "name": "cat",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue"
+    ]
+   }
+  ],
+  "schema_metadata": {
+   "origin": "d3-9-fixture"
+  }
+ },
+ "wide.feather": {
+  "rows": 6,
+  "columns": [
+   {
+    "name": "i64",
+    "type": "int64",
+    "nullable": false,
+    "metadata": {
+     "unit": "count"
+    },
+    "values": [
+     "9007199254740993",
+     "9223372036854775807",
+     "-9223372036854775808",
+     "0",
+     "-9007199254740993",
+     "7"
+    ]
+   },
+   {
+    "name": "u64",
+    "type": "uint64",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "18446744073709551615",
+     "9223372036854775808",
+     "9007199254740993",
+     "1",
+     "0",
+     "3"
+    ]
+   },
+   {
+    "name": "str",
+    "type": "string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "a",
+     "İstanbul",
+     "σ😀",
+     "",
+     null,
+     "z"
+    ]
+   },
+   {
+    "name": "lstr",
+    "type": "large_string",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "x",
+     "y",
+     null,
+     "longlonglong",
+     "q",
+     "r"
+    ]
+   },
+   {
+    "name": "dec",
+    "type": "decimal128(21, 4)",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "123.4500",
+     "-0.0001",
+     "99999999999999999.9999",
+     "0.0000",
+     "1.0000",
+     "2.5000"
+    ]
+   },
+   {
+    "name": "ts_utc",
+    "type": "timestamp[us, tz=UTC]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "1",
+     "2",
+     null,
+     "4",
+     "5",
+     "6"
+    ]
+   },
+   {
+    "name": "ts_off",
+    "type": "timestamp[ms, tz=+05:30]",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "10",
+     "20",
+     "30",
+     null,
+     "50",
+     "60"
+    ]
+   },
+   {
+    "name": "flag",
+    "type": "bool",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "true",
+     "false",
+     null,
+     "true",
+     "false",
+     "true"
+    ]
+   },
+   {
+    "name": "nul",
+    "type": "int32",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "name": "cat",
+    "type": "dictionary<values=string, indices=int8, ordered=0>",
+    "nullable": true,
+    "metadata": {},
+    "values": [
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue"
+    ]
+   }
+  ],
+  "schema_metadata": {
+   "origin": "d3-9-fixture"
+  }
+ }
+}

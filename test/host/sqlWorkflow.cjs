@@ -12,6 +12,7 @@ const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
 (async () => {
   const executable = process.env.DFV_VSCODE_EXECUTABLE || '/Applications/Visual Studio Code.app/Contents/MacOS/Code';
   const vsix = process.env.DFV_VSIX || path.resolve(`data-file-viewer-${require('../../package.json').version}.vsix`);
+  const developmentPath = process.env.DFV_EXTENSION_DEVELOPMENT_PATH && path.resolve(process.env.DFV_EXTENSION_DEVELOPMENT_PATH);
   let cli = process.platform === 'darwin'
     ? path.resolve(executable, '../../Resources/app/out/cli.js')
     : path.join(path.dirname(executable), 'resources/app/out/cli.js');
@@ -52,13 +53,14 @@ const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
       ...Array.from({ length: 300 }, (_, i) => [null, new Date(Date.UTC(1989, 6, 1 + i)).toISOString().slice(0, 10), i]),
     ] }]);
     const original = await fs.readFile(source);
-    execFileSync(executable, [cli, '--user-data-dir', user, '--extensions-dir', extensions, '--install-extension', vsix, '--force'],
+    if (!developmentPath) execFileSync(executable, [cli, '--user-data-dir', user, '--extensions-dir', extensions, '--install-extension', vsix, '--force'],
       { env: { ...env, ELECTRON_RUN_AS_NODE: '1' }, stdio: 'pipe', timeout: 30000 });
     const server = net.createServer();
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     const port = server.address().port;
     await new Promise(resolve => server.close(resolve));
     child = spawn(executable, ['--user-data-dir', user, '--extensions-dir', extensions,
+      ...(developmentPath ? [`--extensionDevelopmentPath=${developmentPath}`] : []),
       `--remote-debugging-port=${port}`, '--disable-gpu', '--disable-extension', 'GitHub.copilot-chat',
       '--skip-welcome', '--skip-release-notes', '--disable-telemetry', '--new-window', source],
       { env, detached: process.platform !== 'win32', stdio: 'ignore' });
@@ -74,12 +76,26 @@ const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
       if (page) for (const candidate of page.frames()) if (await candidate.locator('.sheet-table-sql').count() === 2) frame = candidate;
       if (!frame) await new Promise(resolve => setTimeout(resolve, 250));
     }
-    assert.ok(frame, 'packaged workbook editor rendered two detected tables');
-    console.log('Packaged VS Code workbook rendered.');
+    assert.ok(frame, 'workbook editor rendered two detected tables');
+    if (process.env.DFV_BACKEND !== 'reference') {
+      assert.ok(process.env.DFV_TABLE_WORKER, 'native host qualification names its exact worker');
+      const { descendants } = await import('../vsix_smoke/helpers.mjs');
+      const worker = await fs.realpath(process.env.DFV_TABLE_WORKER);
+      assert.ok(descendants(child.pid).some(p => p.command.includes(worker)), 'the native table worker is running under this VS Code instance');
+    }
+    console.log(`${developmentPath ? 'Unpacked development' : 'Packaged'} VS Code workbook rendered.`);
     page.setDefaultTimeout(10000);
     await page.bringToFront();
     const editor = frame.locator('.cm-content');
-    await editor.fill('SELECT 42 AS saved_draft;');
+    // CodeMirror must receive select-all through its keymap: contenteditable
+    // fill can insert before its DOM-selection observer runs.
+    const typeSql = async text => {
+      await editor.click();
+      await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
+      await page.keyboard.insertText(text);
+      assert.equal(await editor.innerText(), text, 'exact SQL before the next action');
+    };
+    await typeSql('SELECT 42 AS saved_draft;');
     const choices = await frame.locator('#query-target option').evaluateAll(options => options.map(o => ({ value: o.value, label: o.textContent })));
     const main = choices.find(o => o.label.includes('Table 2'));
     assert.ok(main);
@@ -94,12 +110,12 @@ const { xlsxFile } = require('../../out-test/test/stress/generators/_write');
     assert.equal(await editor.innerText(), 'SELECT 42 AS saved_draft;');
     await frame.locator('.sheet-table-sql').nth(1).click();
     await frame.waitForFunction(() => document.querySelector('.cm-content').textContent.includes('Table 2'));
-    await editor.fill(`SELECT * FROM "Raw_Data · Table 2" WHERE CAST("Date" AS DATE) >= DATE '1990-01-01' LIMIT 100;`);
+    await typeSql(`SELECT * FROM "Raw_Data · Table 2" WHERE CAST("Date" AS DATE) >= DATE '1990-01-01' LIMIT 100;`);
     await frame.locator('#run-btn').click();
     await frame.waitForFunction(() => !document.querySelector('.sheet-table-sql') && document.querySelector('.results-footer')?.textContent.includes('100'));
     assert.ok((await frame.locator('body').innerText()).includes('1990-01-01'));
     assert.deepEqual(await fs.readFile(source), original);
-    console.log('Installed-host SQL workflow passed: worksheet outline, row numbers, draft, handoff, restore, exact date boundary, 100 rows and unchanged source.');
+    console.log(`${developmentPath ? 'Unpacked development' : 'Installed'}-host SQL workflow passed: worksheet outline, row numbers, draft, handoff, restore, exact date boundary, 100 rows and unchanged source.`);
   } finally {
     // Stop our VS Code process before closing its CDP connection. Keep the
     // hard deadline active through teardown, including a failed host launch.

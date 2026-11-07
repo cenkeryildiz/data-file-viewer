@@ -9,6 +9,38 @@ DuckDB is the engine reading most of these formats under the hood; kdb+
 files are parsed directly in their own real format (see the kdb+ section
 below).
 
+### 0.0.21: native tables, MAT and PDF
+
+Version 0.0.21 uses separate Rust workers for tables, read-only MATLAB Level-5
+files and the qualified PDF editor. Installing the extension needs no Python,
+Conda, Cargo or Node DuckDB binding. The current package supports **macOS Apple
+silicon (arm64)**; Windows, Linux and Intel Mac packages are not qualified for this
+version. Earlier cross-platform release notes below apply to their named versions.
+
+Download [data-file-viewer-0.0.21-darwin-arm64.vsix](https://github.com/cenkeryildiz/data-file-viewer/releases/download/v0.0.21/data-file-viewer-0.0.21-darwin-arm64.vsix),
+then use VS Code's **Extensions: Install from VSIX…** command, or:
+
+```sh
+code --install-extension data-file-viewer-0.0.21-darwin-arm64.vsix
+```
+
+The versioned GitHub release binds the VSIX checksum to its exact source commit.
+Its release notes record installed-package checks and limitations. Keep your
+previous VSIX if you need to reinstall an earlier version.
+
+Native qualification includes 541 default release Rust tests, 607 tests with
+fault-injection features, 1,190 passing host/unit cases, real VS Code workflows,
+and a full 30-minute mixed-feature soak: 6,052 cycles, 1,008 verified edits and
+13 forced worker kills, with integrity, memory-growth and cleanup checks passing.
+The soak's sampled native-worker peak was 644.44 MiB against a 2,048 MiB budget;
+this excludes VS Code/Chromium and does not guarantee every workload fits.
+
+MAT v7.3/HDF5 and object-value decoding remain unsupported. Large XLSX sheets
+above the 64 MiB decoded-sheet cache are reread; sparse worksheet extents can
+still be expensive. PDF support is the bounded profile described below, with
+advanced editing/math parity deferred. Physical PDF trackpad zoom was reported
+smooth by the user on this packaged version.
+
 ### 0.0.19: Worksheet preview button removed
 
 Query table lists only the open sheet, so the button only reloaded the sheet
@@ -368,10 +400,18 @@ the complete table; its chart uses exactly the filtered, display-limited rows.
   places. The minimum and maximum are not rounded: those two are values that
   are actually in the data, while the other three are computed (and the
   percentiles are approximate to begin with — the label says so).
-- **Plot**: a 📈 button appears in the header of every numeric column that
-  the result has an x axis for, and clicking it opens that column as a line
-  chart in its own VS Code tab beside the grid. Plotting a second column
-  redraws the same tab rather than opening another one.
+- **Plot**: a 📈 button appears in the header of every numeric column, and
+  clicking it opens that column as a line chart in its own VS Code tab beside
+  the grid. Plotting a second column redraws the same tab rather than opening
+  another one. The x axis is the result's date column when it has one, and
+  otherwise the 1-based row number of the rows on screen. The **Plot axis**
+  choice beside the query table picker overrides this for plots only:
+  *Row numbers*, or *Read column as dates* for any column whatever its name.
+  Dates are read as ISO text or four-digit years; day/month text such as
+  03/04/2024, plain integers (never epoch times), and mixed UTC offsets are
+  refused with a count instead of being guessed, rows with no date are left
+  out and counted in the chart heading, and nothing in the file or the query
+  is changed.
 
   The chart opens showing the whole series, and you **drag across the plot**
   to zoom into a range — the scroll wheel zooms too, and **double-clicking**
@@ -431,7 +471,7 @@ the complete table; its chart uses exactly the filtered, display-limited rows.
   — text columns and a count — offers nothing to plot.
 
   **The chart is a port of the R plotting scripts** in
-  `Kod/R/Time_Series_Plotting` (`helpers_echarts.R`, `helpers_core.R`, and
+  `Kod/Projects/R/Time_Series_Plotting` (`helpers_echarts.R`, `helpers_core.R`, and
   `long_run_3.R`'s ECharts branch), so the same series read here and read
   there is one figure rather than two charts of the same numbers. Taken from
   them: the white ground, black axis rules, hairline gridlines with lighter
@@ -461,13 +501,15 @@ the complete table; its chart uses exactly the filtered, display-limited rows.
   text). If the result is a plain `SELECT * FROM one_table` (no joins,
   aggregates, or computed columns), the format supports editing, *and*
   Safe Mode is off, the same panel lets you edit and save the cell back to
-  the source file/table. `.csv`/`.parquet`/`.dta`/`.arrow` are lazily converted from a
+  the source file/table. `.csv`/`.parquet`/`.arrow` are lazily converted from a
   read-only view into a real editable table the first time you actually
   edit a cell in that session — pure browsing stays as fast as before, and
   the panel shows a short status message ("Preparing file for editing…",
   "Saving…") while that happens. Edits match rows by comparing every
   column's value (there's no universal row-id across table kinds), so a
   table with fully duplicate rows will update all of them together.
+
+Stata (`.dta`) files open read-only. To edit their data, convert a copy with ETL.
 
 ### Live mode: watching a file another process is still writing
 
@@ -596,6 +638,11 @@ an abrupt extension-host or OS crash can leave a private directory behind.
 The worker and engine limits are not an operating-system sandbox for native
 library vulnerabilities, and native parser memory can exceed the DuckDB limit.
 
+Table discovery runs only for the selected worksheet; archive safety checks still
+inspect the workbook on open. The decoded-sheet cache is limited to 64 MiB.
+A worksheet larger than that cache is reloaded on each read, and sparse sheets
+with widely separated cells can still use substantial memory within the cell limit.
+
 ### How many rows are there really?
 
 The footer reads `146 of 146 rows shown` — how many you can see, and how many
@@ -616,11 +663,60 @@ described has just changed.
 
 ### Large results
 
-By default every matching row is sent to the view. If very large results feel
-slow, set `dataFileViewer.maxResultRows` (in Settings) to a row count and the
-viewer stops reading past it, noting in the footer that the result was capped.
+Native table results are bounded to 100,000 rows and 32 MiB of encoded data, with
+a 4 MiB cell limit. Charts allow up to 200,000 points within the same byte limits.
+Set `dataFileViewer.maxResultRows` to a smaller count to reduce grid work; the
+footer reports truncation. Oversized cells or encoded results are refused.
 Sorting still happens across the full result before the cap applies, so what
 you see is the true top N by that column rather than an arbitrary N re-ordered.
+
+Range previews use one-based rectangles such as `A1:D929`. SQL-result ranges
+require an outer `ORDER BY`; raw worksheet coordinates include titles and headers.
+On a raw worksheet, **Use as table** lets you set a header row or leave it blank.
+This corrects discovery without writing workbook cells. Selections survive a
+reconnect to unchanged source; a changed workbook clears them with a notice.
+
+## MAT files (read-only)
+
+The MAT viewer reads bounded MATLAB Level-5 files, including v6/v7, without a
+MATLAB or Python runtime. Browse numeric/logical arrays, exact large integers,
+complex values, text, sparse coordinates, cells and structs. Dimension controls
+select an N-D slice; catalogs and children are paged. MAT files have no edit or
+Save controls, and viewing leaves their bytes unchanged.
+
+MAT v4/v7.3 decoding and MATLAB object values are unsupported. Recognized object
+classes appear as metadata with an explicit unsupported status. Refresh reopens
+the source and discards handles belonging to the previous generation.
+
+## PDF editor
+
+> **Version 0.0.21:** macOS Apple silicon (arm64). Uses the retained, qualified
+> PDF MVP worker and UI; other platforms and full PDF parity are not qualified.
+
+**Supported (qualified profile):**
+
+- Open and render PDFs; page navigation, zoom and text search.
+- Annotations and comments (highlight, underline, strikeout, notes).
+- Page operations: rotate, reorder, delete.
+- Undo and Redo.
+- Basic text and paragraph editing: line replacement and paragraph wrapping in
+  the tested own-font profile, with a prepared on-page preview. Taller paragraphs
+  require explicit permission before applying.
+- Save As: writes a new PDF copy and re-reads it to verify it. The original PDF
+  is never modified.
+- Restart recovery: unsaved edits are kept in extension-owned storage and can be
+  restored after a restart or a worker crash. Power-loss durability is not
+  qualified.
+- A named, previewed Inter Regular font fallback can be explicitly accepted when
+  offered. The original PDF fonts remain preserved.
+
+**Disabled or unsupported:** math and LaTeX; universal font compatibility
+(complex font, shaping and Form cases outside the tested profile are refused
+without changing the document); universal paragraph editing; any platform other than macOS arm64.
+
+**Opening:** right-click a `.pdf` → "Open With..." → "PDF editor". It is
+registered as an optional editor, so it never replaces your default PDF viewer
+unless you raise its priority.
 
 ## Local development
 
@@ -656,8 +752,9 @@ scanner. It uses Node's built-in test runner, so there's no test framework to
 install; it does need Node 22 or newer, which is only a requirement for
 running the tests, not for building or using the extension.
 
-Both run in CI on every push, and a failing suite blocks the `latest` release
-below from being published.
+These commands are development checks. The native release also requires actual
+workers, independent readers and installed-profile qualification; unit tests alone
+do not qualify a package. The legacy GitHub workflow is manual and cannot publish.
 
 Press `F5` in VS Code (with this folder open) to launch an Extension Development
 Host, then open any `.duckdb`/`.parquet`/`.csv`/`.dta`/`.arrow`/`.xlsx`/`.db`/`.sqlite`/kdb+ file in
@@ -665,57 +762,94 @@ that window.
 
 ## Packaging
 
+Build a release only after the native DFV acceptance gates pass.
+Unpacked development tests select verified workers with `DFV_TABLE_WORKER` and
+`DFV_MAT_WORKER`; those development paths must not be required by an installed
+extension. Final native packages must include `bin/dfv-table`, `bin/dfv-mat` and
+the pinned `media/pdf` runtime assets for the qualified platform.
+
+The standalone Rust `db-write::duckdb_write` module was qualified on macOS arm64
+on 2026-11-01: 16 DuckDB edit tests, 26 existing SQLite regressions and scoped
+Clippy passed. Python DuckDB 2.0 independently verifies exact 128-bit integers,
+Decimal38, timestamps to nanoseconds, blobs, schema and neighboring data. Real
+process tests cover native locks (including symlink/case aliases), abrupt death
+and replacement at the publication syscall. Edits use a SHA-256 verified private
+snapshot and the shared streaming publisher; an OFD source lock survives the
+publisher's file-descriptor closes. Kernels/filesystems without that lock, source
+journals and nested target values are explicitly refused. Native worker dispatch
+and focused Safe Mode/save-recovery integration are tested. Aggregate resource
+and installed-extension evidence is recorded in the versioned release's delivery plan.
+Reproduce with an independent DuckDB Python selected by `DFV_REF_PYTHON`, an owned
+temporary directory and isolated Cargo target:
+
 ```sh
-npm run package     # builds, then runs vsce package -> data-file-viewer-x.x.x.vsix
-code --install-extension data-file-viewer-0.0.14.vsix
+cd native
+cargo test --offline --locked -p dfv-table-db-write --features test-mutations -j2 -- --test-threads=1
+cargo clippy --offline --locked -p dfv-table-db-write --all-targets --features test-mutations -j2 -- -D warnings
 ```
 
-`@duckdb/node-api` ships platform-specific native binaries resolved at
-`npm install` time. **A `.vsix` built on one OS will not work on another** —
-do not copy it across machines. Build separately per platform, or use the
-GitHub Actions workflow below to get both automatically.
+PDF development builds verify the retained macOS arm64 MVP assets in `media/pdf`
+against the versioned `native/pdf-mvp-assets.json` pin. The pin records the qualified
+31 October r4 artifact and every runtime file's byte count/SHA-256. Restore those
+16 exact files from that qualified artifact (or a verified retained copy) when
+preparing a fresh checkout. The private accepted-source snapshot retains those exact
+runtime files alongside the pin; build caches and other generated outputs stay outside Git. The build does
+not rebuild or change PDF features. Missing pins, altered or incomplete assets,
+and symlinked/unlisted files fail before working assets are replaced.
 
-**If `vsce` packages 9 files and 460 KB instead of ~1500 files and ~42 MB,
-check the path you are building from.** That build has no `node_modules`, so
-the extension installs and then fails on first use with a missing
-`@duckdb/node-api`. `vsce` locates dependencies by running `npm ls --parseable`
-and globbing each path it prints; if anything rewrites that output — a sandbox
-that redacts part of the working directory, for instance — every path it is
-handed does not exist, every glob returns nothing, and it reports no error,
-because zero files is not a failure to it. `vsce ls` is the quick check: it
-should print about 1500 lines. `vsce ls --no-dependencies` printing 7 while
-`vsce ls` prints 0 is the signature. Build from an ordinary path.
+`DFV_PDF_BUNDLE=/absolute/verified/bundle npm run build` remains available for an
+explicit bundle with its own generated `manifest.json`. This override still checks
+every copied byte before replacement. Run `node --test test/pdfMvpPin.test.cjs`
+for default-pin refusals; `npm run test:package` additionally checks explicit-bundle
+refusals and actual package contents. Building development assets is not a VSIX
+qualification or permission to package before the full DFV gates pass.
 
-A correct package contains `extension/dist/extension.js`, a
-`extension/node_modules/@duckdb/node-bindings-*/duckdb.node`, and no
-`extension/test/` or `extension/out-test/` entries at all:
+Release packages are built only by the staging recipe, never by `npm run package` in
+this checkout (that would ship no native workers). It stages a clean copy under `$HOME`
+(vsce packages 0 files from a session-UUID path), adds `bin/dfv-table` and `bin/dfv-mat`
+plus a hash manifest `bin/workers.json`, generates `THIRD_PARTY_LICENSES.txt` from
+`cargo metadata --locked` and `package-lock.json`, appends the retained PDF dependency
+notices in `native/pdf-third-party-licenses.txt` and the bundled DuckDB C/C++ notices
+in `native/duckdb-third-party-licenses.txt`, runs vsce, then inspects the archive:
+
+```sh
+scripts/stage-vsix.sh build-workers           # release workers, default features, path-remapped (heavy lock)
+scripts/stage-vsix.sh package /absolute/out/data-file-viewer-0.0.21-darwin-arm64.vsix
+```
+
+`test/package.cjs` (run by the recipe) requires both workers to be executable Mach-O arm64
+files whose bytes match `bin/workers.json` (and the build directory when
+`DFV_WORKER_DIR` is set), to contain no test switch (`DFV_TABLE_TEST_DOC`,
+`DFV_TEST_PUBLICATION_FAULT`) and no build-machine path, and the Node DuckDB reference
+backend not to be shipped.
+
+Native packages are platform specific. The current integrated target is macOS
+arm64; Windows and other targets need their own workers and qualification.
+`@duckdb/node-api` is a development dependency for the explicit reference backend
+and fixture tests. Native startup must work without that Node binding.
+
+Check exact worker/UI assets and licence manifests, rather than using an archive
+file count or size as evidence. A package must include `extension/dist/extension.js`
+and its qualified native workers, with no `extension/test/` or
+`extension/out-test/` entries:
 
 ```sh
 unzip -l data-file-viewer-*.vsix | grep -c "extension/out-test/"   # must be 0
 npm run test:package   # the same checks and more, on the newest VSIX
 ```
 
-## CI (GitHub Actions)
+## GitHub releases and CI
 
-`.github/workflows/build.yml` builds a macOS and a Windows `.vsix` on every
-push, using GitHub-hosted runners — no local Node/npm/vsce needed on a machine
-that only needs to *install* the extension.
+The newest qualified package is published as a versioned GitHub release, with its
+VSIX SHA-256 and the exact source commit. [Releases](https://github.com/cenkeryildiz/data-file-viewer/releases)
+retain earlier versions for rollback. Version 0.0.21 ships only the qualified
+macOS arm64 artifact; older Windows artifacts belong to older releases.
 
-Every push to `main` also publishes both `.vsix` files to a rolling
-[**`latest` release**](https://github.com/Chaox07/data-file-viewer/releases/tag/latest)
-— one permanent URL that's always overwritten with the newest build, so you
-don't have to dig through the Actions tab or worry about the 90-day artifact
-expiry below. Download the platform-tagged `.vsix` (`...-macos-latest.vsix` /
-`...-windows-latest.vsix`) for your machine, then:
-
-```sh
-code --install-extension <downloaded-file>.vsix
-```
-
-If you need a specific run's build instead of always-latest: open the repo's
-**Actions** tab, pick that run, and download its `vsix-macos-latest` /
-`vsix-windows-latest` artifact. Unlike the `latest` release above, these
-per-run artifacts expire after 90 days by default.
+`.github/workflows/build.yml` is the retained legacy Node-backed pipeline. It runs
+only when manually dispatched, and its release job is disabled so it cannot
+replace a qualified native VSIX. It is not evidence of native cross-platform
+qualification. Native releases use `scripts/stage-vsix.sh`, the recorded worker
+pins, archive checks and disposable-profile acceptance before upload.
 
 ## Making files open in VS Code on double-click from Finder/Explorer
 

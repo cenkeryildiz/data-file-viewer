@@ -1,0 +1,16 @@
+# D3.15a CSV cell writes (bytes only; D3.12 owns publication). Standalone: no path deps; the workspace picks it up via crates/*.
+[package]
+name = "dfv-table-csv-write"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[lib]
+path = "src/lib.rs"
+
+[dev-dependencies]
+# Independent decoder for the tests only; the crate itself has its own byte-exact scanner.
+csv = "=1.4.0"
+serde_json.workspace = true

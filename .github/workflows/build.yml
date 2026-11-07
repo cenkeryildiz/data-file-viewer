@@ -1,5 +1,5 @@
 name: Build extension
-on: [push]
+on: workflow_dispatch
 
 # The release job below deletes the `latest` release before recreating it, so
 # two runs overlapping on the same ref could interleave those steps and leave
@@ -97,7 +97,7 @@ jobs:
     # Also gated on `test`, so a failing suite blocks publishing rather than
     # shipping a broken build to the one URL people install from.
     needs: [build, test]
-    if: github.ref == 'refs/heads/main'
+    if: ${{ false }} # Legacy Node packages must never replace the qualified native release.
     runs-on: ubuntu-latest
     permissions:
       contents: write

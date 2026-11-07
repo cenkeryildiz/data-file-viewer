@@ -4,21 +4,38 @@ import { DuckDbFile, type DuckDbFileOpenOptions, type FileKind, type DetectedShe
 import { QueryWorker, QueryWorkerOperationError } from './queryWorker';
 import { QueryPolicyError } from './queryPolicy';
 import type { ReadMetadata, ReadMethod, ReadReply } from './queryProtocol';
+import type { DocumentFile, PreparationMetrics } from './backend/types';
 import { queryNotices } from './queryDiagnostics';
-import { patchCell as patchXlsxCell } from './xlsxWrite';
+import { patchCell as patchXlsxCell, XlsxPublishError, type PatchCellReceipt } from './xlsxWrite';
 
-/** Public document contract; the raw connection class remains the trusted writer. */
-export type DocumentFile = Pick<DuckDbFile, keyof DuckDbFile>;
+/** What a workbook save's receipt tells the user beyond "saved". */
+function receiptNotices(receipt: PatchCellReceipt): string[] {
+  const out: string[] = [];
+  if (receipt.reconciled) out.push('Saving reported an error, but the workbook was checked afterwards and holds the edit.');
+  if (receipt.directorySync === 'failed') out.push('The edit was saved, but the folder could not be flushed to disk; a system crash soon after could still undo it.');
+  const stages = receipt.recovered.filter(item => item.kind === 'stage').length;
+  if (stages) out.push(`Removed ${stages} unfinished save file(s) left by an earlier interrupted save. They were never applied to the workbook.`);
+  for (const item of receipt.recovered) {
+    if (item.kind !== 'lock') continue;
+    if (item.outcome === 'published') out.push('An earlier save of this workbook was interrupted before it was confirmed; it had completed, and the workbook holds it.');
+    if (item.outcome === 'unknown') out.push('An earlier save of this workbook was interrupted and its result could not be confirmed. Check the workbook\'s contents.');
+  }
+  return out;
+}
+
+/** Compatibility export for callers; the contract is independent of the reference class. */
+export type { DocumentFile } from './backend/types';
 
 export class ViewerFile implements DocumentFile {
   private readonly worker = new QueryWorker();
   private metadata!: ReadMetadata;
   private writable = false;
   private closed = false;
+  private trustedWriteActive = false;
   private backupPath?: string;
   private warnings: string[] = [];
   private readonly tableIdentities = new Map<string, DetectedSheetTable>();
-  private readonly combinedBuilders = new Map<string, Parameters<DuckDbFile['buildCombinedQuery']>>();
+  private readonly combinedBuilders = new Map<string, Parameters<DocumentFile['buildCombinedQuery']>>();
   /**
    * The reader's text-column decisions for the bytes it opened, so a reader
    * started again on the same bytes (Cancel, refresh, the reopen after a
@@ -26,6 +43,13 @@ export class ViewerFile implements DocumentFile {
    * with the tab. See TextDecision.
    */
   private textDecisions?: TextDecisionCache;
+  /**
+   * Where a save's outcome notices go, the moment the save completes: a
+   * reconciled post-rename error, an unflushed folder, recovered debris.
+   * Called even if this file was disposed during the save, so closing the
+   * editor cannot lose them. Without a sink they wait in takeLateWarnings().
+   */
+  onSaveNotice?: (notice: string) => void;
   private constructor(private readonly path: string, private readonly forceKind: FileKind | undefined,
     private readonly options: DuckDbFileOpenOptions) {}
 
@@ -66,7 +90,7 @@ export class ViewerFile implements DocumentFile {
     }
   }
 
-  private read<M extends ReadMethod>(method: M, args: Parameters<DuckDbFile[M]>): ReturnType<DuckDbFile[M]> {
+  private read<M extends ReadMethod>(method: M, args: Parameters<DocumentFile[M]>): ReturnType<DocumentFile[M]> {
     return (async () => {
       await this.ensureOpen();
       let reply: ReadReply;
@@ -78,7 +102,7 @@ export class ViewerFile implements DocumentFile {
       this.accept(reply);
       if (reply.error) throw new QueryPolicyError(reply.error);
       return reply.value;
-    })() as ReturnType<DuckDbFile[M]>;
+    })() as ReturnType<DocumentFile[M]>;
   }
 
   get fileKind() { return this.metadata.fileKind; }
@@ -90,35 +114,48 @@ export class ViewerFile implements DocumentFile {
   hasPendingSheets() { return this.metadata.hasPendingSheets; }
   isWorksheet(name: string) { return this.metadata.worksheets.includes(name); }
   getDetectedSheetTables(sheet: string) { return structuredClone([...this.tableIdentities.values()].filter(table => table.sheet === sheet)); }
+  getPreparationMetrics(): PreparationMetrics {
+    return structuredClone(this.metadata?.preparationMetrics ?? {
+      phases: {}, detectorCalls: 0, gridCells: 0, gridDecodedBytes: 0, cachedCells: 0, cachedObjects: 0,
+      cacheMaxCells: 0, cacheEstimatedBytes: 0, cacheEvictions: 0, cacheRestores: 0,
+    });
+  }
+  listSheetPreparation() { return structuredClone(this.metadata?.sheetPreparation ?? []); }
+  getSheetPreparation(sheet: string) { const s = this.metadata?.sheetPreparation?.find(entry => entry.sheet === sheet); return s ? { ...s } : undefined; }
   takeLateWarnings() { return this.warnings.splice(0); }
-  interruptCurrentQuery() { this.worker.cancel(); }
+  interruptCurrentQuery() { if (!this.trustedWriteActive) this.worker.cancel(); }
   dispose() { this.closed = true; this.worker.dispose(); this.warnings = []; this.tableIdentities.clear(); this.combinedBuilders.clear(); this.textDecisions = undefined; }
 
-  listTables = (...a: Parameters<DuckDbFile['listTables']>) => this.read('listTables', a);
-  getQueryCatalog = (...a: Parameters<DuckDbFile['getQueryCatalog']>) => this.read('getQueryCatalog', a);
-  getQueryColumns = (...a: Parameters<DuckDbFile['getQueryColumns']>) => this.read('getQueryColumns', a);
-  locateXlsxEdit = (...a: Parameters<DuckDbFile['locateXlsxEdit']>) => this.read('locateXlsxEdit', a);
-  listSidebarTables = (...a: Parameters<DuckDbFile['listSidebarTables']>) => this.read('listSidebarTables', a);
-  listSiblingTables = (...a: Parameters<DuckDbFile['listSiblingTables']>) => this.read('listSiblingTables', a);
-  getCombinableTableNames = (...a: Parameters<DuckDbFile['getCombinableTableNames']>) => this.read('getCombinableTableNames', a);
-  async buildCombinedQuery(...args: Parameters<DuckDbFile['buildCombinedQuery']>) {
+  listTables = (...a: Parameters<DocumentFile['listTables']>) => this.read('listTables', a);
+  getQueryCatalog = (...a: Parameters<DocumentFile['getQueryCatalog']>) => this.read('getQueryCatalog', a);
+  getQueryColumns = (...a: Parameters<DocumentFile['getQueryColumns']>) => this.read('getQueryColumns', a);
+  locateXlsxEdit = (...a: Parameters<DocumentFile['locateXlsxEdit']>) => this.read('locateXlsxEdit', a);
+  async retrySheetPreparation(...a: Parameters<DocumentFile['retrySheetPreparation']>) {
+    // A retry replaces that sheet's detected tables; forget their old identities first.
+    for (const [name, table] of this.tableIdentities) if (table.sheet === a[0]) this.tableIdentities.delete(name);
+    return this.read('retrySheetPreparation', a);
+  }
+  listSidebarTables = (...a: Parameters<DocumentFile['listSidebarTables']>) => this.read('listSidebarTables', a);
+  listSiblingTables = (...a: Parameters<DocumentFile['listSiblingTables']>) => this.read('listSiblingTables', a);
+  getCombinableTableNames = (...a: Parameters<DocumentFile['getCombinableTableNames']>) => this.read('getCombinableTableNames', a);
+  async buildCombinedQuery(...args: Parameters<DocumentFile['buildCombinedQuery']>) {
     const result = await this.read('buildCombinedQuery', args);
     if (this.combinedBuilders.size >= 64) this.combinedBuilders.delete(this.combinedBuilders.keys().next().value!);
     this.combinedBuilders.set(result.sql, args);
     return result;
   }
-  getPollCadenceSeconds = (...a: Parameters<DuckDbFile['getPollCadenceSeconds']>) => this.read('getPollCadenceSeconds', a);
-  getSeriesFrequency = (...a: Parameters<DuckDbFile['getSeriesFrequency']>) => this.read('getSeriesFrequency', a);
-  buildDetectedTableQuery = (...a: Parameters<DuckDbFile['buildDetectedTableQuery']>) => this.read('buildDetectedTableQuery', a);
-  runDetectedTableQuery = (...a: Parameters<DuckDbFile['runDetectedTableQuery']>) => this.read('runDetectedTableQuery', a);
-  runQuery = (...a: Parameters<DuckDbFile['runQuery']>) => this.read('runQuery', a);
-  runChartQuery = (...a: Parameters<DuckDbFile['runChartQuery']>) => this.read('runChartQuery', a);
-  runSortedQuery = (...a: Parameters<DuckDbFile['runSortedQuery']>) => this.read('runSortedQuery', a);
-  countMatchingRows = (...a: Parameters<DuckDbFile['countMatchingRows']>) => this.read('countMatchingRows', a);
-  getColumnTopValues = (...a: Parameters<DuckDbFile['getColumnTopValues']>) => this.read('getColumnTopValues', a);
-  getColumnDescriptiveStats = (...a: Parameters<DuckDbFile['getColumnDescriptiveStats']>) => this.read('getColumnDescriptiveStats', a);
-  compareToBackup = (...a: Parameters<DuckDbFile['compareToBackup']>) => this.read('compareToBackup', a);
-  diffQueryAgainstBackup = (...a: Parameters<DuckDbFile['diffQueryAgainstBackup']>) => this.read('diffQueryAgainstBackup', a);
+  getPollCadenceSeconds = (...a: Parameters<DocumentFile['getPollCadenceSeconds']>) => this.read('getPollCadenceSeconds', a);
+  getSeriesFrequency = (...a: Parameters<DocumentFile['getSeriesFrequency']>) => this.read('getSeriesFrequency', a);
+  buildDetectedTableQuery = (...a: Parameters<DocumentFile['buildDetectedTableQuery']>) => this.read('buildDetectedTableQuery', a);
+  runDetectedTableQuery = (...a: Parameters<DocumentFile['runDetectedTableQuery']>) => this.read('runDetectedTableQuery', a);
+  runQuery = (...a: Parameters<DocumentFile['runQuery']>) => this.read('runQuery', a);
+  runChartQuery = (...a: Parameters<DocumentFile['runChartQuery']>) => this.read('runChartQuery', a);
+  runSortedQuery = (...a: Parameters<DocumentFile['runSortedQuery']>) => this.read('runSortedQuery', a);
+  countMatchingRows = (...a: Parameters<DocumentFile['countMatchingRows']>) => this.read('countMatchingRows', a);
+  getColumnTopValues = (...a: Parameters<DocumentFile['getColumnTopValues']>) => this.read('getColumnTopValues', a);
+  getColumnDescriptiveStats = (...a: Parameters<DocumentFile['getColumnDescriptiveStats']>) => this.read('getColumnDescriptiveStats', a);
+  compareToBackup = (...a: Parameters<DocumentFile['compareToBackup']>) => this.read('compareToBackup', a);
+  diffQueryAgainstBackup = (...a: Parameters<DocumentFile['diffQueryAgainstBackup']>) => this.read('diffQueryAgainstBackup', a);
   async checkEditableSelect(sql: string) {
     if (this.isReadOnly()) return { editable: false } as const;
     return this.read('checkEditableSelect', [sql]);
@@ -138,11 +175,26 @@ export class ViewerFile implements DocumentFile {
     if (current.size !== this.metadata.stamp.size || current.mtimeMs !== this.metadata.stamp.mtimeMs) {
       throw new QueryPolicyError('The source changed. Refresh before editing.');
     }
-    await this.worker.close();
+    this.trustedWriteActive = true;
+    let completed = false;
     try {
-      return await operation();
+      await this.worker.close();
+      const result = await operation();
+      completed = true;
+      return result;
     } finally {
-      if (!this.closed) await this.ensureOpen(true);
+      try {
+        if (!this.closed) await this.ensureOpen(true);
+      } catch {
+        // Reloading cannot change a completed write's outcome or mask its original refusal.
+        if (completed) {
+          const notice = 'The file operation completed, but the viewer could not reload it. Refresh the document before continuing.';
+          try {
+            if (this.onSaveNotice) this.onSaveNotice(notice);
+            else this.warnings.push(notice);
+          } catch { this.warnings.push(notice); }
+        }
+      } finally { this.trustedWriteActive = false; }
     }
   }
 
@@ -169,7 +221,7 @@ export class ViewerFile implements DocumentFile {
    * hashes to the bytes the worker opened, and patchCell still checks the
    * cell holds the value the grid showed.
    */
-  private async updateXlsxCell(...[table, column, newValue, rowValues]: Parameters<DuckDbFile['updateCell']>): Promise<number> {
+  private async updateXlsxCell(...[table, column, newValue, rowValues]: Parameters<DocumentFile['updateCell']>): Promise<number> {
     if (this.isReadOnly()) throw new QueryPolicyError('This document is read-only.');
     if (Object.keys(rowValues).length === 0) {
       throw new Error(`The edit did not say which row of "${table}" it is for, so nothing was changed.`);
@@ -185,7 +237,25 @@ export class ViewerFile implements DocumentFile {
     if (!located.sha256) throw new QueryPolicyError('The workbook could not be verified. Refresh before editing.');
     const target = located.target, sha256 = located.sha256;
     return this.withReaderClosed(async () => {
-      await patchXlsxCell({ ...target, filePath: this.path, expectedSha256: sha256, expectedCurrent: rowValues[column], newValue, verbatim: true });
+      let receipt: PatchCellReceipt;
+      try {
+        receipt = await patchXlsxCell({ ...target, filePath: this.path, expectedSha256: sha256, expectedCurrent: rowValues[column], newValue, verbatim: true });
+      } catch (error) {
+        // The writer's message says what is on disk (not changed, or neither
+        // version); keep it intact for the user instead of a generic failure.
+        // Never retried here: a retry could overwrite a newer workbook.
+        if (error instanceof XlsxPublishError) throw Object.assign(new QueryPolicyError(error.message), { outcome: error.outcome });
+        throw error;
+      }
+      const notices = receiptNotices(receipt);
+      const sink = this.onSaveNotice;
+      if (sink) {
+        for (const notice of notices) {
+          try { sink(notice); } catch { /* a failing sink never turns a completed save into an error */ }
+        }
+      } else {
+        this.warnings.push(...notices);
+      }
       return 1;
     });
   }
@@ -194,7 +264,7 @@ export class ViewerFile implements DocumentFile {
     return this.write(async file => { this.backupPath = await file.createBackup(); return this.backupPath; });
   }
 
-  async updateCell(...args: Parameters<DuckDbFile['updateCell']>): Promise<number> {
+  async updateCell(...args: Parameters<DocumentFile['updateCell']>): Promise<number> {
     if (this.metadata.fileKind === 'xlsx') return this.updateXlsxCell(...args);
     const priorTable = this.tableIdentities.get(args[0]);
     return this.write(async file => {

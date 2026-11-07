@@ -1,0 +1,643 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/read-metadata.v1.schema.json",
+  "title": "Read metadata",
+  "$comment": "Sent with every read reply, success or operation failure. Maps ReadMetadata (src/queryProtocol.ts): stamp -> source (full identity).",
+  "x-dfv-version": 1,
+  "$defs": {
+    "detectedTable": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "sheet": {
+          "type": "string"
+        },
+        "top": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "bottom": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "left": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "right": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "header_row": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          ]
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "column_stats_kind": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "numeric",
+              "datetime",
+              "other"
+            ]
+          }
+        },
+        "data_rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "excluded_rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "row": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "reason": {
+                "enum": [
+                  "blank",
+                  "header"
+                ]
+              }
+            },
+            "required": [
+              "row",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "row_count": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "provenance": {
+          "enum": [
+            "manual",
+            "explicit",
+            "heuristic"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 4000
+        }
+      },
+      "required": [
+        "name",
+        "sheet",
+        "top",
+        "bottom",
+        "left",
+        "right",
+        "header_row",
+        "columns",
+        "column_stats_kind",
+        "data_rows",
+        "excluded_rows",
+        "row_count"
+      ],
+      "additionalProperties": false,
+      "$comment": "0-based worksheet-grid coordinates, top/left inclusive, bottom/right exclusive. Worksheet limits fit int32, so these are JSON integers. Additive EX06 revision 2026-11-06: optional provenance/confidence/reason describe authoritative/manual/heuristic discovery; confidence is a structural score, not a calibrated probability. Old reference metadata remains valid."
+    },
+    "preparationMetrics": {
+      "$comment": "PERF-X1 PreparationMetrics (src/backend/types.ts). Cell/byte totals are exact uint64 text; counters are int32-range. Additive PERF-X1 revision 2026-11-06: optional byte-budget/accounting label describes retained decoded payload, not total worker RSS, package bytes or temporary working sets.",
+      "type": "object",
+      "properties": {
+        "phases": {
+          "type": "object",
+          "properties": {
+            "workbook_preflight": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "total_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_ms": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "total_ms",
+                "max_ms",
+                "last_ms"
+              ],
+              "additionalProperties": false
+            },
+            "sheet_catalog": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "total_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_ms": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "total_ms",
+                "max_ms",
+                "last_ms"
+              ],
+              "additionalProperties": false
+            },
+            "sheet_parse": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "total_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_ms": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "total_ms",
+                "max_ms",
+                "last_ms"
+              ],
+              "additionalProperties": false
+            },
+            "read_grid": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "total_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_ms": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "total_ms",
+                "max_ms",
+                "last_ms"
+              ],
+              "additionalProperties": false
+            },
+            "detection": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "total_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_ms": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "total_ms",
+                "max_ms",
+                "last_ms"
+              ],
+              "additionalProperties": false
+            },
+            "derived_preparation": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "total_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_ms": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "total_ms",
+                "max_ms",
+                "last_ms"
+              ],
+              "additionalProperties": false
+            },
+            "catalog": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "total_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_ms": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "total_ms",
+                "max_ms",
+                "last_ms"
+              ],
+              "additionalProperties": false
+            },
+            "cache_restore": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "total_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_ms": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "total_ms",
+                "max_ms",
+                "last_ms"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "detector_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "grid_cells": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "grid_decoded_bytes": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "cached_cells": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "cached_objects": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "cache_max_cells": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "cache_estimated_bytes": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "cache_evictions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "cache_restores": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "cache_max_bytes": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "cache_accounting": {
+          "const": "decoded-payload-v1"
+        }
+      },
+      "required": [
+        "phases",
+        "detector_calls",
+        "grid_cells",
+        "grid_decoded_bytes",
+        "cached_cells",
+        "cached_objects",
+        "cache_max_cells",
+        "cache_estimated_bytes",
+        "cache_evictions",
+        "cache_restores"
+      ],
+      "additionalProperties": false
+    },
+    "sheetPreparation": {
+      "$comment": "SAFE-X1 SheetPreparationStatus (src/backend/types.ts).",
+      "type": "object",
+      "properties": {
+        "sheet": {
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "ready",
+            "none",
+            "disabled",
+            "incomplete",
+            "bounded",
+            "cancelled",
+            "failed"
+          ]
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "tables": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sheet",
+        "state",
+        "generation",
+        "tables",
+        "skipped",
+        "retryable"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "file_kind": {
+      "$ref": "common.v1.schema.json#/$defs/fileKind"
+    },
+    "read_only": {
+      "type": "boolean"
+    },
+    "read_only_by_format": {
+      "type": "boolean"
+    },
+    "has_sibling": {
+      "type": "boolean"
+    },
+    "has_pending_sheets": {
+      "type": "boolean"
+    },
+    "worksheets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "detected_tables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/detectedTable"
+      }
+    },
+    "open_warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "number_locale": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "locale": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "enum": [
+                    "en",
+                    "eu"
+                  ]
+                }
+              ]
+            },
+            "forced": {
+              "type": "boolean"
+            },
+            "undecidable": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "column": {
+                    "type": "string"
+                  },
+                  "samples": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "column",
+                  "samples"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "conflicting": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "locale",
+            "forced",
+            "undecidable",
+            "conflicting"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "source": {
+      "$ref": "source-identity.v1.schema.json"
+    },
+    "text_decisions": {
+      "type": "object",
+      "properties": {
+        "sha256": {
+          "$ref": "common.v1.schema.json#/$defs/sha256"
+        },
+        "tables": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "sha256",
+        "tables"
+      ],
+      "additionalProperties": false
+    },
+    "preparation_metrics": {
+      "$ref": "#/$defs/preparationMetrics"
+    },
+    "sheet_preparation": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sheetPreparation"
+      }
+    }
+  },
+  "required": [
+    "file_kind",
+    "read_only",
+    "read_only_by_format",
+    "has_sibling",
+    "has_pending_sheets",
+    "worksheets",
+    "detected_tables",
+    "open_warnings",
+    "warnings",
+    "number_locale",
+    "source"
+  ],
+  "additionalProperties": false
+}

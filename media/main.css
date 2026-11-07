@@ -35,7 +35,7 @@ html, body {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #7d8493;
+  color: #9199a8;
 }
 
 .table-list .table-item {
@@ -51,9 +51,16 @@ html, body {
   background: #2c313c;
 }
 
+/* The explicitly selected sheet, independent of what result is shown. */
+.table-list .table-item.selected {
+  background: #2c313c;
+  color: #e6e6e6;
+  box-shadow: inset 2px 0 0 #61afef;
+}
+
 .table-list .empty {
   padding: 8px 12px;
-  color: #7d8493;
+  color: #9199a8;
 }
 
 /* Main column: SQL editor (mid-top) + results (below) */
@@ -74,7 +81,7 @@ html, body {
 }
 
 #run-btn {
-  background: #528bff;
+  background: #3b6ad8;
   color: #fff;
   border: none;
   border-radius: 3px;
@@ -84,7 +91,7 @@ html, body {
 }
 
 #run-btn:hover:not(:disabled) {
-  background: #6c9bff;
+  background: #2f5bc8;
 }
 
 #run-btn:disabled {
@@ -93,15 +100,15 @@ html, body {
 }
 
 #run-btn.run-btn-cancel {
-  background: #e06c75;
+  background: #c0424f;
 }
 
 #run-btn.run-btn-cancel:hover {
-  background: #e88089;
+  background: #a62f3b;
 }
 
 .status {
-  color: #7d8493;
+  color: #9199a8;
   font-size: 12px;
 }
 
@@ -122,7 +129,7 @@ html, body {
 
 /* Safe Mode unchecked = write access is live: make that state visually loud. */
 .toolbar-check:has(#safe-mode-check:not(:checked)) {
-  color: #e06c75;
+  color: #e87d86;
   font-weight: 600;
 }
 
@@ -214,7 +221,7 @@ html, body {
 .th-sort-btn, .th-stats-btn, .th-plot-btn {
   background: none;
   border: none;
-  color: #7d8493;
+  color: #9199a8;
   cursor: pointer;
   font-size: 10px;
   line-height: 1;
@@ -283,7 +290,7 @@ html, body {
   width: 1%;
   min-width: 28px;
   background: #21252b;
-  color: #7d8493;
+  color: #9199a8;
   text-align: right;
   font-weight: 400;
   border-right: 1px solid #181a1f;
@@ -299,7 +306,7 @@ html, body {
 }
 
 .results td.cell-null {
-  color: #7d8493;
+  color: #9199a8;
   font-style: italic;
 }
 
@@ -333,7 +340,7 @@ html, body {
   background: none;
   border: none;
   border-radius: 2px;
-  color: #8b93a5;
+  color: #a0a8b8;
   cursor: pointer;
   font-size: 10px;
   line-height: 1;
@@ -368,18 +375,18 @@ html, body {
 }
 
 .results th.col-renamed {
-  text-decoration: underline dotted #7d8493;
+  text-decoration: underline dotted #9199a8;
   cursor: help;
 }
 
 .results-footer {
   padding: 6px 10px;
-  color: #7d8493;
+  color: #9199a8;
   font-size: 12px;
 }
 
 .diff-skipped-note {
-  color: #7d8493;
+  color: #9199a8;
 }
 
 .diff-anyway-btn {
@@ -399,12 +406,12 @@ html, body {
 
 .results .empty {
   padding: 12px;
-  color: #7d8493;
+  color: #9199a8;
 }
 
 .results .error {
   padding: 10px;
-  color: #e06c75;
+  color: #e87d86;
   white-space: pre-wrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -482,12 +489,12 @@ html, body {
 }
 
 .filter-actions button:last-child {
-  background: #528bff;
+  background: #3b6ad8;
   color: #fff;
 }
 
 .stats-loading, .stats-empty {
-  color: #7d8493;
+  color: #9199a8;
 }
 
 .stats-title {
@@ -499,7 +506,7 @@ html, body {
 }
 
 .stats-summary {
-  color: #7d8493;
+  color: #9199a8;
   margin-bottom: 4px;
 }
 
@@ -524,7 +531,7 @@ html, body {
 
 .stats-top-freq, .stats-descriptive-value {
   flex-shrink: 0;
-  color: #7d8493;
+  color: #9199a8;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -567,7 +574,7 @@ html, body {
 .cell-inspector-close {
   background: none;
   border: none;
-  color: #7d8493;
+  color: #9199a8;
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -575,7 +582,7 @@ html, body {
 }
 
 .cell-inspector-close:hover {
-  color: #e06c75;
+  color: #e87d86;
 }
 
 .cell-inspector-body {
@@ -598,7 +605,7 @@ html, body {
 }
 
 .cell-inspector-footer button {
-  background: #528bff;
+  background: #3b6ad8;
   color: #fff;
   border: none;
   border-radius: 3px;
@@ -608,7 +615,7 @@ html, body {
 }
 
 .cell-inspector-footer button:hover {
-  background: #6c9bff;
+  background: #2f5bc8;
 }
 
 .cell-inspector-secondary {
@@ -663,7 +670,7 @@ html, body {
 
 .live-status {
   font-size: 12px;
-  color: #7d8493;
+  color: #9199a8;
   white-space: nowrap;
 }
 
@@ -680,12 +687,12 @@ html, body {
    alarming -- nothing is broken, there is simply nothing to be live about --
    but deliberately NOT the active green, which would read as healthy. */
 .live-status.live-status-nosource {
-  color: #7d8493;
+  color: #9199a8;
   font-style: italic;
 }
 
 .cell-inspector-status, .cell-inspector-note {
-  color: #7d8493;
+  color: #9199a8;
   font-size: 12px;
 }
 
@@ -718,13 +725,18 @@ html, body {
   align-items: baseline;
   gap: 12px;
   padding: 6px 10px;
-  font-size: 12px;
+  /* helpers_echarts.R's title: serif, bold, 14. Left-aligned here (not
+     centred) because the interaction hint shares the row. */
+  font-family: serif;
+  font-size: 14px;
+  font-weight: bold;
   border-bottom: 1px solid #e8e8e8;
 }
 
 .chart-hint {
   color: #8a8a8a;
   font-size: 11px;
+  font-weight: normal;
   white-space: nowrap;
 }
 
@@ -748,14 +760,37 @@ html, body {
 /* `:not([hidden])` is load-bearing -- see .th-inner / #unlock-options above.
    This toolbar IS toggled with `hidden`, and a bare `display` here would beat
    the UA rule and pin it on screen. */
+.chart-readout {
+  position: absolute;
+  max-width: 50%;
+  padding: 3px 6px;
+  border: 1px solid #d0d0d0;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f1f1f;
+  font-size: 10px;
+  line-height: 1.35;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.chart-readout[hidden] {
+  display: none;
+}
+
+.chart-readout span {
+  color: #6a6a6a;
+}
+
 .chart-tools:not([hidden]) {
   display: flex;
 }
 
 .chart-tools {
   position: absolute;
-  top: 10px;
-  right: 12px;
+  /* helpers_echarts.R's reset button sits at top 8, right 8. */
+  top: 8px;
+  right: 8px;
   gap: 6px;
 }
 
@@ -786,3 +821,50 @@ html, body {
 .query-target-toolbar { display: flex; align-items: center; gap: 8px; padding: 6px 10px; flex-wrap: wrap; }
 .query-target-toolbar select { max-width: 46vw; color: var(--vscode-dropdown-foreground); background: var(--vscode-dropdown-background); border: 1px solid var(--vscode-dropdown-border); }
 .sheet-table-sql { font-size: 10px; padding: 1px 4px; }
+
+/* SAFE-X1: a worksheet whose table discovery did not complete. */
+.sheet-preparation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 6px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700);
+  background: var(--vscode-inputValidation-warningBackground, rgba(204, 167, 0, 0.12));
+  color: var(--vscode-foreground);
+}
+.sheet-preparation-failed {
+  border-left-color: var(--vscode-editorError-foreground, #f14c4c);
+}
+.sheet-preparation-pending,
+.sheet-preparation-none,
+.sheet-preparation-disabled {
+  border-left-color: var(--vscode-focusBorder, #007fd4);
+  background: var(--vscode-editor-inactiveSelectionBackground, rgba(128, 128, 128, 0.12));
+}
+.sheet-preparation-retry {
+  flex: none;
+}
+#range-preview { max-height: 45vh; overflow: auto; padding: 8px; border-block: 1px solid var(--vscode-panel-border, #555); }
+#range-preview textarea { display: block; width: 100%; box-sizing: border-box; font-family: var(--vscode-editor-font-family, monospace); }
+.range-scroll { overflow: auto; max-height: 22vh; }
+#range-input { width: 8rem; }
+
+/* EX-07: narrow editor panes (checked at 420x800). The sheet list becomes a bounded
+   strip above the editor and every toolbar wraps; only the data grid scrolls sideways. */
+@media (max-width: 600px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: auto; max-height: 18vh; border-right: 0; border-bottom: 1px solid #181a1f; }
+  .main { min-height: 0; }
+  .editor { max-height: 24vh; }
+  .editor-toolbar { flex-wrap: wrap; }
+  .toolbar-right { margin-left: 0; flex-wrap: wrap; }
+  .query-target-toolbar select, #range-input { flex: 1 1 8rem; min-width: 0; max-width: 100%; }
+  #range-target { flex: 1 1 100%; }
+}
+
+/* Forced colors drops box-shadow and background fills, which hid the selected-sheet cue. */
+@media (forced-colors: active) {
+  .table-list .table-item.selected { outline: 2px solid Highlight; outline-offset: -2px; }
+}

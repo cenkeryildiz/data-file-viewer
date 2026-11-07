@@ -1,0 +1,11 @@
+{
+  "recipe": "qualified paragraph base/unicode and text-edit marker fixture subsets",
+  "reader": "1.28.2",
+  "font_sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
+  "files": {
+    "markers.pdf": "5813e4bf5f835dfca02c0db92b81e3c54ae2169c0f9b3815e6adcc50b057fe64",
+    "unicode.pdf": "2ede985c811367386f5b09244b46c0b5af0a37957eaf51cf93bdc12382a41dd6",
+    "base.pdf": "00173c471c50b75ab87551d95b46affb01008a2362e53278ea2687a4f580d536",
+    "marker_separate.pdf": "1174f39f7eddb87e011e62fb31c88633f26cfdbb24662c7462be054b0aa94dd0"
+  }
+}

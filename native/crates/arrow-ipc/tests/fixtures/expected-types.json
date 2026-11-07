@@ -1,0 +1,359 @@
+{
+ "rows": 4,
+ "schema_metadata": {
+  "origin": "d3-9-types"
+ },
+ "columns": [
+  {
+   "name": "bin",
+   "type": "binary",
+   "metadata": {
+    "col": "bin"
+   },
+   "values": [
+    "00ff",
+    "",
+    null,
+    "616263"
+   ]
+  },
+  {
+   "name": "lbin",
+   "type": "large_binary",
+   "metadata": {
+    "col": "lbin"
+   },
+   "values": [
+    "78",
+    null,
+    "0102",
+    ""
+   ]
+  },
+  {
+   "name": "fbin",
+   "type": "fixed_size_binary[4]",
+   "metadata": {
+    "col": "fbin"
+   },
+   "values": [
+    "61626364",
+    null,
+    "7778797a",
+    "30303030"
+   ]
+  },
+  {
+   "name": "sview",
+   "type": "string_view",
+   "metadata": {
+    "col": "sview"
+   },
+   "values": [
+    "a long utf8 view value, past the twelve byte inline limit",
+    "short",
+    null,
+    ""
+   ]
+  },
+  {
+   "name": "bview",
+   "type": "binary_view",
+   "metadata": {
+    "col": "bview"
+   },
+   "values": [
+    "0101010101010101010101010101010101010101",
+    "6162",
+    null,
+    ""
+   ]
+  },
+  {
+   "name": "i8",
+   "type": "int8",
+   "metadata": {
+    "col": "i8"
+   },
+   "values": [
+    "-128",
+    "127",
+    null,
+    "0"
+   ]
+  },
+  {
+   "name": "u32",
+   "type": "uint32",
+   "metadata": {
+    "col": "u32"
+   },
+   "values": [
+    "0",
+    "4294967295",
+    null,
+    "7"
+   ]
+  },
+  {
+   "name": "f32",
+   "type": "float",
+   "metadata": {
+    "col": "f32"
+   },
+   "values": [
+    "1.5",
+    "inf",
+    null,
+    "NaN"
+   ]
+  },
+  {
+   "name": "f64",
+   "type": "double",
+   "metadata": {
+    "col": "f64"
+   },
+   "values": [
+    "0.1",
+    "-0.0",
+    null,
+    "1e300"
+   ]
+  },
+  {
+   "name": "dec128",
+   "type": "decimal128(22, 2)",
+   "metadata": {
+    "col": "dec128"
+   },
+   "values": [
+    "-12345678901234567890.12",
+    "0.01",
+    null,
+    "99999999999999999999.99"
+   ]
+  },
+  {
+   "name": "dec256",
+   "type": "decimal256(45, 4)",
+   "metadata": {
+    "col": "dec256"
+   },
+   "values": [
+    "1111111111111111111111111111111111111111.5000",
+    "-1.5000",
+    null,
+    "0.0000"
+   ]
+  },
+  {
+   "name": "d32",
+   "type": "date32[day]",
+   "metadata": {
+    "col": "d32"
+   },
+   "values": [
+    "1970-01-01",
+    "2026-10-31",
+    null,
+    "1900-02-28"
+   ]
+  },
+  {
+   "name": "d64",
+   "type": "date64[ms]",
+   "metadata": {
+    "col": "d64"
+   },
+   "values": [
+    "1970-01-02T00:00:00",
+    null,
+    "2000-02-29T00:00:00",
+    "2026-10-31T00:00:00"
+   ]
+  },
+  {
+   "name": "t32",
+   "type": "time32[s]",
+   "metadata": {
+    "col": "t32"
+   },
+   "values": [
+    "01:02:03",
+    null,
+    "00:00:00",
+    "23:59:59"
+   ]
+  },
+  {
+   "name": "t64",
+   "type": "time64[us]",
+   "metadata": {
+    "col": "t64"
+   },
+   "values": [
+    "01:02:03.456789",
+    null,
+    "00:00:00",
+    "23:59:59.999999"
+   ]
+  },
+  {
+   "name": "dur",
+   "type": "duration[us]",
+   "metadata": {
+    "col": "dur"
+   },
+   "values": [
+    "1",
+    "-2",
+    null,
+    "3600000000"
+   ]
+  },
+  {
+   "name": "ts_ns",
+   "type": "timestamp[ns]",
+   "metadata": {
+    "col": "ts_ns"
+   },
+   "values": [
+    "1",
+    "4611686018427387904",
+    null,
+    "-5"
+   ]
+  },
+  {
+   "name": "ts_named",
+   "type": "timestamp[us, tz=Europe/Istanbul]",
+   "metadata": {
+    "col": "ts_named"
+   },
+   "values": [
+    "0",
+    "1700000000000000",
+    null,
+    "5"
+   ]
+  },
+  {
+   "name": "null",
+   "type": "null",
+   "metadata": {
+    "col": "null"
+   },
+   "values": [
+    null,
+    null,
+    null,
+    null
+   ]
+  },
+  {
+   "name": "lst",
+   "type": "list<item: int64>",
+   "metadata": {
+    "col": "lst"
+   },
+   "values": [
+    "[1, 2]",
+    null,
+    "[]",
+    "[9007199254740993]"
+   ]
+  },
+  {
+   "name": "llst",
+   "type": "large_list<item: string>",
+   "metadata": {
+    "col": "llst"
+   },
+   "values": [
+    "[a]",
+    null,
+    "[null, b, ]",
+    "[]"
+   ]
+  },
+  {
+   "name": "fsl",
+   "type": "fixed_size_list<item: int32>[2]",
+   "metadata": {
+    "col": "fsl"
+   },
+   "values": [
+    "[1, 2]",
+    null,
+    "[3, 4]",
+    "[5, 6]"
+   ]
+  },
+  {
+   "name": "st",
+   "type": "struct<a: int64, b: string>",
+   "metadata": {
+    "col": "st"
+   },
+   "values": [
+    "{a: 1, b: x}",
+    null,
+    "{a: null, b: y}",
+    "{a: 4, b: null}"
+   ]
+  },
+  {
+   "name": "mp",
+   "type": "map<string, int64>",
+   "metadata": {
+    "col": "mp"
+   },
+   "values": [
+    "{k: 1}",
+    null,
+    "{}",
+    "{p: null, q: 2}"
+   ]
+  },
+  {
+   "name": "dict_i64",
+   "type": "dictionary<values=int64, indices=int16, ordered=0>",
+   "metadata": {
+    "col": "dict_i64"
+   },
+   "values": [
+    "9007199254740993",
+    "-7",
+    null,
+    "9007199254740993"
+   ]
+  },
+  {
+   "name": "dict_nullval",
+   "type": "dictionary<values=string, indices=int8, ordered=0>",
+   "metadata": {
+    "col": "dict_nullval"
+   },
+   "values": [
+    "a",
+    null,
+    null,
+    null
+   ]
+  },
+  {
+   "name": "dict_lstr",
+   "type": "dictionary<values=large_string, indices=uint8, ordered=0>",
+   "metadata": {
+    "col": "dict_lstr"
+   },
+   "values": [
+    "q",
+    "p",
+    null,
+    "q"
+   ]
+  }
+ ]
+}

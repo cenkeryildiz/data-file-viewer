@@ -1,0 +1,18 @@
+{
+  "command": "npm run test:resources",
+  "exit_code": 1,
+  "passed": 7,
+  "failed": 1,
+  "reason": "Equivalence included two optional local datasets absent from the saved synthetic baseline. Existing resource-test changes and baseline were retained.",
+  "raw_log": {
+    "path": "/tmp/dfv-cont-resources.log",
+    "sha256": "a926661b347b7e62123f2e994947ca74d7fa7497a3698999e9bf9b107991abf8",
+    "disposition": "Local only; dataset details omitted from committed evidence."
+  },
+  "synthetic_rerun": {
+    "command": "DFV_BASELINE_SYNTHETIC=1 npm run test:resources",
+    "exit_code": 0,
+    "passed": 8
+  },
+  "baseline_sha256": "5baeec3f3ec168188a92eee77a2b932037f865401deafbc70a1221e75617f50b"
+}

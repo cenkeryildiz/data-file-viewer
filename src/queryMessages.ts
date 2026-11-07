@@ -10,12 +10,12 @@ function reject(): never { throw new QueryPolicyError('Invalid or oversized quer
 export function validateTableFilters(filters: unknown, sort: unknown, limit: unknown): asserts filters is DetectedTableFilter[] {
   if (!Array.isArray(filters) || filters.length > QUERY_LIMITS.filters || !integer(limit, 0, 100_000)) reject();
   for (const filter of filters) {
-    if (!record(filter) || !text(filter.column) || !operators.has(String(filter.operator)) ||
+    if (!record(filter) || !text(filter.column) || !text(filter.operator) || !operators.has(filter.operator) ||
       (filter.value !== undefined && !text(filter.value, QUERY_LIMITS.filterChars)) ||
       (filter.valueTo !== undefined && !text(filter.valueTo, QUERY_LIMITS.filterChars))) reject();
     if (Object.keys(filter).some(key => !['column', 'operator', 'value', 'valueTo'].includes(key))) reject();
   }
-  if (sort !== undefined && (!record(sort) || !text(sort.column) || !['asc', 'desc'].includes(String(sort.direction)) ||
+  if (sort !== undefined && (!record(sort) || !text(sort.column) || !text(sort.direction) || !['asc', 'desc'].includes(sort.direction) ||
     Object.keys(sort).some(key => !['column', 'direction'].includes(key)))) reject();
 }
 
@@ -28,6 +28,15 @@ export function validateQueryMessage(message: unknown): asserts message is Recor
   if (message.requestId !== undefined && !integer(message.requestId, 1, Number.MAX_SAFE_INTEGER)) reject();
   if (message.generation !== undefined && !integer(message.generation, 0, Number.MAX_SAFE_INTEGER)) reject();
   switch (message.command) {
+    case 'invalidateRange': return;
+    case 'queryRange':
+      if (!text(message.range, 40) || !integer(message.token, 1, Number.MAX_SAFE_INTEGER) ||
+        (message.offset !== undefined && !integer(message.offset, 0, 1048575))) reject();
+      return;
+    case 'useRangeAsTable':
+      if (!text(message.range, 40) || !integer(message.token, 1, Number.MAX_SAFE_INTEGER) ||
+        (message.headerRow !== null && !integer(message.headerRow, 1, 1048576))) reject();
+      return;
     case 'ready': case 'cancelQuery': case 'diffQuery': return;
     case 'queryCatalog':
       if (message.cursor !== undefined && !integer(message.cursor, 0, 1_000_000)) reject();
@@ -38,16 +47,22 @@ export function validateQueryMessage(message: unknown): asserts message is Recor
     case 'runQuery':
       validateSqlSize(message.sql);
       if (message.sheetPreview !== undefined && !text(message.sheetPreview)) reject();
+      if (message.selectionSeq !== undefined && !integer(message.selectionSeq, 0, Number.MAX_SAFE_INTEGER)) reject();
+      return;
+    case 'saveSqlDraft':
+      // Empty clears the draft; otherwise the same ceiling as any SQL.
+      if (typeof message.sql !== 'string' || Buffer.byteLength(message.sql, 'utf8') > QUERY_LIMITS.sqlBytes) reject();
       return;
     case 'sortQuery':
-      if (!text(message.column) || !['asc', 'desc'].includes(String(message.direction))) reject();
+      if (!text(message.column) || !text(message.direction) || !['asc', 'desc'].includes(message.direction)) reject();
       return;
     case 'runCombinedQuery': if (!text(message.table)) reject(); return;
+    case 'retrySheetPreparation': if (!text(message.sheet)) reject(); return;
     case 'toggleSafeMode':
       if ([message.safeMode, message.backupBeforeWrite, message.checkForChanges].some(value => typeof value !== 'boolean')) reject();
       return;
     case 'columnStats':
-      if (!text(message.column) || !['numeric', 'datetime', 'other'].includes(String(message.statsKind)) ||
+      if (!text(message.column) || !text(message.statsKind) || !['numeric', 'datetime', 'other'].includes(message.statsKind) ||
         (message.limit !== undefined && !integer(message.limit, 1, 1000))) reject();
       return;
     case 'toggleLiveRefresh':
@@ -58,10 +73,14 @@ export function validateQueryMessage(message: unknown): asserts message is Recor
     case 'chartQuery':
       if (!text(message.xColumn) || typeof message.xIsText !== 'boolean' ||
         (message.xIsCategory !== undefined && typeof message.xIsCategory !== 'boolean') ||
+        (message.xIsRow !== undefined && typeof message.xIsRow !== 'boolean') ||
+        (message.xDateColumn !== undefined && (!text(message.xDateColumn) || message.xIsRow === true)) ||
         !Array.isArray(message.yColumns) || !message.yColumns.length || message.yColumns.length > 100 || !message.yColumns.every(value => text(value))) reject();
       return;
     case 'sheetTableQuery': case 'sheetTableStats': case 'sheetTableChart': case 'sheetTableSql':
       if (!text(message.table) || (message.column !== undefined && !text(message.column))) reject();
+      if ((message.xIsRow !== undefined && typeof message.xIsRow !== 'boolean') ||
+        (message.xDateColumn !== undefined && (!text(message.xDateColumn) || message.xIsRow === true))) reject();
       validateTableFilters(message.filters, message.sort, message.limit);
       return;
     case 'updateCell':

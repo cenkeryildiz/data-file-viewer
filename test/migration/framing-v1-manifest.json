@@ -1,0 +1,43 @@
+{
+  "contract": "dfv-table framing",
+  "version": 1,
+  "status": "reviewed_relevant_framing_subset",
+  "scope": "NDJSON envelopes, capabilities, typed errors and framing definitions only. Hashing transitive schemas does not accept full common-value, metadata, D1.9 or table-operation semantics.",
+  "encoding": "UTF-8 NDJSON",
+  "max_frame_bytes": 33554432,
+  "request_id": "Canonical uint64 decimal string, semantic range checked by decoders; 0 reserved for unaddressed refusals.",
+  "parent_review": "Primary schemas independently compared with Rust decoder, capabilities and error output plus the host decoder; actual production/host tests pass before this freeze.",
+  "primary_schemas": [
+    "common.v1.schema.json",
+    "envelope.v1.schema.json",
+    "capabilities.v1.schema.json",
+    "error.v1.schema.json"
+  ],
+  "schema_sha256": {
+    "common.v1.schema.json": "49e5a4c64884040cda46a3de4a3a14397b0e27122191d5def67f6dc42935ac32",
+    "envelope.v1.schema.json": "3df489f35c0ef67bdaabda8241b4735493ae373b002d156e9e9a286033393bce",
+    "capabilities.v1.schema.json": "d0e26a0cc6c42816603eb0377282d100b65bba4b53d76904053e20a95ffb6dfa",
+    "error.v1.schema.json": "d20cc0adc274f357cb629e5477fc51c32810ffc9ec9e3d690e90a09ea6387b73",
+    "read-metadata.v1.schema.json": "dd2972b10a481ad24ab1b6d125622f538850ebe9abd44685d79c68913c3ca7ad",
+    "source-identity.v1.schema.json": "6a4bc01b481b64ba7709593fd413b2f2119b27c085bc03abc43acbf736206b30"
+  },
+  "validation": "test/migrationTableSchema.test.ts: D3.1 production framing and host decoder tests; full native stdio and default-build tests are qualified separately.",
+  "revisions": [
+    {
+      "date": "2026-11-06",
+      "schema": "read-metadata.v1.schema.json",
+      "previous_sha256": "4fc4d280d4a5863bd691de09fa40fded488c9d4d1d48faf18423add7e76892e3",
+      "sha256": "907b02099beaac9ad24f15045f45ea20da424f10e92fe7604425c11b33834daa",
+      "change": "Reviewed additive EX06 optional provenance/confidence/reason; prior metadata remains valid, primary envelope/capability/error/common hashes unchanged.",
+      "evidence": "Four valid/refusal fixture additions, actual native selected/manual table metadata schema test, schema closure and real production framing rerun."
+    },
+    {
+      "date": "2026-11-06",
+      "schema": "read-metadata.v1.schema.json",
+      "previous_sha256": "907b02099beaac9ad24f15045f45ea20da424f10e92fe7604425c11b33834daa",
+      "sha256": "dd2972b10a481ad24ab1b6d125622f538850ebe9abd44685d79c68913c3ca7ad",
+      "change": "Reviewed additive PERF-X1 optional preparation_metrics cache_max_bytes (uint64 text) and cache_accounting const decoded-payload-v1; prior metadata remains valid, other schema hashes unchanged.",
+      "evidence": "Schema closure and real production framing tests rerun; actual native worker emits only these optional fields."
+    }
+  ]
+}

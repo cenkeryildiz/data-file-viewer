@@ -1,0 +1,2212 @@
+{
+  "inventory_version": 1,
+  "task": "D1.8",
+  "generated_by": "test/migration/tableOperations.ts",
+  "discovery": "Symbol-based: TypeScript program + checker over every src/**/*.ts. Locators are \"file::Container.member\" with no line numbers. Missing or ambiguous anchors fail generation.",
+  "status_note": "Generated against pre-D1.7 source. Regenerate after D1.7 lands; locators for host/session code are expected to move.",
+  "limits": {
+    "sqlBytes": "256 * 1024",
+    "resultBytes": "32 * 1024 * 1024",
+    "cellBytes": "4 * 1024 * 1024",
+    "catalogBytes": "1024 * 1024",
+    "filters": "100",
+    "filterChars": "4000",
+    "queuedRequests": "8",
+    "deadlineMs": "30_000",
+    "helper_depth_for_errors": "2",
+    "route_depth": "6"
+  },
+  "channels": {
+    "read_worker": {
+      "transport": "Node child_process.fork IPC, serialization \"advanced\" (structured clone). D1.9 defines the portable JSON envelope.",
+      "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+      "allowlist_gate": true,
+      "controls": [
+        "cancel",
+        "open"
+      ],
+      "identity_checks": [
+        "mtimeMs",
+        "realpath",
+        "size"
+      ],
+      "forced_open_options": {
+        "restrictedReads": "true",
+        "forceReadOnly": "true"
+      },
+      "dispatch_errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "Open the document before running a query.",
+          "via": "src/queryWorkerEntry.ts::process.on('message')"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "The source changed. Refresh the document before running another query.",
+          "via": "src/queryWorkerEntry.ts::process.on('message')"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "This operation is not available in a read worker.",
+          "via": "src/queryWorkerEntry.ts::process.on('message')"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "This query worker already owns a document.",
+          "via": "src/queryWorkerEntry.ts::process.on('message')"
+        }
+      ],
+      "client_errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "Four query runtimes are busy. Wait for a query to finish.",
+          "via": "src/queryWorker.ts::QueryWorker.start"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "This query view is closed.",
+          "via": "src/queryWorker.ts::QueryWorker.start"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "Query worker could not start.",
+          "via": "src/queryWorker.ts::spawnReader"
+        }
+      ],
+      "client_stop_reasons": [
+        "Idle query runtime released.",
+        "Query cancelled.",
+        "Query runtime closed.",
+        "Query timed out. Reduce the query and try again.",
+        "Query worker communication failed.",
+        "Query worker could not start.",
+        "Query worker stopped. Run the query again.",
+        "This query view is closed."
+      ],
+      "reply_error_shape": "Operation failure with an open document: {value: undefined, metadata, error: <diagnostic message>} -> QueryWorkerOperationError(message, metadata). Without a document: {id, error}."
+    },
+    "host": {
+      "transport": "In-process calls on the host document object (ViewerFile)."
+    },
+    "trusted_writer": {
+      "transport": "In-process; the reader is closed first (ViewerFile.withReaderClosed), a fresh DuckDbFile writer or xlsxWrite.patchCell performs the write, then the reader reopens."
+    }
+  },
+  "read_metadata": {
+    "fields": [
+      {
+        "name": "detectedTables",
+        "type": "DetectedSheetTable[]",
+        "optional": false
+      },
+      {
+        "name": "fileKind",
+        "type": "FileKind",
+        "optional": false
+      },
+      {
+        "name": "hasPendingSheets",
+        "type": "boolean",
+        "optional": false
+      },
+      {
+        "name": "hasSibling",
+        "type": "boolean",
+        "optional": false
+      },
+      {
+        "name": "numberLocale",
+        "type": "NumberLocaleReport | undefined",
+        "optional": false
+      },
+      {
+        "name": "openWarnings",
+        "type": "readonly string[]",
+        "optional": false
+      },
+      {
+        "name": "readOnly",
+        "type": "boolean",
+        "optional": false
+      },
+      {
+        "name": "readOnlyByFormat",
+        "type": "boolean",
+        "optional": false
+      },
+      {
+        "name": "stamp",
+        "type": "{ size: number; mtimeMs: number; }",
+        "optional": false
+      },
+      {
+        "name": "textDecisions",
+        "type": "TextDecisionCache | undefined",
+        "optional": true
+      },
+      {
+        "name": "warnings",
+        "type": "string[]",
+        "optional": false
+      },
+      {
+        "name": "worksheets",
+        "type": "string[]",
+        "optional": false
+      }
+    ],
+    "worker_metadata_keys": [
+      "detectedTables",
+      "fileKind",
+      "hasPendingSheets",
+      "hasSibling",
+      "numberLocale",
+      "openWarnings",
+      "readOnly",
+      "readOnlyByFormat",
+      "stamp",
+      "textDecisions",
+      "warnings",
+      "worksheets"
+    ]
+  },
+  "error_categories": [
+    "blocked",
+    "cancelled",
+    "column",
+    "conversion",
+    "resource",
+    "syntax",
+    "type",
+    "unknown"
+  ],
+  "operations": [
+    {
+      "id": "read.listTables",
+      "kind": "read",
+      "name": "listTables",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.listTables",
+        "host": "src/viewerFile.ts::ViewerFile.listTables",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [],
+      "result": {
+        "type": "string[]",
+        "envelope": "ReadReply"
+      },
+      "errors": [],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.listSidebarTables",
+      "kind": "read",
+      "name": "listSidebarTables",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.listSidebarTables",
+        "host": "src/viewerFile.ts::ViewerFile.listSidebarTables",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [],
+      "result": {
+        "type": "string[]",
+        "envelope": "ReadReply"
+      },
+      "errors": [],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.listSiblingTables",
+      "kind": "read",
+      "name": "listSiblingTables",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.listSiblingTables",
+        "host": "src/viewerFile.ts::ViewerFile.listSiblingTables",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [],
+      "result": {
+        "type": "string[]",
+        "envelope": "ReadReply"
+      },
+      "errors": [],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.getCombinableTableNames",
+      "kind": "read",
+      "name": "getCombinableTableNames",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.getCombinableTableNames",
+        "host": "src/viewerFile.ts::ViewerFile.getCombinableTableNames",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [],
+      "result": {
+        "type": "string[]",
+        "envelope": "ReadReply"
+      },
+      "errors": [],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.buildCombinedQuery",
+      "kind": "read",
+      "name": "buildCombinedQuery",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.buildCombinedQuery",
+        "host": "src/viewerFile.ts::ViewerFile.buildCombinedQuery",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "limitN",
+          "type": "number",
+          "optional": true,
+          "default": "DuckDbFile.DEFAULT_COMBINED_LIMIT",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "{ sql: string; timeColumn: string | null; }",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "No sibling attached — buildCombinedQuery requires one.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.buildCombinedQuery"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.getPollCadenceSeconds",
+      "kind": "read",
+      "name": "getPollCadenceSeconds",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.getPollCadenceSeconds",
+        "host": "src/viewerFile.ts::ViewerFile.getPollCadenceSeconds",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "number | null",
+        "envelope": "ReadReply"
+      },
+      "errors": [],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "local-port",
+        "proposed_local_adapter": "native/crates/table/src/catalog.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.getSeriesFrequency",
+      "kind": "read",
+      "name": "getSeriesFrequency",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.getSeriesFrequency",
+        "host": "src/viewerFile.ts::ViewerFile.getSeriesFrequency",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "\"annual\" | \"semiannual\" | \"quarterly\" | \"monthly\" | \"weekly\" | \"daily\" | null",
+        "envelope": "ReadReply"
+      },
+      "errors": [],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "local-port",
+        "proposed_local_adapter": "native/crates/table/src/catalog.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.buildDetectedTableQuery",
+      "kind": "read",
+      "name": "buildDetectedTableQuery",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.buildDetectedTableQuery",
+        "host": "src/viewerFile.ts::ViewerFile.buildDetectedTableQuery",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "filters",
+          "type": "readonly DetectedTableFilter[]",
+          "optional": true,
+          "default": "[]",
+          "serializable": true
+        },
+        {
+          "name": "sort",
+          "type": "DetectedTableSort | undefined",
+          "optional": true,
+          "serializable": true
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "optional": true,
+          "default": "0",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "string",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "\"${…}\" is not a table detected inside a worksheet.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.buildDetectedTableQuery"
+        },
+        {
+          "error": "Error",
+          "message": "Column \"${…}\" does not exist in \"${…}\".",
+          "via": "src/duckdbConnection.ts::DuckDbFile.buildDetectedTableQuery"
+        },
+        {
+          "error": "Error",
+          "message": "Unsupported table filter operator.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.buildDetectedTableQuery"
+        },
+        {
+          "error": "Error",
+          "message": "${…}: values in ${…} could not be kept as text. The derived table was refused; use the raw worksheet or retry. The workbook was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.keepLostValuesAsText"
+        },
+        {
+          "error": "Error",
+          "message": "Cannot verify values in \"${…}\". The derived table was refused; use the raw worksheet or retry. The workbook was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.keepLostValuesAsText"
+        },
+        {
+          "error": "Error",
+          "message": "column count changed",
+          "via": "src/duckdbConnection.ts::DuckDbFile.keepLostValuesAsText"
+        },
+        {
+          "error": "Error",
+          "message": "column names changed",
+          "via": "src/duckdbConnection.ts::DuckDbFile.keepLostValuesAsText"
+        },
+        {
+          "error": "Error",
+          "message": "Workbook size changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.verifyWorkbookBytes"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.verifyWorkbookBytes"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is not a date, so ${…} cannot be compared to it.",
+          "via": "src/duckdbConnection.ts::filterValueForType"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is not a number, so ${…} cannot be compared to it.",
+          "via": "src/duckdbConnection.ts::filterValueForType"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "local-port",
+        "proposed_local_adapter": "native/crates/table/src/catalog.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.runDetectedTableQuery",
+      "kind": "read",
+      "name": "runDetectedTableQuery",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.runDetectedTableQuery",
+        "host": "src/viewerFile.ts::ViewerFile.runDetectedTableQuery",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "filters",
+          "type": "readonly DetectedTableFilter[]",
+          "optional": true,
+          "default": "[]",
+          "serializable": true
+        },
+        {
+          "name": "sort",
+          "type": "DetectedTableSort | undefined",
+          "optional": true,
+          "serializable": true
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "optional": true,
+          "default": "0",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "DetectedTableQueryResult",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "\"${…}\" is not a table detected inside a worksheet.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.buildDetectedTableQuery"
+        },
+        {
+          "error": "Error",
+          "message": "Column \"${…}\" does not exist in \"${…}\".",
+          "via": "src/duckdbConnection.ts::DuckDbFile.buildDetectedTableQuery"
+        },
+        {
+          "error": "Error",
+          "message": "Unsupported table filter operator.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.buildDetectedTableQuery"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is not a date, so ${…} cannot be compared to it.",
+          "via": "src/duckdbConnection.ts::filterValueForType"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is not a number, so ${…} cannot be compared to it.",
+          "via": "src/duckdbConnection.ts::filterValueForType"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.runQuery",
+      "kind": "read",
+      "name": "runQuery",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.runQuery",
+        "host": "src/viewerFile.ts::ViewerFile.runQuery",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "sql",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "maxRows",
+          "type": "number",
+          "optional": true,
+          "default": "0",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "QueryResult",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "worker_special_cases": [
+        "error_diagnostic"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.runChartQuery",
+      "kind": "read",
+      "name": "runChartQuery",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.runChartQuery",
+        "host": "src/viewerFile.ts::ViewerFile.runChartQuery",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "baseSql",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "xColumn",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "yColumns",
+          "type": "string[]",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "xIsText",
+          "type": "boolean",
+          "optional": true,
+          "default": "false",
+          "serializable": true
+        },
+        {
+          "name": "maxPoints",
+          "type": "number",
+          "optional": true,
+          "default": "0",
+          "serializable": true
+        },
+        {
+          "name": "xIsCategory",
+          "type": "boolean",
+          "optional": true,
+          "default": "false",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "QueryResult & { xAxisMode: \"time\" | \"category\"; }",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.runSortedQuery",
+      "kind": "read",
+      "name": "runSortedQuery",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.runSortedQuery",
+        "host": "src/viewerFile.ts::ViewerFile.runSortedQuery",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "baseSql",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "column",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "direction",
+          "type": "\"asc\" | \"desc\"",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "maxRows",
+          "type": "number",
+          "optional": true,
+          "default": "0",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "QueryResult & { sortedSql: string; }",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.countMatchingRows",
+      "kind": "read",
+      "name": "countMatchingRows",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.countMatchingRows",
+        "host": "src/viewerFile.ts::ViewerFile.countMatchingRows",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "sql",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "number | undefined",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.checkEditableSelect",
+      "kind": "read",
+      "name": "checkEditableSelect",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.checkEditableSelect",
+        "host": "src/viewerFile.ts::ViewerFile.checkEditableSelect",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "sql",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "describeOnly",
+          "type": "boolean",
+          "optional": true,
+          "default": "false",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "EditabilityInfo",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "worker_special_cases": [
+        "argument_override"
+      ],
+      "reuse": {
+        "reuse_mode": "local-port",
+        "proposed_local_adapter": "native/crates/table/src/catalog.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.getColumnTopValues",
+      "kind": "read",
+      "name": "getColumnTopValues",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.getColumnTopValues",
+        "host": "src/viewerFile.ts::ViewerFile.getColumnTopValues",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "baseSql",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "column",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "optional": true,
+          "default": "20",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "TopValuesStats",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.getColumnDescriptiveStats",
+      "kind": "read",
+      "name": "getColumnDescriptiveStats",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.getColumnDescriptiveStats",
+        "host": "src/viewerFile.ts::ViewerFile.getColumnDescriptiveStats",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "baseSql",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "column",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "statsKind",
+          "type": "\"numeric\" | \"datetime\"",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "DescriptiveStats",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.compareToBackup",
+      "kind": "read",
+      "name": "compareToBackup",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.compareToBackup",
+        "host": "src/viewerFile.ts::ViewerFile.compareToBackup",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [],
+      "result": {
+        "type": "Record<string, \"unchanged\" | \"changed\" | \"new\">",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "No backup available to compare against",
+          "via": "src/duckdbConnection.ts::DuckDbFile.attachBackupCatalog"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.diffQueryAgainstBackup",
+      "kind": "read",
+      "name": "diffQueryAgainstBackup",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.diffQueryAgainstBackup",
+        "host": "src/viewerFile.ts::ViewerFile.diffQueryAgainstBackup",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "sql",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "liveColumns",
+          "type": "string[]",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "liveRows",
+          "type": "unknown[][]",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "QueryDiff | null",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        },
+        {
+          "error": "Error",
+          "message": "No backup available to compare against",
+          "via": "src/duckdbConnection.ts::DuckDbFile.attachBackupCatalog"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.getQueryCatalog",
+      "kind": "read",
+      "name": "getQueryCatalog",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.getQueryCatalog",
+        "host": "src/viewerFile.ts::ViewerFile.getQueryCatalog",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "offset",
+          "type": "number",
+          "optional": true,
+          "default": "0",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "QueryCatalogRelation[]",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "Invalid catalog page.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.getQueryCatalog"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.getQueryColumns",
+      "kind": "read",
+      "name": "getQueryColumns",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.getQueryColumns",
+        "host": "src/viewerFile.ts::ViewerFile.getQueryColumns",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "catalog",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "schema",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "QueryColumn[]",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "Unknown query catalog.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.getQueryColumns"
+        },
+        {
+          "error": "Error",
+          "message": "${…}: values in ${…} could not be kept as text. The derived table was refused; use the raw worksheet or retry. The workbook was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.keepLostValuesAsText"
+        },
+        {
+          "error": "Error",
+          "message": "Cannot verify values in \"${…}\". The derived table was refused; use the raw worksheet or retry. The workbook was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.keepLostValuesAsText"
+        },
+        {
+          "error": "Error",
+          "message": "column count changed",
+          "via": "src/duckdbConnection.ts::DuckDbFile.keepLostValuesAsText"
+        },
+        {
+          "error": "Error",
+          "message": "column names changed",
+          "via": "src/duckdbConnection.ts::DuckDbFile.keepLostValuesAsText"
+        },
+        {
+          "error": "Error",
+          "message": "Workbook size changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.verifyWorkbookBytes"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.verifyWorkbookBytes"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "dependency",
+        "proposed_local_adapter": "native/crates/table/src/query.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "read.locateXlsxEdit",
+      "kind": "read",
+      "name": "locateXlsxEdit",
+      "channel": "read_worker",
+      "source": {
+        "reference": "src/duckdbConnection.ts::DuckDbFile.locateXlsxEdit",
+        "host": "src/viewerFile.ts::ViewerFile.locateXlsxEdit",
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "allowlist": "src/queryProtocol.ts::READ_METHODS"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "column",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "rowValues",
+          "type": "Record<string, unknown>",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "{ target?: { sheetPath: string; columnNames: string[]; rowOrdinal: number; columnName: string; } | undefined; sha256?: string | undefined; }",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook changed after opening. Refresh before querying or editing.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.assertReadSql"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is not a sheet of this workbook, so it cannot be edited.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.locateXlsxCell"
+        },
+        {
+          "error": "Error",
+          "message": "${…} rows in \"${…}\" are identical across every column, so there is no way to tell which one you edited. The workbook was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.locateXlsxCell"
+        },
+        {
+          "error": "Error",
+          "message": "That row of \"${…}\" has no exact cell on sheet \"${…}\" to write to, so the edit was refused. The workbook was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.locateXlsxCell"
+        },
+        {
+          "error": "Error",
+          "message": "Only workbook edits are located this way.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.locateXlsxEdit"
+        }
+      ],
+      "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
+      "identity": "Every read re-checks realpath and {size, mtimeMs} against the stamp taken at worker open and refuses with \"The source changed...\" on mismatch; replies carry metadata.stamp.",
+      "mutability": "read_only",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/queryWorker.ts::QueryWorker.cancel",
+        "src/queryWorker.ts::QueryWorker.stop",
+        "src/viewerFile.ts::ViewerFile.read"
+      ],
+      "reuse": {
+        "reuse_mode": "local-port",
+        "proposed_local_adapter": "native/crates/table/src/catalog.rs",
+        "status": "candidate_not_implemented_or_qualified"
+      }
+    },
+    {
+      "id": "worker.cancel",
+      "kind": "worker_control",
+      "name": "cancel",
+      "channel": "read_worker",
+      "source": {
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "reference": "src/duckdbConnection.ts::DuckDbFile.interruptCurrentQuery"
+      },
+      "arguments": [],
+      "result": {
+        "type": "none (no reply)",
+        "envelope": "none"
+      },
+      "errors": [],
+      "cancellation": "Is the cancellation message itself: no id, no reply; interrupts the current reference query.",
+      "identity": "None: addresses the worker process, not a request id.",
+      "mutability": "process_state",
+      "evidence": [
+        "src/duckdbConnection.ts::DuckDbFile.interruptCurrentQuery",
+        "src/queryWorker.ts::QueryWorker.cancel"
+      ]
+    },
+    {
+      "id": "worker.open",
+      "kind": "worker_control",
+      "name": "open",
+      "channel": "read_worker",
+      "source": {
+        "dispatch": "src/queryWorkerEntry.ts::process.on('message')",
+        "reference": "src/duckdbConnection.ts::DuckDbFile.open"
+      },
+      "arguments": [
+        {
+          "name": "path",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "forceKind",
+          "type": "FileKind | undefined",
+          "optional": true,
+          "serializable": true
+        },
+        {
+          "name": "options",
+          "type": "DuckDbFileOpenOptions | undefined",
+          "optional": true,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "DuckDbFile",
+        "envelope": "ReadReply"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "This query worker already owns a document.",
+          "via": "src/queryWorkerEntry.ts::process.on('message')"
+        }
+      ],
+      "cancellation": "Cancellable as a worker call (deadline/kill); a killed open leaves no worker document.",
+      "identity": "Takes realpath of the host-supplied path and records {size, mtimeMs}; .xlsx also records the SHA-256 of the bytes preflighted.",
+      "mutability": "process_state",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.call",
+        "src/xlsxBudget.ts::preflightWorkbook"
+      ]
+    },
+    {
+      "id": "host.open",
+      "kind": "lifecycle",
+      "name": "open",
+      "channel": "host",
+      "source": {
+        "host": "src/viewerFile.ts::ViewerFile.open",
+        "reference": "src/duckdbConnection.ts::DuckDbFile.open"
+      },
+      "arguments": [
+        {
+          "name": "path",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "forceKind",
+          "type": "FileKind | undefined",
+          "optional": true,
+          "serializable": true
+        },
+        {
+          "name": "options",
+          "type": "DuckDbFileOpenOptions",
+          "optional": true,
+          "default": "{}",
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "ViewerFile",
+        "envelope": "direct"
+      },
+      "errors": [],
+      "cancellation": "Not cancellable by the user; a failed open disposes the half-built file.",
+      "identity": "realpath of the path; writability probed with access(W_OK) unless forceReadOnly.",
+      "mutability": "process_state",
+      "evidence": [
+        "src/viewerFile.ts::ViewerFile.ensureOpen"
+      ],
+      "callers": [
+        {
+          "caller": "src/backend/reference.ts::rawReferenceBackend.open"
+        },
+        {
+          "caller": "src/backend/reference.ts::referenceBackend.open"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('message')"
+        }
+      ]
+    },
+    {
+      "id": "host.close",
+      "kind": "lifecycle",
+      "name": "dispose",
+      "channel": "host",
+      "source": {
+        "host": "src/viewerFile.ts::ViewerFile.dispose",
+        "reference": "src/duckdbConnection.ts::DuckDbFile.dispose"
+      },
+      "arguments": [],
+      "result": {
+        "type": "void",
+        "envelope": "direct"
+      },
+      "errors": [],
+      "cancellation": "Idempotent. Sets closed, stops the reader, rejects queued reads. The provider defers it behind an active trusted save (lockChain).",
+      "identity": "None.",
+      "mutability": "process_state",
+      "evidence": [
+        "src/duckdbEditorProvider.ts::DuckDBDocument.dispose",
+        "src/queryWorker.ts::QueryWorker.dispose"
+      ],
+      "callers": [
+        {
+          "caller": "src/backend/session.ts::DatasetSession.close"
+        },
+        {
+          "caller": "src/backend/session.ts::DatasetSession.reopen"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('disconnect')"
+        }
+      ]
+    },
+    {
+      "id": "host.refreshInPlace",
+      "kind": "lifecycle",
+      "name": "refreshInPlace",
+      "channel": "host",
+      "source": {
+        "host": "src/viewerFile.ts::ViewerFile.refreshInPlace",
+        "reference": "src/duckdbConnection.ts::DuckDbFile.refreshInPlace"
+      },
+      "arguments": [],
+      "result": {
+        "type": "boolean",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "QueryPolicyError",
+          "message": "The source changed. Refresh the document before running another query.",
+          "via": "src/viewerFile.ts::ViewerFile.ensureOpen"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "This query view is closed.",
+          "via": "src/viewerFile.ts::ViewerFile.ensureOpen"
+        }
+      ],
+      "cancellation": "Not cancellable; closes the reader and reopens on current bytes.",
+      "identity": "Accepts changed source stamp (allowChanged) and clears detected-table identities.",
+      "mutability": "process_state",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.close",
+        "src/viewerFile.ts::ViewerFile.ensureOpen"
+      ],
+      "callers": [
+        {
+          "caller": "src/backend/session.ts::DatasetSession.reopen"
+        }
+      ]
+    },
+    {
+      "id": "host.cancel",
+      "kind": "lifecycle",
+      "name": "interruptCurrentQuery",
+      "channel": "host",
+      "source": {
+        "host": "src/viewerFile.ts::ViewerFile.interruptCurrentQuery",
+        "reference": "src/duckdbConnection.ts::DuckDbFile.interruptCurrentQuery"
+      },
+      "arguments": [],
+      "result": {
+        "type": "void",
+        "envelope": "direct"
+      },
+      "errors": [],
+      "cancellation": "Cancels the reader only; never interrupts a trusted save, which runs outside the worker.",
+      "identity": "None.",
+      "mutability": "process_state",
+      "evidence": [
+        "src/queryWorker.ts::QueryWorker.cancel"
+      ],
+      "callers": [
+        {
+          "caller": "src/backend/session.ts::DatasetSession.close"
+        },
+        {
+          "caller": "src/duckdbEditorProvider.ts::DuckDBEditorProvider.resolveCustomEditor",
+          "webview_command": "cancelQuery"
+        },
+        {
+          "caller": "src/duckdbEditorProvider.ts::startLiveRefresh"
+        },
+        {
+          "caller": "src/queryWorkerEntry.ts::process.on('message')"
+        }
+      ]
+    },
+    {
+      "id": "mutation.createBackup",
+      "kind": "mutation",
+      "name": "createBackup",
+      "channel": "trusted_writer",
+      "source": {
+        "host": "src/viewerFile.ts::ViewerFile.createBackup",
+        "reference": "src/duckdbConnection.ts::DuckDbFile.createBackup"
+      },
+      "arguments": [],
+      "result": {
+        "type": "string",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "Safe Mode isn't applicable to a read-only kdb+ table.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.createBackup"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "Backups must use the trusted save operation.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.createBackup"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "The source changed. Refresh before editing.",
+          "via": "src/viewerFile.ts::ViewerFile.withReaderClosed"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "This document is read-only.",
+          "via": "src/viewerFile.ts::ViewerFile.withReaderClosed"
+        }
+      ],
+      "cancellation": "Not cancellable and never retried. Runs with the reader closed, then reopens it.",
+      "identity": "Refuses unless current {size, mtimeMs} equals the reader stamp; backup path is a fresh timestamped sibling name.",
+      "mutability": "creates_sibling_file",
+      "evidence": [
+        "src/viewerFile.ts::ViewerFile.withReaderClosed",
+        "src/viewerFile.ts::ViewerFile.write"
+      ],
+      "callers": [
+        {
+          "caller": "src/duckdbEditorProvider.ts::DuckDBEditorProvider.resolveCustomEditor",
+          "webview_command": "toggleSafeMode"
+        }
+      ],
+      "routes": {
+        "write.backupCopy": [
+          "src/viewerFile.ts::ViewerFile.createBackup",
+          "src/duckdbConnection.ts::DuckDbFile.createBackup"
+        ]
+      }
+    },
+    {
+      "id": "mutation.updateCell",
+      "kind": "mutation",
+      "name": "updateCell",
+      "channel": "trusted_writer",
+      "source": {
+        "host": "src/viewerFile.ts::ViewerFile.updateCell",
+        "reference": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "column",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "newValue",
+          "type": "unknown",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "rowValues",
+          "type": "Record<string, unknown>",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "onStatus",
+          "type": "((message: string) => void) | undefined",
+          "optional": true,
+          "serializable": false
+        }
+      ],
+      "result": {
+        "type": "number",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "\"${…}\" is open read-only, so it cannot be edited.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        },
+        {
+          "error": "Error",
+          "message": "${…} rows in \"${…}\" are identical across every column, so there is no way to tell which one you edited. The file was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        },
+        {
+          "error": "Error",
+          "message": "No source for saved-file reconciliation",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        },
+        {
+          "error": "Error",
+          "message": "The edit did not say which row of \"${…}\" it is for, so nothing was changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "The detected table changed. Refresh before editing.",
+          "via": "src/viewerFile.ts::ViewerFile.updateCell"
+        },
+        {
+          "error": "Error",
+          "message": "The edit did not say which row of \"${…}\" it is for, so nothing was changed.",
+          "via": "src/viewerFile.ts::ViewerFile.updateXlsxCell"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "${…}",
+          "via": "src/viewerFile.ts::ViewerFile.updateXlsxCell",
+          "extra": [
+            "outcome"
+          ]
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "The detected table changed. Refresh before editing.",
+          "via": "src/viewerFile.ts::ViewerFile.updateXlsxCell"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "The workbook could not be verified. Refresh before editing.",
+          "via": "src/viewerFile.ts::ViewerFile.updateXlsxCell"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "This document is read-only.",
+          "via": "src/viewerFile.ts::ViewerFile.updateXlsxCell"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "The source changed. Refresh before editing.",
+          "via": "src/viewerFile.ts::ViewerFile.withReaderClosed"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "This document is read-only.",
+          "via": "src/viewerFile.ts::ViewerFile.withReaderClosed"
+        }
+      ],
+      "cancellation": "Not cancellable and never retried; close waits for it. Duplicate identical rows are refused, not guessed.",
+      "identity": "Refuses on stale {size, mtimeMs}; detected-table identity (JSON equality of DetectedSheetTable) must be unchanged; .xlsx additionally requires the opened SHA-256 and the expected current cell value.",
+      "mutability": "mutates_source",
+      "evidence": [
+        "src/viewerFile.ts::ViewerFile.updateXlsxCell",
+        "src/viewerFile.ts::ViewerFile.withReaderClosed",
+        "src/viewerFile.ts::ViewerFile.write"
+      ],
+      "callers": [
+        {
+          "caller": "src/duckdbEditorProvider.ts::DuckDBEditorProvider.resolveCustomEditor",
+          "webview_command": "updateCell"
+        }
+      ],
+      "routes": {
+        "write.duckdbTransaction": [
+          "src/viewerFile.ts::ViewerFile.updateCell",
+          "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        ],
+        "write.xlsxPatch": [
+          "src/viewerFile.ts::ViewerFile.updateCell",
+          "src/viewerFile.ts::ViewerFile.updateXlsxCell",
+          "src/xlsxWrite.ts::patchCell"
+        ],
+        "write.sqliteCell": [
+          "src/viewerFile.ts::ViewerFile.updateCell",
+          "src/duckdbConnection.ts::DuckDbFile.updateCell",
+          "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        ],
+        "write.flatFileWriteback": [
+          "src/viewerFile.ts::ViewerFile.updateCell",
+          "src/duckdbConnection.ts::DuckDbFile.updateCell",
+          "src/duckdbConnection.ts::DuckDbFile.writeBackFlatFile"
+        ],
+        "write.xlsxZipRewrite": [
+          "src/viewerFile.ts::ViewerFile.updateCell",
+          "src/viewerFile.ts::ViewerFile.updateXlsxCell",
+          "src/xlsxWrite.ts::patchCell",
+          "src/xlsxWrite.ts::planPatch",
+          "src/zipPatch.ts::rewriteZip"
+        ]
+      }
+    },
+    {
+      "id": "write.xlsxPatch",
+      "kind": "write_path",
+      "name": "patchCell",
+      "channel": "trusted_writer",
+      "source": {
+        "implementation": "src/xlsxWrite.ts::patchCell"
+      },
+      "arguments": [
+        {
+          "name": "request",
+          "type": "PatchCellRequest",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "PatchCellReceipt",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "XlsxPublishError",
+          "message": "${…}",
+          "via": "src/xlsxWrite.ts::patchCell"
+        },
+        {
+          "error": "XlsxPublishError",
+          "message": "The workbook changed after it was read, so the cell was not changed. Refresh before editing.",
+          "via": "src/xlsxWrite.ts::patchCell"
+        },
+        {
+          "error": "XlsxPublishError",
+          "message": "The workbook was being changed while it was read, so the cell was not changed. Refresh before editing.",
+          "via": "src/xlsxWrite.ts::patchCell"
+        }
+      ],
+      "cancellation": "Not cancellable. Holds a sibling lock; recovers earlier stages; publishes by rename.",
+      "identity": "expectedSha256 of source bytes and expectedCurrent cell value; receipt carries sourceSha256/publishedSha256.",
+      "mutability": "mutates_source",
+      "evidence": [
+        "src/xlsxWrite.ts::XlsxPublishError"
+      ]
+    },
+    {
+      "id": "write.xlsxZipRewrite",
+      "kind": "write_path",
+      "name": "rewriteZip",
+      "channel": "trusted_writer",
+      "source": {
+        "implementation": "src/zipPatch.ts::rewriteZip"
+      },
+      "arguments": [
+        {
+          "name": "index",
+          "type": "ZipIndex",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "replacements",
+          "type": "ReadonlyMap<string, Uint8Array<ArrayBufferLike>>",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "Buffer<ArrayBufferLike>",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "Workbook is too large to rewrite without ZIP64.",
+          "via": "src/zipPatch.ts::rewriteZip"
+        }
+      ],
+      "cancellation": "Synchronous in-memory archive rewrite; replaced members only, untouched members copied.",
+      "identity": "Operates on a ZipIndex of the verified source bytes.",
+      "mutability": "in_memory",
+      "evidence": [
+        "src/zipPatch.ts::indexZip"
+      ]
+    },
+    {
+      "id": "write.flatFileWriteback",
+      "kind": "write_path",
+      "name": "writeBackFlatFile",
+      "channel": "trusted_writer",
+      "source": {
+        "implementation": "src/duckdbConnection.ts::DuckDbFile.writeBackFlatFile"
+      },
+      "arguments": [],
+      "result": {
+        "type": "void",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "\"${…}\" was changed on disk by another program after editing began, so this edit was not saved over it. Reopen the file to edit the current version.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.writeBackFlatFile"
+        }
+      ],
+      "cancellation": "Not cancellable. Stages a sibling file, chmods to source mode, renames over the source.",
+      "identity": "Refuses if the disk stamp {size, mtimeMs} changed since editing began; updates diskStamp after publish.",
+      "mutability": "mutates_source",
+      "evidence": [
+        "src/duckdbConnection.ts::DuckDbFile.materializeIfNeeded"
+      ]
+    },
+    {
+      "id": "write.sqliteCell",
+      "kind": "write_path",
+      "name": "updateSqliteCell",
+      "channel": "trusted_writer",
+      "source": {
+        "implementation": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "column",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "newValue",
+          "type": "unknown",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "rowValues",
+          "type": "Record<string, unknown>",
+          "optional": false,
+          "serializable": true
+        }
+      ],
+      "result": {
+        "type": "number",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "\"${…}\" is declared with no type in \"${…}\", and its values are stored as numbers. Saving an edit here would store text instead, which would change what other programs read, so this column cannot be edited.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "${…} rows in \"${…}\" are identical across every column, so there is no way to tell which one you edited. The file was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "The row to edit in \"${…}\" could not be identified, so nothing was changed. (${…})",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "The SQLite edit did not update exactly one row; rolled back.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "The table \"${…}\" has no unshadowed rowid available; the edit was refused.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        }
+      ],
+      "cancellation": "Not cancellable; transactional on the attached SQLite catalog.",
+      "identity": "Row identity via rowid unless shadowed by a real column; ambiguity is refused.",
+      "mutability": "mutates_source",
+      "evidence": []
+    },
+    {
+      "id": "write.duckdbTransaction",
+      "kind": "write_path",
+      "name": "updateCell",
+      "channel": "trusted_writer",
+      "source": {
+        "implementation": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+      },
+      "arguments": [
+        {
+          "name": "table",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "column",
+          "type": "string",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "newValue",
+          "type": "unknown",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "rowValues",
+          "type": "Record<string, unknown>",
+          "optional": false,
+          "serializable": true
+        },
+        {
+          "name": "onStatus",
+          "type": "((message: string) => void) | undefined",
+          "optional": true,
+          "serializable": false
+        }
+      ],
+      "result": {
+        "type": "number",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "\"${…}\" could not be read as a Feather / Arrow IPC file: ${…}",
+          "via": "src/duckdbConnection.ts::convertFeatherToStream"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is a COMPRESSED Feather file, which cannot be opened. The converter this viewer uses to read Feather has no decompression codecs. Re-write it uncompressed (polars write_ipc(path, compression=None), pyarrow write_feather(df, path, compression=\"uncompressed\")), or write an Arrow IPC stream instead — a zstd-compressed .arrows stream opens here without any conversion.",
+          "via": "src/duckdbConnection.ts::convertFeatherToStream"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is not a sheet of this workbook, so it cannot be edited.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.locateXlsxCell"
+        },
+        {
+          "error": "Error",
+          "message": "${…} rows in \"${…}\" are identical across every column, so there is no way to tell which one you edited. The workbook was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.locateXlsxCell"
+        },
+        {
+          "error": "Error",
+          "message": "That row of \"${…}\" has no exact cell on sheet \"${…}\" to write to, so the edit was refused. The workbook was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.locateXlsxCell"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is open read-only, so it cannot be edited.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        },
+        {
+          "error": "Error",
+          "message": "${…} rows in \"${…}\" are identical across every column, so there is no way to tell which one you edited. The file was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        },
+        {
+          "error": "Error",
+          "message": "No source for saved-file reconciliation",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        },
+        {
+          "error": "Error",
+          "message": "The edit did not say which row of \"${…}\" it is for, so nothing was changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateCell"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" is declared with no type in \"${…}\", and its values are stored as numbers. Saving an edit here would store text instead, which would change what other programs read, so this column cannot be edited.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "${…} rows in \"${…}\" are identical across every column, so there is no way to tell which one you edited. The file was not changed.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "The row to edit in \"${…}\" could not be identified, so nothing was changed. (${…})",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "The SQLite edit did not update exactly one row; rolled back.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "The table \"${…}\" has no unshadowed rowid available; the edit was refused.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.updateSqliteCell"
+        },
+        {
+          "error": "Error",
+          "message": "\"${…}\" was changed on disk by another program after editing began, so this edit was not saved over it. Reopen the file to edit the current version.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.writeBackFlatFile"
+        }
+      ],
+      "cancellation": "Not cancellable; begin/commit with rollback on failure.",
+      "identity": "WHERE every editable column IS NOT DISTINCT FROM its shown value; more than one changed row rolls back.",
+      "mutability": "mutates_source",
+      "evidence": []
+    },
+    {
+      "id": "write.backupCopy",
+      "kind": "write_path",
+      "name": "createBackup",
+      "channel": "trusted_writer",
+      "source": {
+        "implementation": "src/duckdbConnection.ts::DuckDbFile.createBackup"
+      },
+      "arguments": [],
+      "result": {
+        "type": "string",
+        "envelope": "direct"
+      },
+      "errors": [
+        {
+          "error": "Error",
+          "message": "No backup available to compare against",
+          "via": "src/duckdbConnection.ts::DuckDbFile.attachBackupCatalog"
+        },
+        {
+          "error": "Error",
+          "message": "Safe Mode isn't applicable to a read-only kdb+ table.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.createBackup"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "Backups must use the trusted save operation.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.createBackup"
+        },
+        {
+          "error": "Error",
+          "message": "No view definition recorded for \"${…}\".",
+          "via": "src/duckdbConnection.ts::DuckDbFile.createBackupViews"
+        },
+        {
+          "error": "Error",
+          "message": "None of the workbook's sheets could be read from the backup copy.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.createBackupViews"
+        }
+      ],
+      "cancellation": "Not cancellable; checkpoints duckdb/sqlite first. Refused under a read policy and for kdb.",
+      "identity": "Backup name: <base>.backup-<timestamp>-<8 hex><ext> beside the source.",
+      "mutability": "creates_sibling_file",
+      "evidence": []
+    }
+  ],
+  "reuse_cross_check": {
+    "path": "/Users/macc/Desktop/Kod/.claude/worktrees/agent-a4ab762502a4ccad0/Python/pdf_creator/tests/_evidence/d04/gridcraft-reuse.json",
+    "sha256": "4b5ee87e0a9a15034bc7ea5953d2f016ed4cd60215617d566a506f98074501a7",
+    "viewer_commit": "e13541eb14b74a8a6eb39b0a62f0ff76c0161d54",
+    "query_protocol_sha256": "364cd8c3b1f6d442492e3d8ddcfc48921e5c89e2b30c24c6c8af91c580c3f142",
+    "query_protocol_sha256_matches_current": true,
+    "read_methods_equal": true
+  },
+  "provenance": {
+    "source_sha256": {
+      "src/queryPolicy.ts": "7ed650855c7b5e6dcc8df8e9e978fb613b2c7557a980baa52690181972a752bb",
+      "src/queryMessages.ts": "635d431d859cf97386e79d9702c28d52d5e65af6fc48108763ffd38d28f988c5",
+      "src/queryCatalog.ts": "1195864fbf9f148929b62de23b71121ecd62fbad43513259c0284d60a386b143",
+      "src/zipPatch.ts": "b761e1141d0681d5a45023979e65ca249a3b4ce7f159658434d79c755f89d4a1",
+      "src/xlsxBudget.ts": "e6d4372680693a8e474735fd93e7bc97404b3a5328666638b29f5b6974a7953f",
+      "src/kdbParser.ts": "0db3d388fa83176e42b5f31e641ac652d8fec95dc48c948de4f5c5222c8bd1d9",
+      "src/sheetRowMap.ts": "63c4db960d5d181b54853ebe56c185ed3c986d6beaf9d8738261f4dca41245d4",
+      "src/sheetTables.ts": "63080f919c01677e505fda6f06d45835d0d031d6d926f3530a6387fbd4fd64c4",
+      "src/chartSpec.ts": "09c84d89cade1a66b8514ece48a5cd29769a0fe1de3bc5840efae289b64dbc63",
+      "src/numericLocale.ts": "c8747576f9a771ea42220252790643f74c2d979f66e83b277c38c0de51ce2cbc",
+      "src/xlsxSheets.ts": "bc7bd8a0138a45bca1779d7522f4c663da3e53297e113f616f16e6ed0a143477",
+      "src/textColumns.ts": "15c3c71cbfbe79b5c1f6e645cb0b792b4a8507ae6e8e978f8ee3323bdabc6471",
+      "src/xlsxWrite.ts": "9d6687d7678b715eed9687b030b97cb3f43d7fcfcebf2db2ada27d4a7a4622e7",
+      "src/sqliteTypes.ts": "02b7d36a9efddd961c597f3dd749f6e45057428fe53e03b9edf7012f921f90b1",
+      "src/backend/types.ts": "e127ccebe34d5d6a70aadcd1356d8fdeeaa26c39f41c2001481919272ac098dd",
+      "src/duckdbConnection.ts": "9aeb7b44941719be22f51090a5bf445a901a149a9cb00a90e0bbfc40d53027e9",
+      "src/queryWorker.ts": "0731ad44067406079bfe9f722001fb985b0bf98d997c937c5e30c8ced86d6388",
+      "src/queryProtocol.ts": "364cd8c3b1f6d442492e3d8ddcfc48921e5c89e2b30c24c6c8af91c580c3f142",
+      "src/queryDiagnostics.ts": "db2e8838c50833bdf39fdabb7b487ed1384c5bfb63e3251842f7421bb808cbe4",
+      "src/viewerFile.ts": "125737beae58b360b65262de20f27b6a6da429beb996bbd2cf863422688559a5",
+      "src/backend/reference.ts": "2163972b7aef987b3338afa2e24a29c65e9052ac1bda771edd0c0f42ff6000cb",
+      "src/backend/session.ts": "047667e1e58b568ceae651ef49b23274dad8c7cd519d2b0023653bc963a73ff2",
+      "src/chartDetail.ts": "f5aeaa140e421199be1106beabbefa5d54c6e954714b1065ce82e025cb7c7b2d",
+      "src/chartPanel.ts": "963f10f981b24a8c30f159e6a73765336896d5f8fa91e590d994eeef86889d44",
+      "src/chartView.ts": "221c41aaf486170a1edd23f512af8a1aa40cf386eb42d4ff912c3f7b7fe9e2c0",
+      "src/sqlSafety.ts": "82a800595d4c85e3dbcec7c24e7aec521a575adf6f6bcec09de18a7894c4517d",
+      "src/liveRefresh.ts": "ad74a7d6724b7a2926dfad7a4322f7dbdeea9d2a3e0eef2b005c020c6af6bf30",
+      "src/sqlDraftStore.ts": "3ae97ba09e1078044c8a4bf02b2ddd3c03eea83820c1512967db8927cb462bad",
+      "src/duckdbEditorProvider.ts": "f117e534f70899a71cb36ca47245822c02e1a843b9fb061c6650051e64789ded",
+      "src/extension.ts": "0f3f131351d620fabb80a9f4d501c6e8563fc2489afc2b4802e1b09b12bbf06a",
+      "src/gridFormat.ts": "50dade445b0cbdb8688e5ae1e90079b4968b9f8a0486a05324586677633dcab8",
+      "src/sortOrder.ts": "25d6ad43fe2799ec3dde5cb1fdfbc75bd2b603617fc5f4f9fbb470a650b24d93",
+      "src/gridOrder.ts": "c11e5a77fe4c4b418adae4d6cf6e9113f128cbbb77b73f893419dda78a5dc23e",
+      "src/liveStatus.ts": "b0967a7c25cf60704cd5c746cf3515109944426cfceadd83e32e3a73d7416197",
+      "src/queryTargetList.ts": "9ec1b59a9cab4c67e42b28236481b1b95807614c9ccc347025c9de54beba676e",
+      "src/queryWorkerEntry.ts": "16b95b614a7306667007b4a742297bd75075eaf77d49cd42486995ffe9760c1c",
+      "src/sheetHighlight.ts": "aee34200a19226d47aa0120765a6c7ec79887feb31ec330fa971f2784db5bf3a",
+      "src/virtualWindow.ts": "381f879736a52001b233ef1d5c1771eadd2f1d588c6a9e73f4b7489f84cd54cc",
+      "src/webviewState.ts": "ea692bf2fdb5a6b58bda15f4a97b71a69c18ef0a28c46474ed8f08653530f2b2",
+      "src/webview.ts": "f29460be88533f5ad2cbf7b70ef3a5a6ff091fac5d6648a664365330773a43e5"
+    }
+  }
+}

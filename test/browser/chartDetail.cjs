@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const assert = require('node:assert/strict');
 (async () => {
   const bundle = await esbuild.build({
-    stdin: { contents: fs.readFileSync('src/chartView.ts', 'utf8') + '\nexport function testChart() { return chart; }', resolveDir: require('node:path').resolve('src'), loader: 'ts' },
+    stdin: { contents: fs.readFileSync('src/chartView.ts', 'utf8') + '\nexport function testChart() { return chart; }\nexport * from "./chartSpec";', resolveDir: require('node:path').resolve('src'), loader: 'ts' },
     bundle: true, write: false, format: 'iife', globalName: 'viewerTest', platform: 'browser',
   });
   const browser = await chromium.launch({ channel: process.env.CI ? undefined : 'chrome', headless: true });
@@ -53,6 +53,8 @@ const assert = require('node:assert/strict');
       chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: 100 });
       await pause();
       const text = document.body.textContent;
+      const readoutEl = document.querySelector('.chart-readout');
+      const readout = { shown: !readoutEl.hidden, text: readoutEl.textContent };
       chart.dispatchAction({ type: 'dataZoom', startValue: start, endValue: start + 3000 * 1000 });
       await pause();
       const over = state();
@@ -83,7 +85,7 @@ const assert = require('node:assert/strict');
       categoryChart.dispatchAction({ type: 'legendToggleSelect', name: 'a' });
       await pause();
       const hidden = categoryChart.getOption().tooltip[0].showContent;
-      return { initial, boundary, over, wheel, scatter, reset, lineReset, renderedSymbols, text, category, hidden, denseCross, resetCross };
+      return { readout, initial, boundary, over, wheel, scatter, reset, lineReset, renderedSymbols, text, category, hidden, denseCross, resetCross };
     });
     for (const cross of [result.denseCross, result.resetCross]) {
       assert.equal(cross.vertical, true, JSON.stringify(cross));
@@ -99,6 +101,12 @@ const assert = require('node:assert/strict');
     assert.ok(result.renderedSymbols >= 3000, JSON.stringify(result));
     assert.ok(result.text.includes('1.23456789012345'));
     assert.ok(result.text.includes('2020-01-01T00:01:40.000Z'));
+    // The exact value and timestamp live in the corner readout; the hover popup is rounded and short.
+    assert.equal(result.readout.shown, true);
+    assert.ok(result.readout.text.includes('1.23456789012345') && result.readout.text.includes('2020-01-01T00:01:40.000Z'), result.readout.text);
+    const popupOnly = result.text.replace(result.readout.text, '');
+    assert.ok(!popupOnly.includes('1.23456789012345') && !popupOnly.includes('2020-01-01T00:01:40.000Z'), 'popup must not repeat exact values');
+    assert.ok(popupOnly.includes('1.235'), 'popup shows four significant digits');
     assert.equal(result.over.tooltip, false);
     assert.equal(result.wheel.tooltip, true);
     assert.equal(result.scatter.type, 'scatter');
@@ -144,6 +152,117 @@ const assert = require('node:assert/strict');
       };
     });
     assert.deepEqual(mouseCross, { vertical: true, horizontal: true, popups: 0, emphasis: false });
+
+    // PLOT-01: R-reference styling, theme, zoom/reset, hover and escaping on the live chart.
+    await page.addStyleTag({ path: 'media/main.css' });
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.evaluate(() => {
+      document.body.style.background = '#1e1e1e';
+      document.getElementById('chart-root').className = 'chart-root';
+    });
+    const r = await page.evaluate(async () => {
+      const pause = () => new Promise(resolve => setTimeout(resolve, 80));
+      const day = 86400000, t0 = Date.UTC(2010, 0, 1);
+      const rows = Array.from({ length: 40 }, (_, i) => [new Date(t0 + i * day).toISOString(), i === 3 ? null : i * 0.25 - 2, 10 + (i % 7)]);
+      window.postMessage({ command: 'chart', xColumn: 'd', yColumns: ['a', 'b'], columns: ['d', 'a', 'b'], rows, xAxisMode: 'time', truncated: false, maxPoints: 1000 }, '*');
+      await pause();
+      const two = viewerTest.testChart();
+      const t = two.getOption();
+      const all = rows.flatMap(r => [r[1], r[2]]).filter(v => v !== null);
+      const ext = viewerTest.finiteExtent(all);
+      const want = viewerTest.padValueRange(ext);
+      const wantTicks = viewerTest.evenBreaks(ext.lo, ext.hi, 8);
+      const xwant = viewerTest.padTimeRange(viewerTest.finiteExtent(rows.map(r => Date.parse(r[0]))));
+      const detail = {
+        series: t.series.map(s => ({ colour: s.lineStyle.color, width: s.lineStyle.width, symbol: s.showSymbol, connect: s.connectNulls })),
+        y: { min: t.yAxis[0].min, max: t.yAxis[0].max, ticks: t.yAxis[0].axisLabel.customValues, want, wantTicks },
+        x: { min: t.xAxis[0].min, max: t.xAxis[0].max, want: xwant },
+        chrome: {
+          background: t.backgroundColor,
+          axisFont: [t.yAxis[0].axisLabel.fontFamily, t.yAxis[0].axisLabel.fontSize],
+          axisLine: [t.yAxis[0].axisLine.lineStyle.width, t.yAxis[0].axisLine.lineStyle.color, t.xAxis[0].axisLine.onZero],
+          split: [t.yAxis[0].splitLine.lineStyle.color, t.yAxis[0].splitLine.lineStyle.width],
+          legend: [t.legend[0].textStyle.fontSize, t.legend[0].bottom],
+          grid: [t.grid[0].left, t.grid[0].right, t.grid[0].containLabel],
+          tooltip: [t.tooltip[0].transitionDuration, t.tooltip[0].borderColor, t.tooltip[0].textStyle.fontSize, t.tooltip[0].axisPointer.snap, t.tooltip[0].axisPointer.crossStyle.color],
+          zoomType: t.dataZoom.map(z => z.type), brush: t.brush[0].brushType,
+        },
+        rootBackground: getComputedStyle(document.getElementById('chart-root')).backgroundColor,
+        titleFont: getComputedStyle(document.querySelector('.chart-title')).fontFamily + '|' + getComputedStyle(document.querySelector('.chart-title')).fontWeight,
+      };
+      // Hover: the detail popup shows exact values and escapes a hostile series name.
+      window.postMessage({ command: 'chart', xColumn: 'd', yColumns: ['<img src=x onerror=window.__pwned=1>'], columns: ['d', '<img src=x onerror=window.__pwned=1>'], rows: rows.map(r => [r[0], r[2]]), xAxisMode: 'time', truncated: false, maxPoints: 1000 }, '*');
+      await pause();
+      const hostile = viewerTest.testChart();
+      hostile.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: 5 });
+      await pause();
+      detail.hover = { images: document.querySelectorAll('img').length, text: document.body.textContent.includes('<img src=x onerror=window.__pwned=1>'), pwned: window.__pwned === 1, single: hostile.getOption().series[0].lineStyle.color, legend: hostile.getOption().legend[0] };
+      return detail;
+    });
+    assert.deepEqual(r.series.map(s => s.colour), ['#F8766D', '#00BFC4']);
+    assert.deepEqual(r.series.map(s => [s.width, s.symbol, s.connect]), [[1.4, true, true], [1.4, true, true]]);
+    assert.equal(r.y.min, r.y.want.min); assert.equal(r.y.max, r.y.want.max);
+    assert.deepEqual(r.y.ticks, r.y.wantTicks);
+    assert.equal(r.y.ticks.length, 8);
+    assert.equal(r.x.min, r.x.want.min); assert.equal(r.x.max, r.x.want.max);
+    assert.deepEqual(r.chrome, {
+      background: '#ffffff', axisFont: ['serif', 10], axisLine: [1.5, '#000000', false],
+      split: ['#e5e5e5', 0.5], legend: [11, 0], grid: [10, 10, true],
+      tooltip: [0, '#000000', 11, true, '#000000'], zoomType: ['inside'], brush: 'lineX',
+    });
+    // The page stays white and serif under a dark editor theme: the chart is a figure.
+    assert.equal(r.rootBackground, 'rgb(255, 255, 255)');
+    assert.match(r.titleFont, /serif\|(700|bold)/);
+    assert.deepEqual(r.hover.images, 0);
+    assert.equal(r.hover.text, true);
+    assert.equal(r.hover.pwned, false);
+    assert.equal(r.hover.single, '#F8766D', 'a lone series takes the first hue_pal colour, not navy');
+    assert.equal(r.hover.legend, undefined, 'a lone series has no legend');
+
+    // The corner readout sits where the data is not: a rising ramp fills bottom-left to top-right, so no point may lie under it.
+    await page.evaluate(() => {
+      window.postMessage({ command: 'chart', xColumn: 'd', yColumns: ['a'], columns: ['d', 'a'], rows: Array.from({ length: 40 }, (_, i) => [new Date(Date.UTC(2010, 0, 1) + i * 86400000).toISOString(), i]), xAxisMode: 'time', truncated: false, maxPoints: 1000 }, '*');
+    });
+    await page.waitForTimeout(150);
+    const corner = await page.evaluate(async () => {
+      const chart = viewerTest.testChart();
+      chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: 20 });
+      await new Promise((r) => setTimeout(r, 100));
+      const el = document.querySelector('.chart-readout');
+      const box = el.getBoundingClientRect();
+      const origin = chart.getDom().getBoundingClientRect();
+      const under = Array.from({ length: 40 }, (_, i) => chart.convertToPixel({ gridIndex: 0 }, [Date.UTC(2010, 0, 1) + i * 86400000, i]))
+        .filter((p) => origin.left + p[0] >= box.left && origin.left + p[0] <= box.right && origin.top + p[1] >= box.top && origin.top + p[1] <= box.bottom).length;
+      return { hidden: el.hidden, under, width: box.width };
+    });
+    assert.equal(corner.hidden, false);
+    assert.ok(corner.width > 0);
+    assert.equal(corner.under, 0, 'corner readout covers data points');
+    // Zoom/reset with real input: a double-click on the plot resets, one on the legend does not.
+    await page.evaluate(() => {
+      window.postMessage({ command: 'chart', xColumn: 'd', yColumns: ['a', 'b'], columns: ['d', 'a', 'b'], rows: Array.from({ length: 40 }, (_, i) => [new Date(Date.UTC(2010, 0, 1) + i * 86400000).toISOString(), i, 40 - i]), xAxisMode: 'time', truncated: false, maxPoints: 1000 }, '*');
+    });
+    await page.waitForTimeout(150);
+    const range = () => page.evaluate(() => { const z = viewerTest.testChart().getOption().dataZoom[0]; return [Math.round(z.start), Math.round(z.end)]; });
+    const zoomIn = () => page.evaluate(() => viewerTest.testChart().dispatchAction({ type: 'dataZoom', start: 20, end: 60 }));
+    const canvasBox = await page.locator('.chart-canvas').boundingBox();
+    const inPlot = await page.evaluate(() => { const p = viewerTest.testChart().convertToPixel({ gridIndex: 0 }, [Date.UTC(2010, 0, 20), 20]); return { x: p[0], y: p[1] }; });
+    await zoomIn(); await page.waitForTimeout(100);
+    assert.deepEqual(await range(), [20, 60]);
+    await page.mouse.dblclick(canvasBox.x + canvasBox.width / 2, canvasBox.y + canvasBox.height - 12);
+    await page.waitForTimeout(150);
+    assert.deepEqual(await range(), [20, 60], 'a double-click on the legend must not reset the zoom');
+    await page.mouse.dblclick(canvasBox.x + inPlot.x, canvasBox.y + inPlot.y);
+    await page.waitForTimeout(150);
+    assert.deepEqual(await range(), [0, 100], 'a double-click inside the plot resets the zoom');
+    await zoomIn(); await page.waitForTimeout(100);
+    await page.locator('.chart-reset').click();
+    await page.waitForTimeout(100);
+    assert.deepEqual(await range(), [0, 100]);
+    // Snap is on while the detail popup is, as in helpers_echarts.R.
+    assert.equal(await page.evaluate(() => viewerTest.testChart().getOption().tooltip[0].axisPointer.snap), true);
+    // Styled page: the corner readout must never take the pointer from the chart.
+    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.chart-readout')).pointerEvents), 'none');
     assert.deepEqual(errors, []);
     console.log('Chrome chart checks passed: 200,000 points, exact tooltip, markers, threshold, wheel/brush/reset, scatter, categories, gaps and legend.');
   } finally { await browser.close(); }

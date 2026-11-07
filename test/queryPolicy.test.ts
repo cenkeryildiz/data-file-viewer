@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { DuckDBInstance } from '@duckdb/node-api';
+import { DuckDbFile } from '../src/duckdbConnection';
 import { readerThreads, restrictQueryEngine, validateSqlSize, validateResultSize, QueryPolicyError, ReadSqlPolicy } from '../src/queryPolicy';
 
 test('SQL payload budget uses bytes and rejects invalid values before native access', () => {
@@ -109,4 +113,56 @@ test('the one-scan function allowlists equal the two separate scans they replace
     assert.deepEqual([...loaded.tableFunctions].sort(), [...tableFunctions].sort());
     assert.ok(!loaded.tableFunctions.has('unnest') && !loaded.functions.has('lower_macro'), 'user macros are not granted');
   } finally { c.closeSync(); instance.closeSync(); }
+});
+
+test('persisted aggregate macros cannot grant user functions through the default read backend', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'dfv-policy-macros-'));
+  const source = join(dir, 'source.duckdb');
+  let file: DuckDbFile | undefined;
+  try {
+    const instance = await DuckDBInstance.create(source);
+    const c = await instance.connect();
+    try {
+      await c.run("create table data(i integer); insert into data values (7); create macro bool_and(x) as true; create macro bool_or(x) as false; create macro secret() as current_setting('home_directory')");
+    } finally { c.closeSync(); instance.closeSync(); }
+    const before = await readFile(source);
+    file = await DuckDbFile.open(source, undefined, { forceReadOnly: true, restrictedReads: true });
+    assert.deepEqual((await file.runQuery('select * from data')).rows, [[7]]);
+    assert.deepEqual((await file.runQuery("select lower('A') as value")).rows, [['a']]);
+    await assert.rejects(file.runQuery('select secret()'), QueryPolicyError);
+    await file.dispose(); file = undefined;
+    assert.deepEqual(await readFile(source), before);
+  } finally {
+    await file?.dispose();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('persisted catalog macros cannot read an external sentinel during dataset setup or catalog reads', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'dfv-startup-macros-'));
+  const source = join(dir, 'source.duckdb');
+  const sentinel = join(dir, 'sentinel.txt');
+  let file: DuckDbFile | undefined;
+  try {
+    await writeFile(sentinel, 'synthetic-private-value');
+    const instance = await DuckDBInstance.create(source);
+    const c = await instance.connect();
+    const literal = `'${sentinel.replace(/'/g, "''")}'`;
+    try {
+      await c.run(`create table data(i integer); insert into data values (7); create macro current_database() as (select content from read_text(${literal})); create macro current_schema() as (select content from read_text(${literal}))`);
+    } finally { c.closeSync(); instance.closeSync(); }
+    const before = await readFile(source);
+    await rename(sentinel, `${sentinel}.saved`);
+    file = await DuckDbFile.open(source, undefined, { forceReadOnly: true, restrictedReads: true });
+    assert.deepEqual(await file.listTables(), ['data']);
+    assert.deepEqual((await file.getQueryCatalog()).map(table => table.name), ['data']);
+    assert.deepEqual((await file.runQuery('select * from data')).rows, [[7]]);
+    await assert.rejects(file.runQuery('select current_database()'), QueryPolicyError);
+    await file.dispose(); file = undefined;
+    assert.deepEqual(await readFile(source), before);
+    assert.equal(await readFile(`${sentinel}.saved`, 'utf8'), 'synthetic-private-value');
+  } finally {
+    await file?.dispose();
+    await rm(dir, { recursive: true, force: true });
+  }
 });

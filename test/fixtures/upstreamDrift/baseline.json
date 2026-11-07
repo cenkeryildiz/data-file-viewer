@@ -1,0 +1,472 @@
+{
+  "note": "PLOT-04 baselines for the source-to-port map in PDF_VIEWER_RESEARCH.md. Hashes cover the upstream symbol bodies and whole files. A mismatch means review, never an automatic rewrite; regenerate only with `node test/upstreamDrift.mjs --record` after the review, and keep this file's history.",
+  "recordedAt": "2026-11-02",
+  "repos": [
+    {
+      "prefix": "R/Time_Series_Plotting",
+      "commit": "04aeae2c69be77ffa92f7d207edf7d8319427d1f"
+    },
+    {
+      "prefix": "Rust/ETL",
+      "commit": "124397175d5e178dd4b6f05e794ca04b885e88e1"
+    },
+    {
+      "prefix": "Python/4th_year_bilkent/ETL",
+      "commit": "04aeae2c69be77ffa92f7d207edf7d8319427d1f"
+    }
+  ],
+  "files": {
+    "R/Time_Series_Plotting/helpers/helpers_core.R": {
+      "sha256": "480de617c2f82f84923f4e0c5937f500a58582bc830e96de745512715e164233",
+      "symbols": {
+        ".resolve_date_col": "85f2ad2d34c4e9dab5bd8d98469e46601f186618717f22f72ceafc957190a54d",
+        "make_label_fn": "36465dee432588b5c5e236b62f85946fbf8cb3416bc27ddfac4ce6f30b83581d",
+        "compute_echarts_x_range": "5558058730306e3e927e5367c8a515a3fdaf9961afa52ecbd405661f3d237339",
+        "compute_echarts_y_range": "8c5b48681834dbdcc03d81fdb713031468ae6c0afcce43d754dd4e5d22e3acfc",
+        "get_forced_breaks": "91498cbf8a13cedb21c64c3e11e6479742c672ae3e7d03c3247ba1f22c30f493",
+        "detect_percent": "b417ec6d768d8e7fc0f6376743e15922c54adffac3891613d651e2a720893bcf",
+        "build_hue_color_map": "c0792b0f0ed26b8f061c5eaddd3b61109fac70db44a0d93517c0fe1093c33fab"
+      }
+    },
+    "R/Time_Series_Plotting/helpers/helpers_echarts.R": {
+      "sha256": "9d4c36621ad787342086ff88a4e859be51750544e4518ffc6ebffc79640a5e20",
+      "symbols": {
+        "build_tooltip_formatter~function qLabel(": "a3e1871034bbd697b1b4ccdc8bac88bfe69f066f3ddf280eb30a4e830f36f399",
+        "base_echarts_layout": "014a2c9b707a77529a14deafd8266b8337b871fa70df84cde5d2ebc39e0bd164",
+        "base_echarts_yaxis": "be8a98c72f6c12293fcd1337ea0cfb1546134d573d4dcdc85604fe4fa5858821",
+        ".echarts_number_formatter_js": "969ce1a544e41d36f055aa52a97027160d79b5b7dc1cb049801585d42a8be910",
+        "build_tooltip_formatter": "a3e1871034bbd697b1b4ccdc8bac88bfe69f066f3ddf280eb30a4e830f36f399",
+        "e_inside_zoom": "68c3b01594a141417ae2f0002df99066538199d560438431a9997e916598fdbd",
+        "e_drag_zoom": "2193ff1c74f90e47204a3f970af54ba57c8da6cf5470d96dd603c53542df44b8"
+      }
+    },
+    "R/Time_Series_Plotting/long_run_3.R": {
+      "sha256": "187836924ae9cfcceb6276b4645be96b988ab1c47c8e57d5e2eacf9c780618bc",
+      "symbols": {
+        "x_ticks": "f481fbc78c13b491bbff79a2a8d1d9bee6de44b44d2636a212953a8d8e73093f",
+        "y_ticks": "1f5e26427a953db5a86e94ea5a986e5101cd80760a50fc47c30b3ff4a4e34d36",
+        "linewidth": "895f27694cfbcb5b240923c8c3636293c546e85cdcbc282366d4b135f0088305",
+        "point_size": "eef88326858f737928db11a43c2bbae4d4741c6da23647cd60c78bc53f268671",
+        "raw_type": "9d010a808545ccdfd5a5a1306143a76ed87f60b51e28122dbde4d91c19a72331",
+        "use_percent": "b041042557380e2c65f2b18595a663970d70ccaedd85674906acccb672018fff"
+      }
+    },
+    "Rust/ETL/etl_parts/etl_values.py": {
+      "sha256": "a1664c9d52ba2ab61fa0e9e3e4a48af6e65d81ef0c3c94a93f53dca18d8593be",
+      "symbols": {
+        "_DATE_COL_PATTERN": "8b3718ec01a3778f4d79d86a903adb8ade9013da73ad998dd1ef998968a81125",
+        "_resolve_date_column": "4e80749972148d81a51d19215cb1d1669324d2dec2930debca8f66aeb15e9ed5",
+        "_resolve_multiple_date_columns": "05128e2eb020c1917837b66f1f4e86a2b4fec1ff239996625b695c29fc44a7e6",
+        "_dt_to_iso": "34bfd7770213afb6dd6fb3a3f02d25a6506534fe29d2c9cbef8f3cd9a2423e5f",
+        "_parse_numeric_date": "53eec94167328674b39de255f66ee18f310d7ffa492c08cc523d5e82b4385c4c",
+        "_resolve_numeric_date_format": "6e5466acb3f61f7fb829c95797d61961ead63c277ca68d4083a3efd067b8d4dd",
+        "_compute_frequency_info": "1f55bdd93e12ab9c8f4bf51bae13918a6923684783f236d84e70e1baf30aa9a2",
+        "_is_blank_value": "8c9540820302b6446bf52dae1bda934f175c71439239b9ad01c89b5879473f68",
+        "_TR_FOLD": "c616b62fad0da1a0cd6d306ce722e3eee01df475ce1c0724d1b92e704c9aba23",
+        "_fold_label": "82ab806d2e3d9a3b12fdafb55525452f607b196e5e51e09375402f5bf85e4bfc",
+        "_EXCEL_ERRORS": "f33ac1a9cb0c24f89491f6a58668c89c8d9ec057e8188594a1634acefb6b0873",
+        "_is_excel_error_string": "8eb8cb83cc6e3c4872a62e2122c7ec9b50540469ae2906eed448d4161b87cb85"
+      }
+    },
+    "Python/4th_year_bilkent/ETL/etl_parts/etl_values.py": {
+      "sha256": "1e799086226df3da280225a15dbbf2e6150f8acf2ac555643114f11ac4a21e65",
+      "symbols": {
+        "_DATE_COL_PATTERN": "8b3718ec01a3778f4d79d86a903adb8ade9013da73ad998dd1ef998968a81125",
+        "_resolve_date_column": "4e80749972148d81a51d19215cb1d1669324d2dec2930debca8f66aeb15e9ed5",
+        "_resolve_multiple_date_columns": "05128e2eb020c1917837b66f1f4e86a2b4fec1ff239996625b695c29fc44a7e6"
+      }
+    },
+    "Rust/ETL/etl_parts/etl_io.py": {
+      "sha256": "4a61f9fc263ec82997c4c71b3eb7a4d32986646de9c4ad86ac50dac70feaa53c",
+      "symbols": {
+        "_find_header_row_idx": "8f3d232fe61663a5c428196ab91b2af6ee8d4971e86fc80597270584826c1103",
+        "_sheet_xml_paths": "73b04b5e91e0d220744b546cef6db7b06504f1561a85061d8401746496be7e27",
+        "_read_excel_workbook": "e8abfa6f055604df8eac493792638e06227729bd41eb62f130c48f6046a58035"
+      }
+    },
+    "Rust/ETL/etl_parts/etl_shape.py": {
+      "sha256": "e59f29539e2a0ee8d267fb80ee810d1a1bc357c8b62a3038591c0f9fc1033768",
+      "symbols": {
+        "_year_headed_header": "b22fcc76046ac030c4389e88eb0c08f8a3a8b1986e837cd4aabf337ba594661c",
+        "_split_blocks": "bc06ac195a8d7c7ab9898b4d5d2647caf87f5c455e90e5dd96dfc886e1da5a5c",
+        "_split_one_block_2d": "45d153efcdbae90c4713aff65bef56ab483348c4a6085ea1fa8771ed4d2752c5",
+        "_looks_like_metadata_footer_block": "a2a82bb223068de69dd836ed0083618afa3db395f1517c2bcdf54a564d1345e2"
+      }
+    },
+    "Rust/ETL/etl_parts/etl_xlsx.py": {
+      "sha256": "d5217e30bf7dc15acd61d3ab604b2594e810d63312284af1684dcb42349a73ef",
+      "symbols": {
+        "read_shared_strings": "fd675b12967fdc124637739f34ab32aece00825dd29bb37400c2fd127381c3c5",
+        "read_date_styles": "7d1bde43ae1db9078b62cdc90c257f237cc933cd05cc3b1b9f8f35206e5abd66",
+        "uses_1904_epoch": "29e2d0641a6458794861284074cce749abff3d61d592a22f1c32a4f230d4fb00"
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "date-names",
+      "behavior": "Date-like column names and preferred date column",
+      "upstream": {
+        "Rust/ETL/etl_parts/etl_values.py": [
+          "_DATE_COL_PATTERN",
+          "_resolve_date_column",
+          "_resolve_multiple_date_columns"
+        ],
+        "Python/4th_year_bilkent/ETL/etl_parts/etl_values.py": [
+          "_DATE_COL_PATTERN",
+          "_resolve_date_column",
+          "_resolve_multiple_date_columns"
+        ]
+      },
+      "extension": {
+        "src/sheetTables.ts": [
+          "DATE_COL_PATTERN",
+          "isDateColumnName"
+        ],
+        "src/chartSpec.ts": [
+          "pickXAxis"
+        ],
+        "native/crates/xlsx/src/sheet_tables.rs": []
+      },
+      "tests": [
+        "test/sheetTables.test.ts",
+        "test/chartSpec.test.ts"
+      ]
+    },
+    {
+      "id": "date-values",
+      "behavior": "Date values, numeric-date formats and ISO output",
+      "upstream": {
+        "Rust/ETL/etl_parts/etl_values.py": [
+          "_dt_to_iso",
+          "_parse_numeric_date",
+          "_resolve_numeric_date_format",
+          "_compute_frequency_info"
+        ]
+      },
+      "extension": {
+        "src/duckdbConnection.ts": [
+          "textAxisParseRate",
+          "runChartQuery"
+        ],
+        "native/crates/duckdb-query/src/query.rs": [
+          "run_chart_query",
+          "run_chart_query_wire"
+        ]
+      },
+      "tests": [
+        "test/chartQuery.test.ts"
+      ]
+    },
+    {
+      "id": "sheet-tables",
+      "behavior": "Worksheet header/table classification and side-by-side regions",
+      "upstream": {
+        "Rust/ETL/etl_parts/etl_io.py": [
+          "_find_header_row_idx"
+        ],
+        "Rust/ETL/etl_parts/etl_shape.py": [
+          "_year_headed_header",
+          "_split_blocks",
+          "_split_one_block_2d",
+          "_looks_like_metadata_footer_block"
+        ]
+      },
+      "extension": {
+        "src/sheetTables.ts": [
+          "yearHeadedHeader",
+          "findHeaderRow",
+          "splitRegions",
+          "looksLikeFooter",
+          "detectTables"
+        ],
+        "src/backend/excel/detect.ts": [],
+        "src/backend/excel/sourceMap.ts": [],
+        "native/crates/xlsx/src/sheet_tables.rs": []
+      },
+      "tests": [
+        "test/sheetTables.test.ts"
+      ]
+    },
+    {
+      "id": "blank-fold-errors",
+      "behavior": "Blank cells, Turkish label folding and Excel error markers",
+      "upstream": {
+        "Rust/ETL/etl_parts/etl_values.py": [
+          "_is_blank_value",
+          "_TR_FOLD",
+          "_fold_label",
+          "_EXCEL_ERRORS",
+          "_is_excel_error_string"
+        ]
+      },
+      "extension": {
+        "src/sheetTables.ts": [
+          "isBlank",
+          "foldLabel"
+        ],
+        "src/textColumns.ts": [
+          "EXCEL_ERROR_TOKENS",
+          "isExcelError",
+          "classifyTextColumn"
+        ]
+      },
+      "tests": [
+        "test/sheetTables.test.ts",
+        "test/textColumns.test.ts"
+      ]
+    },
+    {
+      "id": "workbook-parts",
+      "behavior": "Workbook parts/shared strings/styles and 1904 epoch",
+      "upstream": {
+        "Rust/ETL/etl_parts/etl_io.py": [
+          "_sheet_xml_paths",
+          "_read_excel_workbook"
+        ],
+        "Rust/ETL/etl_parts/etl_xlsx.py": [
+          "read_shared_strings",
+          "read_date_styles",
+          "uses_1904_epoch"
+        ]
+      },
+      "extension": {
+        "src/xlsxSheets.ts": [
+          "listSheets"
+        ],
+        "src/xlsxWrite.ts": [
+          "readSharedStrings",
+          "readDateStyles",
+          "usesDate1904"
+        ],
+        "native/crates/xlsx/src/xlsx_read.rs": [],
+        "native/crates/xlsx-patch/src/xlsx_patch.rs": []
+      },
+      "tests": [
+        "test/sheetTables.test.ts"
+      ]
+    },
+    {
+      "id": "date-priority-labels",
+      "behavior": "Default date-column priority and calendar labels (R)",
+      "upstream": {
+        "R/Time_Series_Plotting/helpers/helpers_core.R": [
+          ".resolve_date_col",
+          "make_label_fn"
+        ],
+        "R/Time_Series_Plotting/helpers/helpers_echarts.R": [
+          "build_tooltip_formatter~function qLabel("
+        ]
+      },
+      "extension": {
+        "src/chartSpec.ts": [
+          "pickXAxis",
+          "axisDateLabel",
+          "pointDateLabel"
+        ],
+        "src/duckdbConnection.ts": [
+          "getSeriesFrequency"
+        ],
+        "native/crates/duckdb-query/src/operations.rs": [
+          "series_frequency"
+        ]
+      },
+      "tests": [
+        "test/chartSpec.test.ts"
+      ]
+    },
+    {
+      "id": "plot-ranges-colors",
+      "behavior": "Plot ranges, ticks, percent decisions and colors (R)",
+      "upstream": {
+        "R/Time_Series_Plotting/helpers/helpers_core.R": [
+          "compute_echarts_x_range",
+          "compute_echarts_y_range",
+          "get_forced_breaks",
+          "detect_percent",
+          "build_hue_color_map"
+        ],
+        "R/Time_Series_Plotting/long_run_3.R": [
+          "x_ticks",
+          "y_ticks",
+          "linewidth",
+          "point_size",
+          "raw_type",
+          "use_percent"
+        ]
+      },
+      "extension": {
+        "src/chartSpec.ts": [
+          "padTimeRange",
+          "padValueRange",
+          "evenBreaks",
+          "seriesShape"
+        ],
+        "src/chartView.ts": []
+      },
+      "tests": [
+        "test/chartSpec.test.ts",
+        "test/browser/chartDetail.cjs"
+      ]
+    },
+    {
+      "id": "plot-layout-hover",
+      "behavior": "Plot layout, hover and navigation (R)",
+      "upstream": {
+        "R/Time_Series_Plotting/helpers/helpers_echarts.R": [
+          "base_echarts_layout",
+          "base_echarts_yaxis",
+          ".echarts_number_formatter_js",
+          "build_tooltip_formatter",
+          "e_inside_zoom",
+          "e_drag_zoom"
+        ]
+      },
+      "extension": {
+        "src/chartView.ts": [],
+        "src/chartDetail.ts": [],
+        "src/chartPanel.ts": [],
+        "media/main.css": [],
+        "src/duckdbEditorProvider.ts": [],
+        "src/webview.ts": []
+      },
+      "tests": [
+        "test/chartDetail.test.ts",
+        "test/browser/chartDetail.cjs"
+      ]
+    }
+  ],
+  "differential": {
+    "etlFile": "Rust/ETL/etl_parts/etl_values.py",
+    "historicalFile": "Python/4th_year_bilkent/ETL/etl_parts/etl_values.py",
+    "tsFile": "src/sheetTables.ts",
+    "words": [
+      "date",
+      "Date",
+      "DATE",
+      "datetime",
+      "DateTime",
+      "time",
+      "timestamp",
+      "period",
+      "year",
+      "month",
+      "week",
+      "day",
+      "quarter",
+      "tarih",
+      "Tarih",
+      "TARIH",
+      "TARİH",
+      "tarihi",
+      "zaman",
+      "Zaman",
+      "yil",
+      "yıl",
+      "Yıl",
+      "YIL",
+      "YILLAR",
+      "yillar",
+      "yıllar",
+      "donem",
+      "dönem",
+      "Dönem",
+      "DÖNEM",
+      "DONEM",
+      "donemi",
+      "dönemi",
+      "ay",
+      "Ay",
+      "AY",
+      "aylar",
+      "hafta",
+      "Hafta",
+      "ceyrek",
+      "çeyrek",
+      "Çeyrek",
+      "ÇEYREK",
+      "gun",
+      "gün",
+      "Gün",
+      "GÜN",
+      "date_end",
+      "dt_start",
+      "ts_x",
+      "time_of_day",
+      "start_date",
+      "event_dt",
+      "obs_ts",
+      "obs_time",
+      "obs_timestamp",
+      "ref_period",
+      "end_datetime",
+      "d1date",
+      "W12date",
+      "Mdate",
+      "q4date",
+      "H2date",
+      "dt",
+      "ts",
+      "DT",
+      "TS",
+      "2019",
+      "1999",
+      "date ",
+      " date",
+      "Date\n",
+      "dates",
+      "update",
+      "tarih_son",
+      "yil_sonu",
+      "price",
+      "Value",
+      "Açıklama",
+      "Seri Adı",
+      "",
+      "date_",
+      "_date",
+      "datex",
+      "xdate",
+      "x_date",
+      "date_x",
+      "ISO_date",
+      "TARİHİ",
+      "tarıh",
+      "tarıhı",
+      "YİL",
+      "YıLLAR",
+      "DÖNEMİ",
+      "DÖNEMı",
+      "TİME",
+      "PERİOD",
+      "PERıOD",
+      "ref_PERİOD",
+      "end_DATETİME",
+      "tİme_start",
+      "weeK",
+      "çeyreK",
+      "timeſtamp",
+      "tſ",
+      "TARİHLER",
+      "PERİODIC",
+      "tarİh_son",
+      "DÖNEMİ_extra",
+      "weeKly",
+      "ſtats"
+    ],
+    "intentionalDifferences": [
+      {
+        "word": "Date\n",
+        "etl": true,
+        "viewer": false,
+        "status": "intentional",
+        "reason": "Python $ also matches before a trailing newline; JavaScript $ does not. The viewer trims every header through isDateColumnName before testing, so the shipped behaviour accepts it."
+      }
+    ],
+    "statuses": {
+      "intentional": "deliberate viewer behaviour",
+      "gap": "observed ETL/viewer disagreement that is pinned but not yet decided"
+    },
+    "revision": "2026-11-06: PLOT-03 restores Python IGNORECASE dotted/dotless I, long s and Kelvin-sign vocabulary; upstream file and symbol hashes remain unchanged."
+  }
+}

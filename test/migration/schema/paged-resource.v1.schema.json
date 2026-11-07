@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-file-viewer.invalid/schema/table/v1/paged-resource.v1.schema.json",
+  "title": "Paged result resource",
+  "$comment": "One page of a result. Rows are arrays of wire values aligned with columns. A resource is bound to the source revision it was read from; a page for another revision is refused, never mixed. Resources are released explicitly (method releaseResource) or with the session.",
+  "x-dfv-version": 1,
+  "type": "object",
+  "properties": {
+    "resource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "source_revision": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        }
+      },
+      "required": [
+        "id",
+        "source_revision"
+      ],
+      "additionalProperties": false
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "$ref": "common.v1.schema.json#/$defs/column"
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "$ref": "common.v1.schema.json#/$defs/value"
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "row_count": {
+          "$ref": "common.v1.schema.json#/$defs/uint64Text"
+        },
+        "total_rows": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "common.v1.schema.json#/$defs/uint64Text"
+            }
+          ]
+        },
+        "next_offset": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "common.v1.schema.json#/$defs/uint64Text"
+            }
+          ]
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "offset",
+        "row_count",
+        "total_rows",
+        "next_offset",
+        "truncated"
+      ],
+      "additionalProperties": false
+    },
+    "sql": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "resource",
+    "columns",
+    "rows",
+    "page"
+  ],
+  "additionalProperties": false
+}

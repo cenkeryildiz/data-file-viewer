@@ -4,22 +4,31 @@ import { mkdtemp, writeFile, readFile, readdir, rm, symlink, mkdir } from 'node:
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { DuckDBInstance } from '@duckdb/node-api';
 import { DuckDbFile } from '../src/duckdbConnection';
+import { NativeDocument } from '../src/backend/nativeDocument';
+import type { DocumentFile, DuckDbFileOpenOptions } from '../src/backend/types';
 import { xlsxFile, sqliteFile } from './stress/generators/_write';
 
-// SEC-01–13 of docs/sql-filtering-plan.md, against the real restricted reader.
+// SEC-01–13 against the real reader; opt into the identical matrix over Rust.
 // Every refusal is paired with an authorized query on the same document, and
 // the observation is the side effect (canary text, listener hits, hashes and
 // directory listings), not the error message.
 
 const CANARY = 'SYNTHETIC_OUTSIDE_CANARY_7f3a';
+const native = process.env.DFV_SECURITY_BACKEND === 'native';
+async function openFile(source: string, _kind: undefined, options: DuckDbFileOpenOptions): Promise<DocumentFile> {
+  if (!native) return DuckDbFile.open(source, undefined, options);
+  assert.ok(process.env.DFV_TABLE_WORKER, 'native security matrix requires an explicit real worker');
+  return NativeDocument.open({ executable: process.env.DFV_TABLE_WORKER,
+    env: { DFV_TABLE_STATE_DIR: join(dirname(dirname(source)), 'state') } }, source, undefined, options);
+}
 const lit = (s: string) => `'${s.replace(/'/g, "''")}'`;
 const sha = async (p: string) => createHash('sha256').update(await readFile(p)).digest('hex');
 
 /** Every public read path a webview message can reach with user SQL. */
-async function everyReadPath(file: DuckDbFile, sql: string, column: string): Promise<unknown[]> {
+async function everyReadPath(file: DocumentFile, sql: string, column: string): Promise<unknown[]> {
   const outcomes: unknown[] = [];
   const attempt = async (run: () => Promise<unknown>) => {
     try { outcomes.push(await run()); } catch (error) { outcomes.push({ refused: String(error instanceof Error ? error.message : error) }); }
@@ -90,11 +99,11 @@ function outsideReads(outside: string, docs: string): string[] {
 
 test('SEC-01–04: outside files, links, prefixes and globs never reach any read path (CSV)', async () => {
   const { root, docs, outside } = await fixtureDir('dfv-sec-csv-');
-  let file: DuckDbFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const source = join(docs, 'approved.csv');
     await writeFile(source, 'id,value\n1,10\n2,20\n');
-    file = await DuckDbFile.open(source, undefined, { restrictedReads: true });
+    file = await openFile(source, undefined, { restrictedReads: true });
     assert.equal((await file.runQuery('select * from approved where id >= 2')).rows.length, 1, 'authorized query works');
     for (const sql of outsideReads(outside, docs)) assertNoLeak(await everyReadPath(file, sql, 'value'), sql);
     assert.equal(Number((await file.runQuery('select sum(value) from approved')).rows[0][0]), 30, 'still usable after refusals');
@@ -103,7 +112,7 @@ test('SEC-01–04: outside files, links, prefixes and globs never reach any read
 
 test('SEC-01–04: persisted views and macros in a .duckdb file cannot read outside files', async () => {
   const { root, docs, outside } = await fixtureDir('dfv-sec-db-');
-  let file: DuckDbFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const path = join(docs, 'store.duckdb');
     const instance = await DuckDBInstance.create(path);
@@ -119,9 +128,9 @@ test('SEC-01–04: persisted views and macros in a .duckdb file cannot read outs
     await c.run(`create view "weird ""name""" as select * from read_text(${lit(outside)})`);
     c.closeSync(); instance.closeSync();
     const before = await sha(path);
-    file = await DuckDbFile.open(path, undefined, { restrictedReads: true });
+    file = await openFile(path, undefined, { restrictedReads: true });
     assert.equal((await file.runQuery('select count(*) from good')).rows[0][0] + '', '2');
-    assert.equal((await file.runQuery('select sum(value)::integer from data')).rows[0][0], 30);
+    assert.equal(Number((await file.runQuery('select sum(value)::integer from data')).rows[0][0]), 30);
     for (const sql of [
       'select * from bad', 'select * from bad_nested', 'select * from via_bad',
       'select m_scalar() as value', 'select * from m_table()', 'select m_env() as value',
@@ -144,11 +153,11 @@ test('SEC-05–07: no outbound request from URLs, redirects or credential-bearin
   });
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
   const port = (server.address() as { port: number }).port;
-  let file: DuckDbFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const source = join(docs, 'approved.csv');
     await writeFile(source, 'id,value\n1,10\n');
-    file = await DuckDbFile.open(source, undefined, { restrictedReads: true });
+    file = await openFile(source, undefined, { restrictedReads: true });
     const urls = [`http://127.0.0.1:${port}/data.csv`, `https://127.0.0.1:${port}/data.csv`,
       `http://127.0.0.1:${port}/redirect`, `http://user:SYNTHETIC_PASSWORD@127.0.0.1:${port}/data.csv`,
       `s3://synthetic-bucket/data.csv`, `http://localhost:${port}/data.csv?token=SYNTHETIC_TOKEN`];
@@ -173,7 +182,7 @@ test('SEC-07: a stored external view in a .duckdb file makes no request during o
   const server = createServer((_req, res) => { hits++; res.end(`id\n${CANARY}\n`); });
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
   const port = (server.address() as { port: number }).port;
-  let file: DuckDbFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const path = join(docs, 'remote.duckdb');
     const instance = await DuckDBInstance.create(path);
@@ -183,7 +192,7 @@ test('SEC-07: a stored external view in a .duckdb file makes no request during o
     await c.run(`create view remote_view as select * from read_csv('http://127.0.0.1:${port}/x.csv', columns={'id':'varchar'})`);
     c.closeSync(); instance.closeSync();
     hits = 0;
-    file = await DuckDbFile.open(path, undefined, { restrictedReads: true });
+    file = await openFile(path, undefined, { restrictedReads: true });
     await file.listTables();
     await file.getQueryCatalog();
     assertNoLeak(await everyReadPath(file, 'select * from remote_view', 'id'), 'remote_view');
@@ -198,7 +207,7 @@ test('SEC-07: a stored external view in a .duckdb file makes no request during o
 
 test('SEC-08–10: writes, DDL, COPY/ATTACH, settings and extensions change nothing', async () => {
   const { root, docs } = await fixtureDir('dfv-sec-write-');
-  let file: DuckDbFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const path = join(docs, 'store.duckdb');
     const instance = await DuckDBInstance.create(path);
@@ -209,7 +218,7 @@ test('SEC-08–10: writes, DDL, COPY/ATTACH, settings and extensions change noth
     const before = await sha(path);
     const listing = (await readdir(docs)).sort();
     const target = join(docs, 'written.csv');
-    file = await DuckDbFile.open(path, undefined, { restrictedReads: true });
+    file = await openFile(path, undefined, { restrictedReads: true });
     const writes = [
       'delete from data', 'update data set value = 0', 'insert into data values (9, 90)',
       'create table t2 as select 1', 'create view v2 as select 1', 'drop table data', 'alter table data add column z int',
@@ -242,7 +251,7 @@ test('SEC-08–10: writes, DDL, COPY/ATTACH, settings and extensions change noth
 
 test('SEC-11–13: only this document\'s relations are reachable; internal catalogs are not', async () => {
   const { root, docs } = await fixtureDir('dfv-sec-cat-');
-  const files: DuckDbFile[] = [];
+  const files: DocumentFile[] = [];
   try {
     const mk = async (name: string, secret: string) => {
       const p = join(docs, `${name}.duckdb`);
@@ -257,10 +266,24 @@ test('SEC-11–13: only this document\'s relations are reachable; internal catal
     const aPath = await mk('alpha', 'ALPHA_OTHER_SCHEMA');
     const bPath = await mk('beta', CANARY);
     // A backup catalog is attached for Safe Mode comparison; it must not be queryable.
-    const backup = join(root, 'backup.duckdb');
-    await writeFile(backup, await readFile(bPath));
-    const a = await DuckDbFile.open(aPath, undefined, { restrictedReads: true, backupPath: backup });
-    const b = await DuckDbFile.open(bPath, undefined, { restrictedReads: true });
+    let backup = join(root, 'backup.duckdb');
+    if (native) {
+      // Rust accepts its own verified publication receipt, never a foreign file
+      // blessed only by its current hash. Put the canary in a genuine backup.
+      const setFixtureValue = async (value: string) => {
+        const instance = await DuckDBInstance.create(aPath), connection = await instance.connect();
+        try { await connection.run(`update main.data set value = ${lit(value)}`); }
+        finally { connection.closeSync(); instance.closeSync(); }
+      };
+      await setFixtureValue(CANARY);
+      const setup = await openFile(aPath, undefined, { restrictedReads: true });
+      try {
+        backup = await setup.createBackup();
+      } finally { await (setup as NativeDocument).close(); }
+      await setFixtureValue('alpha');
+    } else await writeFile(backup, await readFile(bPath));
+    const a = await openFile(aPath, undefined, { restrictedReads: true, backupPath: backup });
+    const b = await openFile(bPath, undefined, { restrictedReads: true });
     files.push(a, b);
     assert.equal((await a.runQuery('select value from other.data')).rows[0][0], 'ALPHA_OTHER_SCHEMA', 'same-name relation in another schema of the SAME document stays distinct and reachable');
     assert.equal((await a.runQuery('select value from data')).rows[0][0], 'alpha');
@@ -281,14 +304,15 @@ test('SEC-11–13: only this document\'s relations are reachable; internal catal
 
 test('SEC-01/SEC-13: a workbook reader cannot address hidden raw sheets or outside files', async () => {
   const { root, docs, outside } = await fixtureDir('dfv-sec-xlsx-');
-  let file: DuckDbFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const path = await xlsxFile(join(docs, 'book.xlsx'), [
       { name: 'Data', rows: [['id', 'value'], [1, 10], [2, 20]] },
       { name: 'Other', rows: [['id', 'value'], [3, 30]] },
     ]);
     const before = await sha(path);
-    file = await DuckDbFile.open(path, undefined, { restrictedReads: true });
+    file = await openFile(path, undefined, { restrictedReads: true });
+    await file.runQuery('select * from "Data"', 0, 'Data');
     assert.equal((await file.runQuery('select count(*) from "Data · Table 1"')).rows[0][0] + '', '2');
     for (const sql of [
       `select * from read_xlsx(${lit(path)})`, `select * from read_xlsx(${lit(outside)})`,
@@ -301,13 +325,13 @@ test('SEC-01/SEC-13: a workbook reader cannot address hidden raw sheets or outsi
 
 test('SEC-13: the hidden SQLite source catalog behind the typed views is not addressable', async () => {
   const { root, docs } = await fixtureDir('dfv-sec-sqlite-');
-  let file: DuckDbFile | undefined;
+  let file: DocumentFile | undefined;
   try {
     const path = await sqliteFile(join(docs, 'hot.sqlite'), [{ name: 'data',
       columns: [{ name: 'id', type: 'INTEGER' }, { name: 'value', type: 'VARCHAR' }],
       rows: [[1, CANARY], [2, 'ok']] }]);
     const before = await sha(path);
-    file = await DuckDbFile.open(path, undefined, { restrictedReads: true });
+    file = await openFile(path, undefined, { restrictedReads: true });
     const catalog = (await file.getQueryCatalog())[0].catalog;
     assert.equal((await file.runQuery("select id from data where value = 'ok'")).rows[0][0] + '', '2');
     const hidden = `${catalog}__dfv_sqlite_source`;

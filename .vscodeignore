@@ -2,6 +2,7 @@ src/**
 esbuild.js
 tsconfig.json
 .github/**
+.serena/**
 .gitignore
 **/*.ts
 **/*.map
@@ -25,3 +26,10 @@ tsconfig.test.json
 # Older builds left in the folder and repository notes are not runtime files.
 *.vsix
 docs/**
+
+# Native source workspaces and build caches are not extension runtime assets.
+native/**
+
+# Packaging recipe scripts and the Node reference backend: the installed extension runs on bin/dfv-table.
+scripts/**
+node_modules/@duckdb/**

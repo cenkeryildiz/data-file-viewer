@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "scope": "D1.1 baseline in progress; not a release or Rust-readiness gate",
+  "source_commit": "2643ee26ef6b72aa08464c175e87b5f5f425223c",
+  "platform": "darwin-arm64",
+  "versions": {
+    "node": "v26.4.0",
+    "npm": "11.17.0",
+    "python": "3.14.6 (Conda myproject)"
+  },
+  "commands": [
+    {
+      "command": "npm run typecheck",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "completed",
+      "exit_code": 0,
+      "log": "docs/migration/baseline-typecheck.log",
+      "sha256": "1ce49ed465c9114c2f4984bd15c93d3d95b1545eb0a9350d4eea1dc8b234d507"
+    },
+    {
+      "command": "npm test",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "completed",
+      "exit_code": 0,
+      "log": "docs/migration/baseline-tests.log",
+      "sha256": "463532ad8e474e99fdbda688968fd75e4152105cb36bb29c04e0ee01471072f4"
+    },
+    {
+      "command": "npm run test:security",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "completed",
+      "exit_code": 0,
+      "log": "docs/migration/baseline-security.log",
+      "sha256": "20844e8ab2ad4d126fd99f91429977eb532feb0566b5a868727517c63c5807be"
+    },
+    {
+      "command": "npm run test:fuzz -- --seed 538030117 --runs 20000",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "completed",
+      "exit_code": 1,
+      "log": "docs/migration/baseline-fuzz.log",
+      "sha256": "1c8196261c8215489962a7e8b25b55da93fdbad545f63ac469c08adc07a228c7"
+    },
+    {
+      "command": "npm run test:browser",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "not_run"
+    },
+    {
+      "command": "npm run test:host",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "not_run"
+    },
+    {
+      "command": "npm run test:resources",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "not_run"
+    },
+    {
+      "command": "npm run stress",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "not_run"
+    },
+    {
+      "command": "npm run package",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "not_run"
+    },
+    {
+      "command": "npm run test:package",
+      "cwd": "/Users/macc/Desktop/Kod/Rust/data-file-viewer",
+      "prerequisites": "Installed lockfile dependencies and native DuckDB binding; browser/host commands also require their existing harness prerequisites",
+      "status": "not_run"
+    }
+  ],
+  "source_files": [
+    {
+      "path": "src/queryMessages.ts",
+      "sha256": "cad3ec94e0881bf0bc7e424e9c86c3e72942a4b3586641488f0fd402f46ea6b4"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "c853c557bf8b78c8a9c80ed2d71618497f8a7c0a642f1215daca1ace24f2dfcb"
+    },
+    {
+      "path": "test/queryBoundary.test.ts",
+      "sha256": "ff2e20acfbc40c5d338158998049741c04fe8c0e57df70a0c071d8272ceb7beb"
+    }
+  ],
+  "known_limits": [
+    "Other platforms untested; no Rust conversion baseline frozen yet.",
+    "npm test: 798 passed, 4 TODO, no test failures; resources/host/browser/stress/package gates not yet rerun. Existing resource-test edits retained."
+  ],
+  "known_failures": [
+    "Historical L-VIEW-01 reproduced in baseline-fuzz.log, subsequently resolved; see resolved_failures.",
+    "Unscoped resource run has optional local dataset/baseline scope mismatch; see continuation-resources-summary.json."
+  ],
+  "continuation_evidence": "docs/migration/enum-fix.json",
+  "resolved_failures": [
+    {
+      "failure": "L-VIEW-01",
+      "commit": "55e53c4316021631c166df42568c48a86922a132",
+      "verification": "docs/migration/enum-fix-fuzz.log"
+    }
+  ],
+  "continuation_runs": [
+    {
+      "command": "npm run test:browser",
+      "exit_code": 0,
+      "log": "docs/migration/continuation-browser.log"
+    },
+    {
+      "command": "DFV_BASELINE_SYNTHETIC=1 npm run test:resources",
+      "exit_code": 0,
+      "log": "docs/migration/continuation-resources-synthetic.log"
+    },
+    {
+      "command": "npm run stress",
+      "exit_code": 0,
+      "log": "docs/migration/continuation-stress.log"
+    },
+    {
+      "command": "npm run test:resources",
+      "exit_code": 1,
+      "log": "docs/migration/continuation-resources-summary.json"
+    }
+  ]
+}

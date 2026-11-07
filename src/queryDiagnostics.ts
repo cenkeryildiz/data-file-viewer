@@ -1,4 +1,5 @@
 import { QueryPolicyError } from './queryPolicy';
+import { NativeError } from './backend/nativeWorker';
 
 /** Notices can contain sampled cells and file-controlled labels. Classify them
  * before they cross into notifications; leave exact values in requested grids. */
@@ -21,11 +22,55 @@ export interface QueryDiagnostic {
   line?: number;
 }
 
+const REOPEN = 'Reopen the file to continue.';
+
+/** Typed codes whose cause is known. Fixed text only: the worker's message is never forwarded,
+ * and a write never claims success, retry or "nothing saved" unless the worker confirmed it. */
+function nativeDiagnostic(e: NativeError, dateAxis: boolean): QueryDiagnostic | undefined {
+  const unknown = (message: string): QueryDiagnostic => ({ category: 'unknown', message });
+  const notSaved = e.mutationOutcome === 'not-published' ? ' Nothing was saved.' : '';
+  if (e.mutationOutcome === 'unknown') return unknown(e.code === 'worker_exited'
+    ? 'The table worker stopped while saving. The save was not confirmed; reopen the file to check it.'
+    : e.code === 'worker_timeout'
+      ? 'The table worker stopped responding while saving. The save was not confirmed; reopen the file to check it.'
+      : 'The save was not confirmed. Reopen the file to check it.');
+  switch (e.code) {
+    case 'stale_source': return unknown(`The file changed on disk since it was opened.${notSaved} Reopen it to continue.`);
+    case 'table_changed': return unknown(`The table changed since it was displayed.${notSaved} ${REOPEN}`);
+    case 'ambiguous_row': return unknown(`More than one row matches the edited cell, so it was not changed.${notSaved}`);
+    case 'no_matching_row': return unknown(`No row matches the edited cell any more.${notSaved} ${REOPEN}`);
+    case 'mutation_not_published': return unknown('The save did not happen; nothing was written.');
+    case 'mutation_unknown': return unknown('The save was not confirmed. Reopen the file to check it.');
+    case 'read_only': return { category: 'blocked', message: 'This document is read-only.' };
+    case 'unsupported': case 'unknown_method': return { category: 'blocked', message: 'This operation is not available for this document.' };
+    case 'not_open': case 'client_closed': return unknown(`This document is closed. ${REOPEN}`);
+    case 'worker_exited': return unknown(`The table worker stopped. ${REOPEN}`);
+    case 'worker_timeout': return unknown(`The table worker stopped responding. ${REOPEN}`);
+    case 'worker_failed': case 'protocol_violation': return unknown(`The table worker failed. ${REOPEN}`);
+    case 'frame_too_large': return { category: 'resource', message: 'The request is too large for the table worker. Select fewer rows or columns, or simplify the query.' };
+    case 'malformed_value': return { category: 'conversion', message: dateAxis
+      ? 'The plot axis could not be read as dates. Every value must be an ISO date or a whole year from 1000 to 3000; choose another axis.'
+      : 'A value or argument was not valid for this operation. Check the selected columns and values.' };
+  }
+}
+
 /** Classify locally; never forward a raw engine error, SQL excerpt, URL or value.
  * Unknown diagnostics stay generic instead of relying on secret-pattern redaction.
  */
-export function queryDiagnostic(error: unknown, rawWorksheet = false): QueryDiagnostic {
+export function queryDiagnostic(error: unknown, rawWorksheet = false, dateAxis = false): QueryDiagnostic {
   if (error instanceof QueryPolicyError) return { category: 'blocked', message: error.message };
+  if (error instanceof NativeError) {
+    const typed = nativeDiagnostic(error, dateAxis);
+    if (typed) return typed;
+    if (error.code === 'runtime_busy' || error.code === 'queue_full') return { category: 'resource', message: 'The document is busy. Wait for its current operation to finish.' };
+    if (error.code === 'deadline_exceeded') return { category: 'resource', message: 'The query exceeded its time limit. Select fewer rows or columns, or simplify the query.' };
+    if (error.category === 'cancelled') return { category: 'cancelled', message: 'Query cancelled.' };
+    if (error.category === 'resource') return { category: 'resource', message: 'Query exceeded a resource limit. Select fewer rows or columns, or simplify the query.' };
+    if (error.category === 'blocked') return { category: 'blocked', message: 'This operation is unavailable for this document or its access settings.' };
+    if (error.code === 'query_failed' && rawWorksheet) return {
+      category: 'unknown', message: 'The query could not be completed. Raw worksheets expose Excel letter columns (A, B, C…). Choose a detected table in Query table to use its headers and SQL types.',
+    };
+  }
   const raw = error instanceof Error ? error.message : '';
   if (/already open elsewhere|being used by another process|resource busy|Could not set lock/i.test(raw)) return {
     category: 'blocked', message: 'The file is locked by another connection. Close that connection and reopen this view.',

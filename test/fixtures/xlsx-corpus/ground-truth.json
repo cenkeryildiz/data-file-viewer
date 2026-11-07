@@ -1,0 +1,1247 @@
+{
+  "schema": 1,
+  "note": "Ground truth derived from the fixture spec in build_corpus.py, never from detector or DuckDB output. Rows are logical data rows; raw holds every stored cell exactly. Row numbers (headerRows/excludedRows) are 1-based Excel rows.",
+  "fixtures": {
+    "single-column": {
+      "file": "single-column.xlsx",
+      "description": "One undeclared single-column block. Heuristic policy keeps one-column blocks out of the table list (sheetTables size gate); the raw sheet must still show every value.",
+      "defects": [],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "A4": {
+              "type": "string",
+              "text": "Clara"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        }
+      ],
+      "tables": [],
+      "nonTables": [
+        {
+          "sheet": "Sheet",
+          "ref": "A1:A4",
+          "why": "undeclared one-column block (heuristic size gate)"
+        }
+      ]
+    },
+    "explicit-single": {
+      "file": "explicit-single.xlsx",
+      "description": "One DECLARED Excel table (xl/tables/table1.xml) covering a single column A1:A3.",
+      "defects": [
+        "EX-06 explicit-single-column-missed"
+      ],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Bob"
+            }
+          },
+          "merges": [],
+          "declaredTables": [
+            {
+              "name": "Names",
+              "ref": "A1:A3"
+            }
+          ]
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "declaredName": "Names",
+          "range": "A1:A3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Name"
+          ],
+          "rows": [
+            [
+              "Alice"
+            ],
+            [
+              "Bob"
+            ]
+          ]
+        }
+      ],
+      "nonTables": []
+    },
+    "explicit-adjacent": {
+      "file": "explicit-adjacent.xlsx",
+      "description": "Two DECLARED tables side by side with no blank column: LeftData A1:B3, RightData C1:D3.",
+      "defects": [
+        "EX-06 adjacent-explicit-tables-fused"
+      ],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "C1": {
+              "type": "string",
+              "text": "Code"
+            },
+            "D1": {
+              "type": "string",
+              "text": "Amount"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1"
+            },
+            "C2": {
+              "type": "string",
+              "text": "X"
+            },
+            "D2": {
+              "type": "number",
+              "text": "2"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "B3": {
+              "type": "number",
+              "text": "3"
+            },
+            "C3": {
+              "type": "string",
+              "text": "Y"
+            },
+            "D3": {
+              "type": "number",
+              "text": "4"
+            }
+          },
+          "merges": [],
+          "declaredTables": [
+            {
+              "name": "LeftData",
+              "ref": "A1:B3"
+            },
+            {
+              "name": "RightData",
+              "ref": "C1:D3"
+            }
+          ]
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "declaredName": "LeftData",
+          "range": "A1:B3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Name",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Alice",
+              1
+            ],
+            [
+              "Bob",
+              3
+            ]
+          ]
+        },
+        {
+          "sheet": "Sheet",
+          "declaredName": "RightData",
+          "range": "C1:D3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Code",
+            "Amount"
+          ],
+          "rows": [
+            [
+              "X",
+              2
+            ],
+            [
+              "Y",
+              4
+            ]
+          ]
+        }
+      ],
+      "nonTables": []
+    },
+    "explicit-stacked": {
+      "file": "explicit-stacked.xlsx",
+      "description": "Two DECLARED tables stacked with no blank row: Top A1:B3, Bottom A4:B6.",
+      "defects": [
+        "EX-06 adjacent-explicit-tables-fused (vertical)"
+      ],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "B3": {
+              "type": "number",
+              "text": "2"
+            },
+            "A4": {
+              "type": "string",
+              "text": "Code"
+            },
+            "B4": {
+              "type": "string",
+              "text": "Amount"
+            },
+            "A5": {
+              "type": "string",
+              "text": "X"
+            },
+            "B5": {
+              "type": "number",
+              "text": "10"
+            },
+            "A6": {
+              "type": "string",
+              "text": "Y"
+            },
+            "B6": {
+              "type": "number",
+              "text": "20"
+            }
+          },
+          "merges": [],
+          "declaredTables": [
+            {
+              "name": "Top",
+              "ref": "A1:B3"
+            },
+            {
+              "name": "Bottom",
+              "ref": "A4:B6"
+            }
+          ]
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "declaredName": "Top",
+          "range": "A1:B3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Name",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Alice",
+              1
+            ],
+            [
+              "Bob",
+              2
+            ]
+          ]
+        },
+        {
+          "sheet": "Sheet",
+          "declaredName": "Bottom",
+          "range": "A4:B6",
+          "headerRows": [
+            4
+          ],
+          "columns": [
+            "Code",
+            "Amount"
+          ],
+          "rows": [
+            [
+              "X",
+              10
+            ],
+            [
+              "Y",
+              20
+            ]
+          ]
+        }
+      ],
+      "nonTables": []
+    },
+    "merged-heading": {
+      "file": "merged-heading.xlsx",
+      "description": "Merged title A1:B1 above a two-column table. Existing detector handles this; retain.",
+      "defects": [],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Annual totals"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B2": {
+              "type": "string",
+              "text": "Value"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "B3": {
+              "type": "number",
+              "text": "1"
+            },
+            "A4": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "B4": {
+              "type": "number",
+              "text": "2"
+            }
+          },
+          "merges": [
+            "A1:B1"
+          ],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "range": "A2:B4",
+          "headerRows": [
+            2
+          ],
+          "columns": [
+            "Name",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Alice",
+              1
+            ],
+            [
+              "Bob",
+              2
+            ]
+          ]
+        }
+      ],
+      "nonTables": [
+        {
+          "sheet": "Sheet",
+          "ref": "A1:B1",
+          "why": "merged title"
+        }
+      ]
+    },
+    "multilevel-header": {
+      "file": "multilevel-header.xlsx",
+      "description": "Two-level header: merged group captions Q1 (B1:C1) and Q2 (D1:E1) over Units/Revenue.",
+      "defects": [
+        "EX-06 multilevel-header (no two-level header support)"
+      ],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Item"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Q1"
+            },
+            "D1": {
+              "type": "string",
+              "text": "Q2"
+            },
+            "B2": {
+              "type": "string",
+              "text": "Units"
+            },
+            "C2": {
+              "type": "string",
+              "text": "Revenue"
+            },
+            "D2": {
+              "type": "string",
+              "text": "Units"
+            },
+            "E2": {
+              "type": "string",
+              "text": "Revenue"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Apples"
+            },
+            "B3": {
+              "type": "number",
+              "text": "10"
+            },
+            "C3": {
+              "type": "number",
+              "text": "25.5"
+            },
+            "D3": {
+              "type": "number",
+              "text": "12"
+            },
+            "E3": {
+              "type": "number",
+              "text": "30"
+            },
+            "A4": {
+              "type": "string",
+              "text": "Pears"
+            },
+            "B4": {
+              "type": "number",
+              "text": "4"
+            },
+            "C4": {
+              "type": "number",
+              "text": "8"
+            },
+            "D4": {
+              "type": "number",
+              "text": "6"
+            },
+            "E4": {
+              "type": "number",
+              "text": "12.25"
+            },
+            "A5": {
+              "type": "string",
+              "text": "Plums"
+            },
+            "B5": {
+              "type": "number",
+              "text": "7"
+            },
+            "C5": {
+              "type": "number",
+              "text": "14"
+            },
+            "D5": {
+              "type": "number",
+              "text": "9"
+            },
+            "E5": {
+              "type": "number",
+              "text": "18"
+            }
+          },
+          "merges": [
+            "B1:C1",
+            "D1:E1",
+            "A1:A2"
+          ],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "range": "A1:E5",
+          "headerRows": [
+            1,
+            2
+          ],
+          "columns": null,
+          "columnLevels": [
+            [
+              "Item",
+              "Q1",
+              "Q1",
+              "Q2",
+              "Q2"
+            ],
+            [
+              "Item",
+              "Units",
+              "Revenue",
+              "Units",
+              "Revenue"
+            ]
+          ],
+          "rows": [
+            [
+              "Apples",
+              10,
+              25.5,
+              12,
+              30
+            ],
+            [
+              "Pears",
+              4,
+              8,
+              6,
+              12.25
+            ],
+            [
+              "Plums",
+              7,
+              14,
+              9,
+              18
+            ]
+          ]
+        }
+      ],
+      "nonTables": []
+    },
+    "footer": {
+      "file": "footer.xlsx",
+      "description": "Table followed by a blank row and a one-cell source footnote. Existing detector excludes it; retain.",
+      "defects": [],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "B3": {
+              "type": "number",
+              "text": "2"
+            },
+            "A5": {
+              "type": "string",
+              "text": "Source: synthetic fixture"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "range": "A1:B3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Name",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Alice",
+              1
+            ],
+            [
+              "Bob",
+              2
+            ]
+          ]
+        }
+      ],
+      "nonTables": [
+        {
+          "sheet": "Sheet",
+          "ref": "A5",
+          "why": "footnote"
+        }
+      ]
+    },
+    "duplicate-headings": {
+      "file": "duplicate-headings.xlsx",
+      "description": "Header row repeats captions (Value, Value, Note, Note) inside one table.",
+      "defects": [],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Date"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "C1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "D1": {
+              "type": "string",
+              "text": "Note"
+            },
+            "E1": {
+              "type": "string",
+              "text": "Note"
+            },
+            "A2": {
+              "type": "string",
+              "text": "2024-01-01"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1"
+            },
+            "C2": {
+              "type": "number",
+              "text": "2"
+            },
+            "D2": {
+              "type": "string",
+              "text": "a"
+            },
+            "E2": {
+              "type": "string",
+              "text": "b"
+            },
+            "A3": {
+              "type": "string",
+              "text": "2024-01-02"
+            },
+            "B3": {
+              "type": "number",
+              "text": "3"
+            },
+            "C3": {
+              "type": "number",
+              "text": "4"
+            },
+            "D3": {
+              "type": "string",
+              "text": "c"
+            },
+            "E3": {
+              "type": "string",
+              "text": "d"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "range": "A1:E3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Date",
+            "Value",
+            "Value_1",
+            "Note",
+            "Note_1"
+          ],
+          "rows": [
+            [
+              "2024-01-01",
+              1,
+              2,
+              "a",
+              "b"
+            ],
+            [
+              "2024-01-02",
+              3,
+              4,
+              "c",
+              "d"
+            ]
+          ]
+        }
+      ],
+      "nonTables": []
+    },
+    "repeated": {
+      "file": "repeated.xlsx",
+      "description": "One logical table whose header repeats after a blank row (Name/Value, Alice/1, blank, Name/Value, Bob/2). Correct logical rows are exactly Alice/1 and Bob/2.",
+      "defects": [
+        "EX-05 repeated-header-rows-in-query (detector rowCount=2, query returns 4 rows)"
+      ],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1"
+            },
+            "A4": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B4": {
+              "type": "string",
+              "text": "Value"
+            },
+            "A5": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "B5": {
+              "type": "number",
+              "text": "2"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "range": "A1:B5",
+          "headerRows": [
+            1
+          ],
+          "excludedRows": [
+            3,
+            4
+          ],
+          "columns": [
+            "Name",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Alice",
+              1
+            ],
+            [
+              "Bob",
+              2
+            ]
+          ]
+        }
+      ],
+      "nonTables": []
+    },
+    "sparse": {
+      "file": "sparse.xlsx",
+      "description": "Small table at A1:B3 plus one distant note at AZ1000.",
+      "defects": [],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "B3": {
+              "type": "number",
+              "text": "2"
+            },
+            "AZ1000": {
+              "type": "string",
+              "text": "far note"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "range": "A1:B3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Name",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Alice",
+              1
+            ],
+            [
+              "Bob",
+              2
+            ]
+          ]
+        }
+      ],
+      "nonTables": [
+        {
+          "sheet": "Sheet",
+          "ref": "AZ1000",
+          "why": "distant single note"
+        }
+      ]
+    },
+    "mixed-value": {
+      "file": "mixed-value.xlsx",
+      "description": "Numeric column with one non-numeric text value (Bob / 'not numeric').",
+      "defects": [
+        "EX-05 mixed-text-converted-to-null-without-warning"
+      ],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "B3": {
+              "type": "string",
+              "text": "not numeric"
+            },
+            "A4": {
+              "type": "string",
+              "text": "Clara"
+            },
+            "B4": {
+              "type": "number",
+              "text": "3"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "range": "A1:B4",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Name",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Alice",
+              1
+            ],
+            [
+              "Bob",
+              "not numeric"
+            ],
+            [
+              "Clara",
+              3
+            ]
+          ]
+        }
+      ],
+      "nonTables": []
+    },
+    "formula-errors": {
+      "file": "formula-errors.xlsx",
+      "description": "Numbers, text, formulas with cached numeric/string results and cached Excel errors.",
+      "defects": [],
+      "sheets": [
+        {
+          "name": "Sheet",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Name"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Value"
+            },
+            "C1": {
+              "type": "string",
+              "text": "Label"
+            },
+            "A2": {
+              "type": "string",
+              "text": "Alice"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1"
+            },
+            "C2": {
+              "type": "string",
+              "text": "plain"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Bob"
+            },
+            "B3": {
+              "type": "formula",
+              "formula": "1+1",
+              "cachedType": "number",
+              "text": "2"
+            },
+            "C3": {
+              "type": "formula",
+              "formula": "\"a\"&\"b\"",
+              "cachedType": "string",
+              "text": "ab"
+            },
+            "A4": {
+              "type": "string",
+              "text": "Clara"
+            },
+            "B4": {
+              "type": "formula",
+              "formula": "1/0",
+              "cachedType": "error",
+              "text": "#DIV/0!"
+            },
+            "C4": {
+              "type": "string",
+              "text": "after div"
+            },
+            "A5": {
+              "type": "string",
+              "text": "Dan"
+            },
+            "B5": {
+              "type": "formula",
+              "formula": "NA()",
+              "cachedType": "error",
+              "text": "#N/A"
+            },
+            "C5": {
+              "type": "string",
+              "text": "after na"
+            },
+            "A6": {
+              "type": "string",
+              "text": "Eve"
+            },
+            "B6": {
+              "type": "error",
+              "text": "#REF!"
+            },
+            "C6": {
+              "type": "string",
+              "text": "literal ref error"
+            },
+            "A7": {
+              "type": "string",
+              "text": "Finn"
+            },
+            "B7": {
+              "type": "number",
+              "text": "2.5"
+            },
+            "C7": {
+              "type": "string",
+              "text": "last"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Sheet",
+          "range": "A1:C7",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Name",
+            "Value",
+            "Label"
+          ],
+          "rows": [
+            [
+              "Alice",
+              1,
+              "plain"
+            ],
+            [
+              "Bob",
+              2,
+              "ab"
+            ],
+            [
+              "Clara",
+              null,
+              "after div"
+            ],
+            [
+              "Dan",
+              null,
+              "after na"
+            ],
+            [
+              "Eve",
+              null,
+              "literal ref error"
+            ],
+            [
+              "Finn",
+              2.5,
+              "last"
+            ]
+          ],
+          "errorCells": {
+            "B4": "#DIV/0!",
+            "B5": "#N/A",
+            "B6": "#REF!"
+          }
+        }
+      ],
+      "nonTables": []
+    },
+    "two-sheet": {
+      "file": "two-sheet.xlsx",
+      "description": "Raw_Data and ZOther each hold one table; source of the picker missing-raw-entry reproduction.",
+      "defects": [],
+      "sheets": [
+        {
+          "name": "Raw_Data",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Date"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Rate"
+            },
+            "A2": {
+              "type": "string",
+              "text": "2024-01-01"
+            },
+            "B2": {
+              "type": "number",
+              "text": "1.5"
+            },
+            "A3": {
+              "type": "string",
+              "text": "2024-01-02"
+            },
+            "B3": {
+              "type": "number",
+              "text": "1.75"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        },
+        {
+          "name": "ZOther",
+          "raw": {
+            "A1": {
+              "type": "string",
+              "text": "Code"
+            },
+            "B1": {
+              "type": "string",
+              "text": "Amount"
+            },
+            "A2": {
+              "type": "string",
+              "text": "X"
+            },
+            "B2": {
+              "type": "number",
+              "text": "10"
+            },
+            "A3": {
+              "type": "string",
+              "text": "Y"
+            },
+            "B3": {
+              "type": "number",
+              "text": "20"
+            }
+          },
+          "merges": [],
+          "declaredTables": []
+        }
+      ],
+      "tables": [
+        {
+          "sheet": "Raw_Data",
+          "range": "A1:B3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Date",
+            "Rate"
+          ],
+          "rows": [
+            [
+              "2024-01-01",
+              1.5
+            ],
+            [
+              "2024-01-02",
+              1.75
+            ]
+          ]
+        },
+        {
+          "sheet": "ZOther",
+          "range": "A1:B3",
+          "headerRows": [
+            1
+          ],
+          "columns": [
+            "Code",
+            "Amount"
+          ],
+          "rows": [
+            [
+              "X",
+              10
+            ],
+            [
+              "Y",
+              20
+            ]
+          ]
+        }
+      ],
+      "nonTables": []
+    }
+  }
+}

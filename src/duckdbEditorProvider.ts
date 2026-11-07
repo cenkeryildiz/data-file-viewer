@@ -3,30 +3,23 @@ import { basename, dirname, extname, join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { open as fsOpen, readFile, stat, unlink } from 'node:fs/promises';
 import { existsSync, realpathSync } from 'node:fs';
-import {
-  DescriptiveStats,
-  DetectedTableFilter,
-  DetectedTableSort,
-  DuckDbFile,
-  FNV_OFFSET_BASIS,
-  FileKind,
-  QueryDiff,
-  SheetTableMode,
-  baseTableOfSelect,
-  TopValuesStats,
-  fnv1aFold,
-  hasTrailingLimit,
-} from './duckdbConnection';
+import type { DescriptiveStats, DetectedTableFilter, DetectedTableSort, FileKind, QueryDiff, SheetTableMode, TopValuesStats } from './backend/types';
+import { FNV_OFFSET_BASIS, fnv1aFold } from './contentSignature';
 import { EXCEL_ERROR_TOKENS } from './textColumns';
 import { ChartPanel } from './chartPanel';
-import { pickXAxis } from './chartSpec';
+import { pickPlotAxis, type AxisChoice } from './chartSpec';
 import { destructiveReason, hasMultipleStatements } from './sqlSafety';
 import { LiveRefreshController, LiveStatus } from './liveRefresh';
-import { ViewerFile, type DocumentFile } from './viewerFile';
+import type { BackendFactory, DocumentFile, ManualSheetTable } from './backend/types';
+import { referenceBackend, referenceBackendFor } from './backend/reference';
+import { DatasetSession } from './backend/session';
 import { QUERY_LIMITS, QueryPolicyError } from './queryPolicy';
 import { queryDiagnostic } from './queryDiagnostics';
 import { validateQueryMessage } from './queryMessages';
 import type { QueryTarget } from './queryCatalog';
+import { SqlDraftStore } from './sqlDraftStore';
+import { assertRangeReadWithinCells, parseCellRange, selectResultRange, tableFromRange, type RangeSnapshot } from './queryRange';
+import { quoteIdent, baseTableOfSelect, hasTrailingLimit } from './backend/sql';
 
 // Real, permanent debug channel rather than throwaway instrumentation — this
 // feature accumulates enough internal state machinery (backoff phase,
@@ -417,6 +410,8 @@ export class DuckDBDocument implements vscode.CustomDocument {
   queryCatalogGeneration = 0;
   readonly queryTargets = new Map<string, QueryTarget>();
   activeQueryRequest = 0;
+  rangeSnapshot: { value: RangeSnapshot; stats: Map<string, FileStat> } | undefined;
+  readonly manualSheetTables = new Map<string, { tables: ManualSheetTable[]; stats: Map<string, FileStat> }>();
   // name (e.g. "orders_combined") -> the synthesized SQL that entry runs.
   combinedQueryMap = new Map<string, string>();
 
@@ -438,6 +433,43 @@ export class DuckDBDocument implements vscode.CustomDocument {
   lastQueriedBaseTable: string | undefined;
   /** Set only when the grid is the untouched worksheet preview with valid coordinates. */
   lastSheetPreview: string | undefined;
+  /** The webview's selection sequence that produced lastSheetPreview. */
+  lastSheetPreviewSeq: number | undefined;
+  /**
+   * The sidebar entry the user explicitly chose, set the moment the request
+   * arrives. Independent of the result kind: SQL the user runs leaves it as it
+   * is, but never gains worksheet coordinates from it. `hostSeq` orders
+   * choices on this side; `clientSeq` is the webview's own, echoed back.
+   */
+  worksheetSelection: { sheet: string; clientSeq: number | undefined; hostSeq: number; generation: number; worksheet: boolean } | undefined;
+  private worksheetSelectionCounter = 0;
+  /**
+   * Increments, under the query lock, for every query a result is posted
+   * for (user/sidebar runs and live ticks), so the view can tell which of two
+   * results describes the source later, whatever order they arrive in.
+   */
+  executionSeq = 0;
+
+  selectWorksheet(sheet: string, clientSeq: number | undefined): number {
+    const hostSeq = ++this.worksheetSelectionCounter;
+    this.worksheetSelection = { sheet, clientSeq, hostSeq, generation: this.queryCatalogGeneration, worksheet: this.file.isWorksheet(sheet) };
+    return hostSeq;
+  }
+
+  /**
+   * After the source was re-read: a selected worksheet the new source no
+   * longer has is cleared, with its coordinates. Returns true when that
+   * happened, so the caller refreshes the sidebar (which clears the view's
+   * choice too). Only a metadata lookup, so it costs a live tick nothing.
+   */
+  clearVanishedWorksheet(): boolean {
+    const selection = this.worksheetSelection;
+    if (!selection?.worksheet || this.file.isWorksheet(selection.sheet)) return false;
+    this.worksheetSelection = undefined;
+    this.lastSheetPreview = undefined;
+    this.lastSheetPreviewSeq = undefined;
+    return true;
+  }
 
   // Keyed by `${statsKind}:${column}` — cleared whenever a new query runs,
   // since stats are scoped to the current base query.
@@ -451,12 +483,26 @@ export class DuckDBDocument implements vscode.CustomDocument {
   lastFileStats: Map<string, FileStat> | undefined;
   lastResultRowCount: number | undefined;
   lastResultHash: string | undefined;
+  /** Source stats taken just before Live last opened the reader. */
+  liveReaderStats: Map<string, FileStat> | undefined;
+
+  /**
+   * The query Live refreshes from now on. The screen no longer shows the last
+   * tick's rows, so the next tick must not call identical rows "unchanged".
+   */
+  setLiveQuery(sql: string, sheetPreview: string | undefined, sheetPreviewSeq: number | undefined): void {
+    this.lastSql = sql;
+    this.lastSheetPreview = sheetPreview;
+    this.lastSheetPreviewSeq = sheetPreview !== undefined ? sheetPreviewSeq : undefined;
+    this.lastResultRowCount = undefined;
+    this.lastResultHash = undefined;
+  }
   // Cached per base table so repeated toggle-off/toggle-on within the same
   // session doesn't re-read sheet_metadata each time. `null` is a cached
   // "checked, no hint found" — distinct from `undefined` ("not checked yet").
   pollCadenceCache: number | null | undefined;
   pollCadenceCacheTable: string | undefined;
-  disposed = false;
+  get disposed(): boolean { return this.session.closed; }
 
   // Sibling resolution costs an existsSync plus two realpathSync per candidate,
   // and the live path was paying for it twice per tick. Cached, but re-checked
@@ -466,69 +512,62 @@ export class DuckDBDocument implements vscode.CustomDocument {
   private siblingPathCheckedAt = 0;
   private static readonly SIBLING_RECHECK_MS = 30_000;
 
-  // Serializes every use of `file`. Without it, a live tick's reconnect can
-  // dispose the connection a columnStats/runQuery/updateCell handler is
-  // awaiting on — a use-after-close in native code, which takes the extension
-  // host down rather than raising something catchable.
-  private lockChain: Promise<void> = Promise.resolve();
-  private lockDepth = 0;
-  private readonly queuedChecks = new Set<() => boolean>();
+  readonly session: DatasetSession;
 
   constructor(
     readonly uri: vscode.Uri,
-    public file: DocumentFile,
+    file: DocumentFile,
     private readonly onDispose?: () => void,
     /** Set only for kinds that can't be sniffed from the path (kdb+), so a live reconnect re-opens as the right kind. */
-    readonly forceKind?: FileKind
-  ) {}
-
-  isBusy(): boolean {
-    return this.lockDepth > 0;
-  }
-
-  /**
-   * Queues `fn` behind whatever else holds the connection. Use for user-initiated work, which must never be dropped.
-   *
-   * `isSuperseded` marks a query a newer Run has replaced. Its result would be
-   * suppressed anyway, so it neither counts against the queue limit nor runs
-   * when its turn comes -- otherwise a burst of Runs fills the queue with dead
-   * work and refuses the one the user actually wants. A hard ceiling still
-   * bounds the chain against a flood of messages.
-   */
-  runExclusive<T>(fn: () => Promise<T>, isSuperseded?: () => boolean): Promise<T> {
-    const live = [...this.queuedChecks].filter(superseded => !superseded()).length;
-    if (live >= QUERY_LIMITS.queuedRequests || this.lockDepth >= QUERY_LIMITS.queuedRequests * 8) {
-      return Promise.reject(new QueryPolicyError('Too many queued operations. Wait or cancel the current query.'));
-    }
-    // Each queued job needs its own identity, even if callers reuse a guard.
-    const check = () => isSuperseded?.() ?? false;
-    this.queuedChecks.add(check);
-    this.lockDepth++;
-    const run = this.lockChain.then(() => {
-      if (this.disposed) throw new QueryPolicyError('This document is closed.');
-      if (vscode.workspace.isTrusted === false) throw new QueryPolicyError('Trust this workspace before opening datasets or running queries.');
-      if (check()) throw new QueryPolicyError('Superseded by a newer query.');
-      return fn();
+    readonly forceKind?: FileKind,
+    /** Capture the backend strategy once, preserving deliberate raw reference injection. */
+    readonly backend: BackendFactory = referenceBackendFor(file)
+  ) {
+    this.session = new DatasetSession(file, backend, {
+      authorize: () => {
+        if (vscode.workspace.isTrusted === false) throw new QueryPolicyError('Trust this workspace before opening datasets or running queries.');
+      },
+      onSaveNotice: notice => { void vscode.window.showWarningMessage(`${basename(this.uri.fsPath)}: ${notice}`); },
+      onClosing: () => {
+        this.worksheetSelection = undefined;
+        this.lastSheetPreview = undefined;
+        this.lastSheetPreviewSeq = undefined;
+        try { this.liveRefreshController?.dispose(); }
+        finally { this.liveRefreshController = undefined; }
+      },
+      beforeDispose: file => {
+        if (!this.hasBackup || !this.checkForChanges || vscode.workspace.isTrusted === false) return;
+        return this.reportChangesOnClose(file);
+      },
+      onDisposed: () => {
+        this.manualSheetTables.clear();
+        this.queryTargets.clear(); this.combinedQueryMap.clear(); this.statsCache.clear();
+        this.lastSql = undefined; this.lastEditableColumns = undefined;
+        this.onDispose?.();
+      },
     });
-    // Both arms settle the chain, so one failed job can't wedge every later
-    // one behind a permanently rejected promise.
-    const settle = () => {
-      this.lockDepth--;
-      this.queuedChecks.delete(check);
-    };
-    this.lockChain = run.then(settle, settle);
-    return run;
   }
 
-  /**
-   * Non-blocking variant for the live tick: a tick that finds the connection
-   * busy yields rather than queueing. Queueing would be wrong here — by the
-   * time it ran, the scheduler would already want a newer tick, and a backlog
-   * of stale ticks is exactly what the interval floor exists to prevent.
-   */
+  get file(): DocumentFile { return this.session.file; }
+  set file(next: DocumentFile) { this.session.file = next; }
+  isBusy(): boolean { return this.session.isBusy(); }
+
+  /** Queue and authorization are owned by the host-free dataset session. */
+  runExclusive<T>(fn: () => Promise<T>, isSuperseded?: () => boolean): Promise<T> {
+    return this.session.runExclusive(fn, isSuperseded);
+  }
+
   async tryRunExclusive<T>(fn: () => Promise<T>): Promise<{ ran: true; value: T } | { ran: false }> {
-    if (this.isBusy()) return { ran: false };
-    return { ran: true, value: await this.runExclusive(fn) };
+    return this.session.tryRunExclusive(fn);
+  }
+
+  private async reportChangesOnClose(file: DocumentFile): Promise<void> {
+    const entries = Object.entries(await file.compareToBackup());
+    const changed = entries.filter(([, status]) => status !== 'unchanged');
+    if (entries.length) vscode.window.showInformationMessage(
+      changed.length ? `${basename(this.uri.fsPath)}: ${changed.length} of ${entries.length} table(s) changed since backup.`
+        : `${basename(this.uri.fsPath)}: no changes since backup.`
+    );
   }
 
   getSiblingPath(): string | undefined {
@@ -544,6 +583,7 @@ export class DuckDBDocument implements vscode.CustomDocument {
   }
 
   invalidateTablesCache(): void {
+    this.rangeSnapshot = undefined;
     this.tablesCache = undefined;
     this.queryCatalogGeneration++;
     this.queryTargets.clear();
@@ -603,34 +643,7 @@ export class DuckDBDocument implements vscode.CustomDocument {
     return this.tablesCache;
   }
 
-  dispose(): void {
-    if (this.disposed) return;
-    this.disposed = true;
-    this.liveRefreshController?.dispose();
-    this.liveRefreshController = undefined;
-    this.file.interruptCurrentQuery();
-    const finish = async () => {
-      try {
-        if (this.hasBackup && this.checkForChanges && vscode.workspace.isTrusted !== false) {
-          const entries = Object.entries(await this.file.compareToBackup());
-          const changed = entries.filter(([, status]) => status !== 'unchanged');
-          if (entries.length) vscode.window.showInformationMessage(
-            changed.length ? `${basename(this.uri.fsPath)}: ${changed.length} of ${entries.length} table(s) changed since backup.`
-              : `${basename(this.uri.fsPath)}: no changes since backup.`
-          );
-        }
-      } catch { /* Closing never publishes raw errors or prevents cleanup. */ }
-      finally {
-        this.file.dispose();
-        this.queryTargets.clear(); this.combinedQueryMap.clear(); this.statsCache.clear();
-        this.lastSql = undefined; this.lastEditableColumns = undefined;
-        this.onDispose?.();
-      }
-    };
-    // A trusted save must finish before its filesystem lock is released.
-    if (this.lockDepth > 0) void this.lockChain.then(finish);
-    else void finish();
-  }
+  dispose(): void { this.rangeSnapshot = undefined; void this.session.close(); }
 
 }
 
@@ -646,35 +659,26 @@ export class DuckDBDocument implements vscode.CustomDocument {
  * reason).
  */
 async function reconnectDocument(document: DuckDBDocument, forceReadOnly: boolean): Promise<void> {
-  // Most kinds don't need a new instance at all to see another process's
-  // writes — a re-ATTACH, or in the flat-file case nothing whatsoever, is
-  // enough. Only .duckdb has to pay full price. See DuckDbFile.refreshInPlace.
-  if (forceReadOnly && (await document.file.refreshInPlace())) {
-    document.invalidateTablesCache();
-    return;
+  const sourceStats = await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath()));
+  let cleared = false;
+  for (const [sheet, selection] of document.manualSheetTables) {
+    if (statsChanged(selection.stats, sourceStats)) { document.manualSheetTables.delete(sheet); cleared = true; }
   }
-
-  const siblingPath = document.getSiblingPath();
-  const runtime = document.file instanceof ViewerFile ? ViewerFile : DuckDbFile;
-  const newFile = await runtime.open(document.uri.fsPath, document.forceKind, {
-    forceReadOnly,
-    siblingPath,
+  if (cleared) void vscode.window.showWarningMessage('The workbook changed. Manual table selections were cleared; select the ranges again.');
+  await document.session.reopen(document.uri.fsPath, document.forceKind, forceReadOnly, () => ({
+    siblingPath: document.getSiblingPath(),
     numberLocale: numberLocaleSetting(),
     nullText: nullTextSetting(),
     sheetTables: sheetTablesSetting(),
-  });
-  if (document.disposed) {
-    // dispose() fired while this reconnect was in flight — don't swap a
-    // fresh connection into a now-dead document (a connection leak, and a
-    // route to querying something nobody will ever close). Just close what
-    // was just opened instead of assigning it.
-    newFile.dispose();
-    return;
+    sheetTableCorrections: Object.fromEntries([...document.manualSheetTables].map(([sheet, selection]) => [sheet, { manualTables: selection.tables }])),
+  }), () => document.invalidateTablesCache());
+  if (document.manualSheetTables.size && statsChanged(sourceStats, await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath())))) {
+    document.manualSheetTables.clear();
+    void vscode.window.showWarningMessage('The workbook changed while reopening. Manual table selections were cleared; select the ranges again.');
+    await document.session.reopen(document.uri.fsPath, document.forceKind, forceReadOnly, () => ({
+      siblingPath: document.getSiblingPath(), numberLocale: numberLocaleSetting(), nullText: nullTextSetting(), sheetTables: sheetTablesSetting(),
+    }), () => document.invalidateTablesCache());
   }
-  const oldFile = document.file;
-  document.file = newFile;
-  document.invalidateTablesCache();
-  oldFile.dispose();
 }
 
 async function runLiveTick(document: DuckDBDocument, webview: vscode.Webview, generation: number): Promise<void> {
@@ -699,6 +703,20 @@ async function runLiveTick(document: DuckDBDocument, webview: vscode.Webview, ge
 
   const outcome = await document.tryRunExclusive(async () => {
     await reconnectDocument(document, true);
+    document.liveReaderStats = stats;
+    // A replaced source can drop the selected sheet. Tell the view before
+    // anything else, so it never keeps that sheet selected or editable.
+    if (!document.disposed && document.clearVanishedWorksheet()) {
+      const tables = await document.getTables();
+      if (isCurrent()) {
+        webview.postMessage({
+          command: 'tables',
+          tables,
+          combinedTableNames: [...document.combinedQueryMap.values()].map((table) => `${table}_combined`),
+          previewFirst: false,
+        });
+      }
+    }
     // dispose() can fire while the reconnect is in flight, in which case
     // reconnectDocument deliberately declines to install the new connection —
     // leaving document.file as the one dispose() just closed. Querying that is
@@ -707,7 +725,12 @@ async function runLiveTick(document: DuckDBDocument, webview: vscode.Webview, ge
     if (document.disposed || !sql) return undefined;
     // Same cap as the manual run that produced lastSql, so a live tick can't
     // quietly return a different number of rows than the view it's refreshing.
-    return { sql, result: await document.file.runQuery(sql, getMaxResultRows()) };
+    // What the rows describe is captured with the query, under the lock: a
+    // sidebar choice that runs after this section must not relabel them.
+    const sheetPreview = document.lastSheetPreview;
+    const selectionSeq = sheetPreview ? document.lastSheetPreviewSeq : undefined;
+    const executionSeq = ++document.executionSeq;
+    return { sql, sheetPreview, selectionSeq, executionSeq, result: await document.file.runQuery(sql, getMaxResultRows(), sheetPreview) };
   });
 
   if (!outcome.ran) {
@@ -717,7 +740,7 @@ async function runLiveTick(document: DuckDBDocument, webview: vscode.Webview, ge
     return;
   }
   if (outcome.value === undefined || !isCurrent()) return;
-  const { sql, result } = outcome.value;
+  const { sql, sheetPreview, selectionSeq, executionSeq, result } = outcome.value;
 
   const rowCount = result.rows.length;
   const shouldHash = rowCount <= HASH_ROW_THRESHOLD;
@@ -754,10 +777,13 @@ async function runLiveTick(document: DuckDBDocument, webview: vscode.Webview, ge
       editable: false,
       editableTable: undefined,
       serverSorted: false,
-      sheetPreview: document.lastSheetPreview,
-      sheetTables: document.lastSheetPreview
-        ? document.file.getDetectedSheetTables(document.lastSheetPreview)
-        : undefined,
+      sheetPreview,
+      sheetTables: sheetPreview ? document.file.getDetectedSheetTables(sheetPreview) : undefined,
+      sheetPreparation: sheetPreview ? document.file.getSheetPreparation(sheetPreview) : undefined,
+      // The choice these rows were previewed for, so a view that has since
+      // chosen another sheet can tell they are not its rows.
+      selectionSeq,
+      executionSeq,
     },
   });
 }
@@ -826,7 +852,11 @@ async function startLiveRefresh(
   // editing the moment Live turns on (checkEditableSelect already refuses
   // to edit a read-only connection), rather than deferring the read-only
   // switch until the first tick.
-  await document.runExclusive(() => reconnectDocument(document, true));
+  await document.runExclusive(async () => {
+    const stats = await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath()));
+    await reconnectDocument(document, true);
+    document.liveReaderStats = stats;
+  });
   if (document.disposed) return;
 
   document.liveRefreshController?.dispose();
@@ -919,8 +949,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
   // (bound to the Explorer context menu, scoped to *_kdb/ folders).
   public static readonly kdbViewType = 'dataFileViewer.kdbEditor';
 
-  static register(context: vscode.ExtensionContext): vscode.Disposable {
-    const provider = new DuckDBEditorProvider(context);
+  static register(context: vscode.ExtensionContext, backend?: BackendFactory): vscode.Disposable {
+    const provider = new DuckDBEditorProvider(context, backend);
     const registerOptions = {
       webviewOptions: { retainContextWhenHidden: true },
       supportsMultipleEditorsPerDocument: false,
@@ -952,7 +982,13 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
   // own (better — graceful read-only fallback) protection via DuckDbFile.open().
   private readonly openFlatFilePaths = new Set<string>();
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  /** User SQL drafts per document; outlives any one editor tab. */
+  private readonly sqlDrafts: SqlDraftStore;
+
+  // Legacy direct test harnesses keep their reference default; activation always injects selectBackend.
+  constructor(private readonly context: vscode.ExtensionContext, private readonly backend: BackendFactory = referenceBackend) {
+    this.sqlDrafts = new SqlDraftStore(context.workspaceState);
+  }
 
   async openCustomDocument(uri: vscode.Uri): Promise<DuckDBDocument> {
     return this.openDocumentInternal(uri);
@@ -983,7 +1019,7 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
 
       const siblingPath = forceKind === 'kdb' ? undefined : resolveSiblingPath(uri.fsPath);
       if (vscode.workspace.isTrusted === false) throw new QueryPolicyError('Trust this workspace before opening datasets or running queries.');
-      const file = await ViewerFile.open(uri.fsPath, forceKind, {
+      const file = await this.backend.open(uri.fsPath, forceKind, {
         siblingPath,
         numberLocale: numberLocaleSetting(),
         nullText: nullTextSetting(),
@@ -1015,7 +1051,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
         // Carried so a live reconnect re-opens as the same kind. kdb+ files are
         // extensionless, so without this the reconnect would sniff the path,
         // find nothing, and try to open a kdb+ table as a DuckDB database.
-        forceKind
+        forceKind,
+        this.backend
       );
     } catch (err) {
       releaseLock?.();
@@ -1053,7 +1090,11 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
     // live ticks yield (see tryRunExclusive).
     type IncomingPayload =
       | { command: 'ready' }
-      | { command: 'runQuery'; sql: string; sheetPreview?: string }
+      | { command: 'runQuery'; sql: string; sheetPreview?: string; selectionSeq?: number }
+      | { command: 'queryRange'; range: string; token: number; offset?: number }
+      | { command: 'useRangeAsTable'; range: string; token: number; headerRow: number | null }
+      | { command: 'invalidateRange' }
+      | { command: 'saveSqlDraft'; sql: string }
       | { command: 'queryCatalog'; cursor?: number }
       | { command: 'queryTarget' | 'queryTargetSql'; targetId: string; generation: number }
       | { command: 'sheetTableSql'; table: string; filters: DetectedTableFilter[]; sort?: DetectedTableSort; limit: number; generation: number }
@@ -1066,7 +1107,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
       | { command: 'toggleLiveRefresh'; enabled: boolean; intervalMs?: number }
       | { command: 'setLiveRefreshInterval'; intervalMs: number }
       | { command: 'runCombinedQuery'; table: string }
-      | { command: 'chartQuery'; xColumn: string; xIsText: boolean; xIsCategory?: boolean; yColumns: string[] }
+      | { command: 'retrySheetPreparation'; sheet: string }
+      | { command: 'chartQuery'; xColumn: string; xIsText: boolean; xIsCategory?: boolean; xIsRow?: boolean; xDateColumn?: string; yColumns: string[] }
       | {
           command: 'sheetTableQuery';
           table: string;
@@ -1086,6 +1128,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           command: 'sheetTableChart';
           table: string;
           column: string;
+          xIsRow?: boolean;
+          xDateColumn?: string;
           filters: DetectedTableFilter[];
           sort?: DetectedTableSort;
           limit: number;
@@ -1105,12 +1149,12 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
     const hostWebview = webview;
     let lastRequestId = 0;
     const messageSub = webview.onDidReceiveMessage(async (message: IncomingMessage) => {
-      const queryCommands = ['runQuery', 'runCombinedQuery', 'sortQuery'];
+      const queryCommands = ['runQuery', 'runCombinedQuery', 'sortQuery', 'queryRange', 'useRangeAsTable'];
       let owner = document.activeQueryRequest;
       const webview = new Proxy(hostWebview, {
         get(target, property) {
           if (property === 'postMessage') return (payload: Record<string, unknown>) => {
-            const sensitive = ['queryResult', 'sortQueryResult', 'rowTotal', 'error', 'columnStatsResult', 'columnStatsError', 'cellUpdated', 'cellUpdateError'];
+            const sensitive = ['queryResult', 'sortQueryResult', 'queryRangeResult', 'rowTotal', 'error', 'columnStatsResult', 'columnStatsError', 'cellUpdated', 'cellUpdateError'];
             if (document.disposed || (sensitive.includes(String(payload.command)) && owner !== document.activeQueryRequest)) return Promise.resolve(false);
             return target.postMessage({ ...payload, requestId: message?.requestId });
           };
@@ -1129,9 +1173,72 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
         lastRequestId = message.requestId;
       }
       if (queryCommands.includes(message.command)) owner = ++document.activeQueryRequest;
+      if (['runQuery', 'runCombinedQuery', 'sortQuery', 'sheetTableQuery', 'updateCell', 'retrySheetPreparation', 'toggleLiveRefresh', 'queryTarget', 'queryTargetSql'].includes(message.command)) document.rangeSnapshot = undefined;
       const superseded = () => owner !== document.activeQueryRequest;
       if (vscode.workspace.isTrusted === false) {
         webview.postMessage({ command: 'error', message: 'Trust this workspace before opening datasets or running queries.' });
+        return;
+      }
+      if (message.command === 'invalidateRange') { document.rangeSnapshot = undefined; return; }
+      if (message.command === 'queryRange') {
+        try {
+          const result = await document.runExclusive(async () => {
+            const captured = document.rangeSnapshot;
+            if (!captured || document.liveRefreshEnabled || captured.value.context.token !== message.token || statsChanged(captured.stats, await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath())))) {
+              document.rangeSnapshot = undefined;
+              throw new QueryPolicyError('This result or source has changed. Run the query and select the range again.');
+            }
+            // The worker also validates its immutable source generation before serving a read.
+            await document.file.runQuery('SELECT 1', 1);
+            const rectangle = parseCellRange(message.range);
+            if (captured.value.worksheet && rectangle.lastRow > captured.value.result.rows.length) {
+              const rowLimit = getMaxResultRows();
+              if (rowLimit > 0 && rectangle.lastRow > rowLimit) throw new QueryPolicyError('The range exceeds the configured result-row limit. Choose a smaller rectangle.');
+              assertRangeReadWithinCells(rectangle.lastRow, captured.value.result.columns.length);
+              // Sidebar previews may contain only 100 rows; raw worksheet order still has exact cell coordinates.
+              const sourceSql = `SELECT * FROM ${quoteIdent(captured.value.worksheet)} LIMIT ${rectangle.lastRow}`;
+              const expanded = await document.file.runQuery(sourceSql, rectangle.lastRow);
+              if (statsChanged(captured.stats, await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath())))) {
+                document.rangeSnapshot = undefined;
+                throw new QueryPolicyError('The source changed. Open the worksheet and select the range again.');
+              }
+              captured.value.result = expanded;
+              captured.value.sql = sourceSql;
+              captured.value.context.rows = expanded.rows.length;
+            }
+            return selectResultRange(captured.value, message.token, message.range, message.offset ?? 0);
+          }, superseded);
+          webview.postMessage({ command: 'queryRangeResult', ...result });
+        } catch (error) { webview.postMessage({ command: 'queryRangeResult', error: queryDiagnostic(error).message, token: message.token }); }
+        return;
+      }
+      if (message.command === 'useRangeAsTable') {
+        try {
+          const result = await document.runExclusive(async () => {
+            const captured = document.rangeSnapshot;
+            if (!captured || document.liveRefreshEnabled || statsChanged(captured.stats, await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath())))) {
+              document.rangeSnapshot = undefined;
+              throw new QueryPolicyError('The source or result changed. Preview the worksheet range again.');
+            }
+            const table = tableFromRange(captured.value, message.token, message.range, message.headerRow);
+            const sheet = captured.value.worksheet!;
+            if (!document.file.isWorksheet(sheet)) throw new QueryPolicyError('That worksheet is no longer in the file.');
+            await document.file.runQuery('SELECT 1', 1);
+            const previous = document.file.getDetectedSheetTables(sheet).filter(t => t.provenance === 'manual'
+              && !(t.top < table.bottom && table.top < t.bottom && t.left < table.right && table.left < t.right));
+            const manualTables = [...previous.map(t => ({
+              top: t.top, bottom: t.bottom, left: t.left, right: t.right, headerRow: t.headerRow,
+            })), table];
+            const status = await document.file.retrySheetPreparation(sheet, manualTables);
+            document.manualSheetTables.set(sheet, { tables: manualTables, stats: captured.stats });
+            document.invalidateTablesCache();
+            document.statsCache.clear();
+            return { sheet, status, tables: await document.getTables() };
+          }, superseded);
+          webview.postMessage({ command: 'sheetPreparationRetried', sheet: result.sheet, status: result.status });
+          webview.postMessage({ command: 'tables', tables: result.tables,
+            combinedTableNames: [...document.combinedQueryMap.values()].map(t => `${t}_combined`), previewFirst: false });
+        } catch (error) { webview.postMessage({ command: 'error', message: queryDiagnostic(error).message }); }
         return;
       }
       if (message.command === 'queryCatalog') {
@@ -1179,7 +1286,33 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
         } catch (error) { webview.postMessage({ command: 'error', message: queryDiagnostic(error).message }); }
         return;
       }
+      if (message.command === 'retrySheetPreparation') {
+        // SAFE-X1: an explicit, user-requested retry of one worksheet's table
+        // discovery. Never automatic; the reply says what the fresh attempt found.
+        try {
+          const status = await document.runExclusive(async () => {
+            if (!document.file.isWorksheet(message.sheet)) throw new QueryPolicyError('That worksheet is no longer in the file.');
+            return document.file.retrySheetPreparation(message.sheet);
+          });
+          webview.postMessage({ command: 'sheetPreparationRetried', sheet: message.sheet, status });
+          const tables = await document.runExclusive(() => document.getTables());
+          webview.postMessage({
+            command: 'tables', tables,
+            combinedTableNames: [...document.combinedQueryMap.values()].map((t) => `${t}_combined`),
+            previewFirst: false,
+          });
+        } catch (error) { webview.postMessage({ command: 'error', message: queryDiagnostic(error).message }); }
+        return;
+      }
+      if (message.command === 'saveSqlDraft') {
+        this.sqlDrafts.set(document.uri.toString(), message.sql);
+        return;
+      }
       if (message.command === 'ready') {
+        // Before the sidebar: the webview must hold the draft before anything
+        // can auto-preview, so nothing ever has a chance to replace it.
+        const draft = this.sqlDrafts.get(document.uri.toString());
+        if (draft !== undefined) webview.postMessage({ command: 'sqlDraft', sql: draft });
         try {
           const tables = await document.runExclusive(() => document.getTables());
           webview.postMessage({
@@ -1239,8 +1372,7 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
         try {
           const { sql, timeColumn, result } = await document.runExclusive(async () => {
             const built = await document.file.buildCombinedQuery(message.table);
-            document.lastSql = built.sql;
-            document.lastSheetPreview = undefined;
+            document.setLiveQuery(built.sql, undefined, undefined);
             document.lastQueriedBaseTable = message.table;
             document.combinedQueryMap.set(built.sql, message.table);
             document.statsCache.clear();
@@ -1346,16 +1478,60 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           }
 
           const sql = message.sql;
+          // A sidebar click selects immediately, before the preview runs.
+          const selectionHostSeq = message.sheetPreview !== undefined
+            ? document.selectWorksheet(message.sheetPreview, message.selectionSeq)
+            : undefined;
+          const isCurrentSelection = () =>
+            selectionHostSeq !== undefined && document.worksheetSelection?.hostSeq === selectionHostSeq;
           // A workbook sheet finds the tables inside it the first time it is
           // queried, not when the file opens — reading every sheet to show one
           // is what made opening slow. So the sidebar can gain entries as a
           // result of this query, and has to be told.
           const hadPendingSheets = document.file.hasPendingSheets();
-          const { result, diffFields, diffSkipped, editability } = await document.runExclusive(async () => {
+          const { result, diffFields, diffSkipped, editability, sheetPreview, executionSeq } = await document.runExclusive(async () => {
             if (document.safeMode && destructive) throw new QueryPolicyError('Blocked by Safe Mode.');
-            const queryResult = await document.file.runQuery(sql, getMaxResultRows());
-            document.lastSql = sql;
+            // Coordinates are meaningful only for the untouched preview the
+            // sidebar generated for the current choice; any other SQL --
+            // including hand-written SQL on the selected sheet -- gets none.
+            const previewSheet = message.sheetPreview;
+            const coordinatesFor = () =>
+              previewSheet !== undefined && isCurrentSelection() &&
+              document.file.isWorksheet(previewSheet) && baseTableOfSelect(sql) === previewSheet
+                ? previewSheet
+                : undefined;
+            const livePreview = document.liveRefreshEnabled && previewSheet !== undefined;
+            if (livePreview) {
+              // A writer may have replaced the source since Live last opened
+              // the reader; the old reader would refuse this preview.
+              const stats = await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath()));
+              if (statsChanged(document.liveReaderStats, stats)) {
+                await reconnectDocument(document, true);
+                document.liveReaderStats = stats;
+              }
+            }
+            const executionSeq = ++document.executionSeq;
+            const rangeStats = await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath()));
+            let queryResult: Awaited<ReturnType<typeof document.file.runQuery>>;
+            try {
+              queryResult = await document.file.runQuery(sql, getMaxResultRows(), coordinatesFor());
+            } catch (error) {
+              // The source can still change while this preview reads it. Live
+              // then refreshes the current choice, not the previous one, whose
+              // rows the view would discard as stale.
+              if (livePreview && isCurrentSelection()) document.setLiveQuery(sql, coordinatesFor(), message.selectionSeq);
+              throw error;
+            }
+            // Set together with the SQL, under the same lock, so a live tick
+            // can never pair it with the previous sheet's coordinates.
+            document.setLiveQuery(sql, coordinatesFor(), message.selectionSeq);
             document.statsCache.clear();
+            if (!destructive && !document.liveRefreshEnabled && !superseded() && !statsChanged(rangeStats, await statAll(watchPathsFor(document.uri.fsPath, document.getSiblingPath())))) {
+              document.rangeSnapshot = { stats: rangeStats, value: {
+                context: { token: executionSeq, label: document.lastSheetPreview ? `Worksheet ${document.lastSheetPreview}` : `SQL result ${executionSeq} (row 1 is the first data row)`, rows: queryResult.rows.length, columns: queryResult.columns.length },
+                sql, result: queryResult, worksheet: document.lastSheetPreview,
+              } };
+            }
 
             let fields: Partial<QueryDiff> = {};
             let skipped = false;
@@ -1377,6 +1553,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
 
             return {
               result: queryResult,
+              executionSeq,
+              sheetPreview: document.lastSheetPreview,
               diffFields: fields,
               diffSkipped: skipped,
               editability: destructive ? { editable: false as const } : await document.file.checkEditableSelect(sql),
@@ -1394,12 +1572,6 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           document.lastEditableColumns = editability.editable ? editability.columns : undefined;
           document.lastQueriedBaseTable =
             document.combinedQueryMap.get(sql) ?? (editability.editable ? editability.table : undefined);
-          document.lastSheetPreview =
-            message.sheetPreview &&
-            document.file.isWorksheet(message.sheetPreview) &&
-            baseTableOfSelect(sql) === message.sheetPreview
-              ? message.sheetPreview
-              : undefined;
 
           webview.postMessage({
             command: 'queryResult',
@@ -1412,11 +1584,15 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
             // Coordinates are meaningful only for the untouched preview the
             // sidebar generated. A hand-written WHERE/ORDER BY can rearrange
             // worksheet rows, so it deliberately gets an ordinary result.
-            sheetPreview: document.lastSheetPreview,
-            sheetTables:
-              document.lastSheetPreview
-                ? document.file.getDetectedSheetTables(document.lastSheetPreview)
-                : undefined,
+            sheetPreview,
+            sheetTables: sheetPreview ? document.file.getDetectedSheetTables(sheetPreview) : undefined,
+            sheetPreparation: sheetPreview ? document.file.getSheetPreparation(sheetPreview) : undefined,
+            // Echoed only for a sidebar choice, so the webview can drop a
+            // preview that answers an older one.
+            selectionSeq: selectionHostSeq !== undefined ? message.selectionSeq : undefined,
+            sourceGeneration: selectionHostSeq !== undefined ? document.worksheetSelection?.generation : undefined,
+            executionSeq,
+            rangeContext: document.rangeSnapshot?.value.context,
           });
 
           // Posted AFTER the result, so the rows the user asked for are never
@@ -1436,9 +1612,10 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           }
           void reportRowTotal(document, webview, sql, result);
         } catch (err) {
+          const table = baseTableOfSelect(message.sql);
           webview.postMessage({
             command: 'error',
-            message: queryDiagnostic(err, !!message.sheetPreview).message,
+            message: queryDiagnostic(err, !!message.sheetPreview || (table !== undefined && document.file.isWorksheet(table))).message,
           });
         }
         return;
@@ -1559,15 +1736,21 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
             if (yIndex === -1 || probe.columnStatsKind[yIndex] !== 'numeric') {
               throw new Error(`"${message.column}" is not numeric, so it cannot be plotted.`);
             }
-            const x = pickXAxis(probe.columns, probe.columnStatsKind);
-            if (!x) throw new Error('This table has no date/time column to use as the chart axis.');
+            const choice: AxisChoice = { row: message.xIsRow === true, dateColumn: message.xDateColumn };
+            if (choice.dateColumn !== undefined && !probe.columns.includes(choice.dateColumn)) {
+              throw new QueryPolicyError('This table has no such column to read as dates. Change the plot axis.');
+            }
+            const x = pickPlotAxis(probe.columns, probe.columnStatsKind, choice);
+            if (!x) throw new Error('This table cannot be plotted.');
             return document.file.runChartQuery(
               sql,
               x.column,
               [message.column],
               x.kind === 'text',
               cap,
-              x.kind === 'category'
+              x.kind === 'category',
+              x.kind === 'row',
+              x.kind === 'date'
             );
           });
           chartPanel.reveal(label, {
@@ -1578,6 +1761,7 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
             columns: result.columns,
             rows: result.rows,
             xAxisMode: result.xAxisMode,
+            note: result.note,
             truncated: result.truncated === true,
             maxPoints: cap,
           });
@@ -1608,6 +1792,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           return;
         }
         const cap = getChartMaxPoints();
+        // An explicit date column is the axis, whatever xColumn says.
+        const xAsDate = typeof message.xDateColumn === 'string';
         const series = message.yColumns.length === 1 ? message.yColumns[0] : `${message.yColumns.length} series`;
         // Keyed by the table being plotted, so a second table opens a second
         // tab instead of taking over the first one's. A query somebody typed
@@ -1628,11 +1814,13 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           const result = await document.runExclusive(() =>
             document.file.runChartQuery(
               document.lastSql!,
-              message.xColumn,
+              xAsDate ? message.xDateColumn! : message.xColumn,
               message.yColumns,
               message.xIsText === true,
               cap,
-              message.xIsCategory === true
+              message.xIsCategory === true,
+              message.xIsRow === true,
+              xAsDate
             )
           );
           // Read after the chart query, and never allowed to fail the chart:
@@ -1649,11 +1837,13 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           chartPanel.reveal(label, {
             command: 'chart',
             frequency,
-            xColumn: message.xColumn,
+            // columns[0], not message.xColumn: a generated row axis may have been renamed.
+            xColumn: result.columns[0],
             yColumns: message.yColumns,
             columns: result.columns,
             rows: result.rows,
             xAxisMode: result.xAxisMode,
+            note: result.note,
             // `truncated` means the cap actually bit. The chart view reports
             // the refusal instead of drawing a prefix of the series.
             truncated: result.truncated === true,
@@ -1663,7 +1853,7 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           // In the chart's own tab, not the grid's status line: the tab is
           // where the user is looking, and a chart that silently never appears
           // is the failure worth avoiding.
-          chartPanel.reveal(label, { command: 'chartError', message: queryDiagnostic(err).message });
+          chartPanel.reveal(label, { command: 'chartError', message: queryDiagnostic(err, false, xAsDate).message });
         }
         return;
       }
@@ -1800,6 +1990,15 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
         }
 
         const editableTable = document.lastEditableTable;
+        // An edit's outcome must reach the user even when the view cannot take
+        // it any more -- the editor closed during the save, or a newer query
+        // replaced the grid: then it is said in a notification instead.
+        const label = basename(document.uri.fsPath);
+        const deliver = async (payload: Record<string, unknown>, text: string, failed: boolean) => {
+          let shown = false;
+          try { shown = (await webview.postMessage(payload)) !== false; } catch { shown = false; }
+          if (!shown) void (failed ? vscode.window.showErrorMessage : vscode.window.showInformationMessage)(`${label}: ${text}`);
+        };
         try {
           const rowsMatched = await document.runExclusive(() => {
             if (document.safeMode || document.lastEditableTable !== editableTable) throw new QueryPolicyError('The edit state changed. Re-run the query before editing.');
@@ -1812,29 +2011,32 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
             );
           });
           if (rowsMatched === 0) {
-            webview.postMessage({
-              command: 'cellUpdateError',
-              column: message.column,
-              message: 'No matching row found — the data may have changed. Re-run the query and try again.',
-            });
+            const text = 'No matching row found — the data may have changed. Re-run the query and try again.';
+            await deliver({ command: 'cellUpdateError', column: message.column, message: text },
+              `The edit to "${message.column}" was not saved. ${text}`, true);
           } else {
             document.invalidateTablesCache();
-            webview.postMessage({
+            await deliver({
               command: 'cellUpdated',
               column: message.column,
               newValue: message.newValue,
               rowValues: message.rowValues,
               rowsMatched,
-            });
+            }, `The edit to "${message.column}" was saved.`, false);
           }
         } catch (err) {
-          webview.postMessage({ command: 'cellUpdateError', column: message.column, message: queryDiagnostic(err).message });
+          const text = queryDiagnostic(err).message;
+          await deliver({ command: 'cellUpdateError', column: message.column, message: text },
+            `The edit to "${message.column}" did not complete: ${text}`, true);
         }
       }
     });
 
     webviewPanel.onDidDispose(() => {
       messageSub.dispose();
+      // The draft is already in memory; persist it now rather than after the
+      // store's pause, so a window closing right after this tab keeps it.
+      void this.sqlDrafts.flush();
       // A chart of a document nobody has open is furniture.
       for (const panel of chartPanels.values()) panel.dispose();
       chartPanels.clear();

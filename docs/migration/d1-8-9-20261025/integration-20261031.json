@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-31",
+  "source_commits": [
+    "2197413",
+    "f4ffecb",
+    "c85ad9d",
+    "7809b5d"
+  ],
+  "integrated_commits": [
+    "80f0f8e",
+    "0b8d4ed",
+    "9108ea4",
+    "8ca7d87"
+  ],
+  "resumed_metadata": {
+    "path": "/Users/macc/Desktop/Kod/.codex-work/d1-8-9-resume-20261027/test/migration/schema/read-metadata.v1.schema.json",
+    "sha256": "4fc4d280d4a5863bd691de09fa40fded488c9d4d1d48faf18423add7e76892e3",
+    "disposition": "Imported byte-identically; retains SAFE-X1 status and PERF-X1 metrics schema additions."
+  },
+  "changes": [
+    "Regenerated 36 operations against integrated reference/backend code.",
+    "Workspace-relative optional reuse inventory path replaces obsolete owner-absolute worktree path.",
+    "AST move regression retains existing backend contract declarations.",
+    "New valid/refused status and metrics boundary cases.",
+    "Actual production frames and host decoder checked against independently reviewed framing schema subset."
+  ],
+  "evidence": "test/_evidence/d1-8-9-integration-20261031/attempt-01/terminal.json",
+  "tests": {
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0
+  },
+  "framing_contract": "test/migration/framing-v1-manifest.json",
+  "whole_d1_8_accepted": false,
+  "whole_d1_9_accepted": false,
+  "remaining": "Whole D1.7 reference preparation remains open. This integration and relevant framing freeze do not accept all metadata, value or operation semantics, complete native parity, or independent release qualification."
+}

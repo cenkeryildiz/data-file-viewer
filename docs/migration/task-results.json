@@ -1,0 +1,396 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "D0.1",
+      "status": "passed",
+      "input_commits": [
+        "48510a0aa3ef762101d6db53267ca6843cd6dc16"
+      ],
+      "output_commits": [
+        "2643ee26ef6b72aa08464c175e87b5f5f425223c"
+      ],
+      "dirty_disposition": [
+        "All pre-existing dirty/untracked files retained; see source-inventory.json. Only migration implementation/evidence committed."
+      ],
+      "commands": [
+        {
+          "command": "/Users/macc/miniforge3/envs/myproject/bin/python -B Python/pdf_creator/tests/migration/inventory.py (Kod cwd)",
+          "exit_code": 0,
+          "log": "docs/migration/source-inventory.json"
+        }
+      ],
+      "fixtures": [],
+      "artifacts": [
+        {
+          "path": "docs/migration/source-inventory.json",
+          "sha256": "534de9f17eeeb59304f964710baabad2e1a1003a44b836aa5c1d3b1851e0d013"
+        }
+      ],
+      "evidence_paths": [
+        "docs/migration/source-inventory.json"
+      ],
+      "failures": [],
+      "skips": [
+        "Inventory excludes external disks, custom VS Code user-data directories and symlink directory traversal; no cleanup authorized."
+      ],
+      "platform": {
+        "runner": "darwin-arm64",
+        "tested": [
+          "darwin-arm64"
+        ],
+        "claimed": [
+          "darwin-arm64"
+        ]
+      },
+      "blockers": [],
+      "rollback_ref": "48510a0aa3ef762101d6db53267ca6843cd6dc16"
+    },
+    {
+      "task_id": "D0.2",
+      "status": "passed",
+      "input_commits": [
+        "48510a0aa3ef762101d6db53267ca6843cd6dc16"
+      ],
+      "output_commits": [
+        "2643ee26ef6b72aa08464c175e87b5f5f425223c"
+      ],
+      "dirty_disposition": [
+        "All pre-existing dirty/untracked files retained; see source-inventory.json. Only migration implementation/evidence committed."
+      ],
+      "commands": [
+        {
+          "command": "inventory.py: verify git show 7076ae4:Website_ETL_and_Viewer_Plan.md SHA-256 and working-file absence",
+          "exit_code": 0,
+          "log": "docs/migration/source-inventory.json"
+        }
+      ],
+      "fixtures": [],
+      "artifacts": [
+        {
+          "path": "docs/migration/source-inventory.json",
+          "sha256": "534de9f17eeeb59304f964710baabad2e1a1003a44b836aa5c1d3b1851e0d013"
+        }
+      ],
+      "evidence_paths": [
+        "docs/migration/source-inventory.json"
+      ],
+      "failures": [],
+      "skips": [],
+      "platform": {
+        "runner": "darwin-arm64",
+        "tested": [
+          "darwin-arm64"
+        ],
+        "claimed": [
+          "darwin-arm64"
+        ]
+      },
+      "blockers": [],
+      "rollback_ref": "48510a0aa3ef762101d6db53267ca6843cd6dc16"
+    },
+    {
+      "task_id": "D0.5",
+      "status": "passed",
+      "input_commits": [
+        "48510a0aa3ef762101d6db53267ca6843cd6dc16"
+      ],
+      "output_commits": [
+        "2643ee26ef6b72aa08464c175e87b5f5f425223c"
+      ],
+      "dirty_disposition": [
+        "All pre-existing dirty/untracked files retained; see source-inventory.json. Only migration implementation/evidence committed."
+      ],
+      "commands": [
+        {
+          "command": "node --test Python/pdf_creator/tests/migration/validate.test.cjs Rust/data-file-viewer/test/migration/validate.test.cjs (Kod cwd)",
+          "exit_code": 0,
+          "log": "docs/migration/validator-tests.log"
+        }
+      ],
+      "fixtures": [],
+      "artifacts": [
+        {
+          "path": "docs/migration/validator-tests.log",
+          "sha256": "6eb6f3796fb1cac321dbcd66d5bf7bbd2b42a322106d3ed826e783db3fa9c094"
+        }
+      ],
+      "evidence_paths": [
+        "docs/migration/validator-tests.log"
+      ],
+      "failures": [],
+      "skips": [],
+      "platform": {
+        "runner": "darwin-arm64",
+        "tested": [
+          "darwin-arm64"
+        ],
+        "claimed": [
+          "darwin-arm64"
+        ]
+      },
+      "blockers": [],
+      "rollback_ref": "48510a0aa3ef762101d6db53267ca6843cd6dc16"
+    },
+    {
+      "task_id": "D1.1",
+      "status": "running",
+      "input_commits": [
+        "2643ee26ef6b72aa08464c175e87b5f5f425223c"
+      ],
+      "output_commits": [],
+      "dirty_disposition": [
+        "Pre-existing changes retained; baseline was run against the inventoried checkout plus committed D0 preparation."
+      ],
+      "commands": [
+        {
+          "command": "npm run typecheck",
+          "exit_code": 0,
+          "log": "docs/migration/baseline-typecheck.log"
+        },
+        {
+          "command": "npm test",
+          "exit_code": 0,
+          "log": "docs/migration/baseline-tests.log"
+        },
+        {
+          "command": "npm run test:security",
+          "exit_code": 0,
+          "log": "docs/migration/baseline-security.log"
+        },
+        {
+          "command": "npm run test:fuzz -- --seed 538030117 --runs 20000",
+          "exit_code": 1,
+          "log": "docs/migration/baseline-fuzz.log"
+        },
+        {
+          "command": "npm run test:browser",
+          "exit_code": 0,
+          "log": "docs/migration/continuation-browser.log"
+        },
+        {
+          "command": "DFV_BASELINE_SYNTHETIC=1 npm run test:resources",
+          "exit_code": 0,
+          "log": "docs/migration/continuation-resources-synthetic.log"
+        },
+        {
+          "command": "npm run stress",
+          "exit_code": 0,
+          "log": "docs/migration/continuation-stress.log"
+        },
+        {
+          "command": "npm run test:resources",
+          "exit_code": 1,
+          "log": "docs/migration/continuation-resources-summary.json"
+        }
+      ],
+      "fixtures": [],
+      "artifacts": [
+        {
+          "path": "docs/migration/baseline-typecheck.log",
+          "sha256": "1ce49ed465c9114c2f4984bd15c93d3d95b1545eb0a9350d4eea1dc8b234d507"
+        },
+        {
+          "path": "docs/migration/baseline-tests.log",
+          "sha256": "463532ad8e474e99fdbda688968fd75e4152105cb36bb29c04e0ee01471072f4"
+        },
+        {
+          "path": "docs/migration/baseline-security.log",
+          "sha256": "20844e8ab2ad4d126fd99f91429977eb532feb0566b5a868727517c63c5807be"
+        },
+        {
+          "path": "docs/migration/baseline-fuzz.log",
+          "sha256": "1c8196261c8215489962a7e8b25b55da93fdbad545f63ac469c08adc07a228c7"
+        },
+        {
+          "path": "docs/migration/reference-runs.json",
+          "sha256": "3337943c5efa5c788b00f053e139dcb7235b5454490a99ecaf59861f5ac3f166"
+        },
+        {
+          "path": "docs/migration/continuation-browser.log",
+          "sha256": "1e535f735f33e76aea9dfedfa6b3bccd37fdcb529c2f0b74d1ca0ff3685e590d"
+        },
+        {
+          "path": "docs/migration/continuation-resources-synthetic.log",
+          "sha256": "53e2b1bedc105e2b675b2beb71c4abbc037428ab0c68292387606ac67bb31197"
+        },
+        {
+          "path": "docs/migration/continuation-stress.log",
+          "sha256": "1d411a2f99b50fb9ed34dc691db1d443cad24f6e9fca034207cc9b6f968c2ad7"
+        },
+        {
+          "path": "docs/migration/continuation-resources-summary.json",
+          "sha256": "19d85844913b9eab49b973c3767b0219a8d304a55ab8eadb4fe7e4b05a1c7333"
+        }
+      ],
+      "evidence_paths": [
+        "docs/migration/baseline-typecheck.log",
+        "docs/migration/baseline-tests.log",
+        "docs/migration/baseline-security.log",
+        "docs/migration/baseline-fuzz.log",
+        "docs/migration/reference-runs.json",
+        "docs/migration/continuation-browser.log",
+        "docs/migration/continuation-resources-synthetic.log",
+        "docs/migration/continuation-stress.log",
+        "docs/migration/continuation-resources-summary.json"
+      ],
+      "failures": [
+        "Unscoped resource equivalence: optional local datasets absent from the saved synthetic baseline (7 pass, 1 fail); synthetic-only run passes all 8."
+      ],
+      "skips": [
+        "Other platforms untested; no Rust conversion baseline frozen yet.",
+        "npm test: 798 passed, 4 TODO, no test failures; resources/host/browser/stress/package gates not yet rerun. Existing resource-test edits retained.",
+        "Stress: 277 passed, 4 known cases; package and isolated VS Code host passed after enum correction. Historical failing fuzz run retained; fixed in 55e53c4316021631c166df42568c48a86922a132"
+      ],
+      "platform": {
+        "runner": "darwin-arm64",
+        "tested": [
+          "darwin-arm64"
+        ],
+        "claimed": [
+          "darwin-arm64"
+        ]
+      },
+      "blockers": [
+        "Full D1.1 signoff pending wider PDF browser coverage and disposition of the local resource baseline mismatch. Existing unrelated resource-test modifications were used as found and remain uncommitted."
+      ],
+      "rollback_ref": "2643ee26ef6b72aa08464c175e87b5f5f425223c"
+    },
+    {
+      "task_id": "D1.6",
+      "status": "running",
+      "input_commits": [
+        "39b2a832e05e2f301a65b0fe687f8a6359a88153"
+      ],
+      "output_commits": [
+        "55e53c4316021631c166df42568c48a86922a132"
+      ],
+      "dirty_disposition": [
+        "Only src/queryMessages.ts and test/queryMessages.test.ts changed; unrelated resource-test edits retained."
+      ],
+      "commands": [
+        {
+          "command": "npm run typecheck",
+          "exit_code": 0,
+          "log": "docs/migration/enum-fix-typecheck.log"
+        },
+        {
+          "command": "npm run test:security",
+          "exit_code": 0,
+          "log": "docs/migration/enum-fix-security.log"
+        },
+        {
+          "command": "npm run test:fuzz -- --seed 538030117 --runs 20000",
+          "exit_code": 0,
+          "log": "docs/migration/enum-fix-fuzz.log"
+        },
+        {
+          "command": "npm test",
+          "exit_code": 0,
+          "log": "docs/migration/enum-fix-all.log"
+        },
+        {
+          "command": "npm run build",
+          "exit_code": 0,
+          "log": "docs/migration/enum-fix-build.log"
+        },
+        {
+          "command": "./node_modules/.bin/vsce package --out /Users/macc/pdf_viewer_improvements/dfv-enum-fix-20261014.vsix",
+          "exit_code": 0,
+          "log": "docs/migration/enum-fix-package.log"
+        },
+        {
+          "command": "node test/package.cjs /Users/macc/pdf_viewer_improvements/dfv-enum-fix-20261014.vsix",
+          "exit_code": 0,
+          "log": "docs/migration/enum-fix-package-check.log"
+        },
+        {
+          "command": "DFV_VSIX=/Users/macc/pdf_viewer_improvements/dfv-enum-fix-20261014.vsix npm run test:host",
+          "exit_code": 0,
+          "log": "docs/migration/enum-fix-host.log"
+        }
+      ],
+      "fixtures": [
+        {
+          "path": "src/queryMessages.ts",
+          "sha256": "424bed58908ebf7194c2cac9ace1b933519e069a6f2a5c2a7f3e051528c5e26c"
+        },
+        {
+          "path": "test/queryMessages.test.ts",
+          "sha256": "a01d95da85cdca4498f82423ff4bd15821b6c9c64a2d086be7a690ddd2fe2978"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "docs/migration/enum-fix-typecheck.log",
+          "sha256": "1ce49ed465c9114c2f4984bd15c93d3d95b1545eb0a9350d4eea1dc8b234d507"
+        },
+        {
+          "path": "docs/migration/enum-fix-security.log",
+          "sha256": "d2e23d00ac447d1c5ad5ec7054d92cf51e3d3a84c117e981dcaf18a40c62a113"
+        },
+        {
+          "path": "docs/migration/enum-fix-fuzz.log",
+          "sha256": "3a1ceca7de0b027611b902518d74c382e6f08a1fa8b6bf683ce5a4ba16340e10"
+        },
+        {
+          "path": "docs/migration/enum-fix-all.log",
+          "sha256": "2025b6e28d26c5060eee552ff820b0499bdcffaa78c8955dd15687d3d8d8b6ea"
+        },
+        {
+          "path": "docs/migration/enum-fix-build.log",
+          "sha256": "05028da2c4ea8d662f8472f308f4fd6c55404b7a423672b5075c6fbce86c9331"
+        },
+        {
+          "path": "docs/migration/enum-fix-package.log",
+          "sha256": "254fa169c384da6b5a5b1d5fc8f48f4a833a8ebfedf5bf8da844cd090b142449"
+        },
+        {
+          "path": "docs/migration/enum-fix-package-check.log",
+          "sha256": "7953b6867e4a5cdf21d711ec731bf33526b5f13008c4bcb136d162c648c7f9c5"
+        },
+        {
+          "path": "docs/migration/enum-fix-host.log",
+          "sha256": "e03120ab7e5de17b250f0273f0913e41f3a52f7c00595a2785143b391e04bda8"
+        },
+        {
+          "path": "docs/migration/enum-fix-before.log",
+          "sha256": "9fada09e4d79fc9072d13caa62667272d7c0e655cc673ee8964080adc7d6e278"
+        },
+        {
+          "path": "docs/migration/enum-fix.json",
+          "sha256": "441815580927008571528bdae2d02cff06e4602caaa7e52cf5a57de630ced0de"
+        }
+      ],
+      "evidence_paths": [
+        "docs/migration/enum-fix-typecheck.log",
+        "docs/migration/enum-fix-security.log",
+        "docs/migration/enum-fix-fuzz.log",
+        "docs/migration/enum-fix-all.log",
+        "docs/migration/enum-fix-build.log",
+        "docs/migration/enum-fix-package.log",
+        "docs/migration/enum-fix-package-check.log",
+        "docs/migration/enum-fix-host.log",
+        "docs/migration/enum-fix-before.log",
+        "docs/migration/enum-fix.json"
+      ],
+      "failures": [],
+      "skips": [
+        "Other platforms not exercised."
+      ],
+      "platform": {
+        "runner": "darwin-arm64",
+        "tested": [
+          "darwin-arm64"
+        ],
+        "claimed": [
+          "darwin-arm64"
+        ]
+      },
+      "blockers": [
+        "Implementation and focused acceptance pass; formal task signoff awaits prerequisite D1.1 baseline completion."
+      ],
+      "rollback_ref": "39b2a832e05e2f301a65b0fe687f8a6359a88153"
+    }
+  ]
+}

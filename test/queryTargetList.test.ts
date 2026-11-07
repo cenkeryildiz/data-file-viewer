@@ -72,3 +72,50 @@ test('a database file (no worksheets) is grouped by catalog.schema, even when a 
     ]);
   }
 });
+
+/* ------------------------------------------------- EX-01 reproduced defects */
+
+// Reproduced in the real browser (viewer_plan_validation_20261016,
+// picker-missing-raw.png): a current-generation catalog that lacks the open
+// sheet's raw entry makes the picker fall back to the whole workbook, so the
+// other sheet's tables appear under the selected sheet. Fixed by EX-03.
+const twoSheet = [
+  target({ name: 'Raw_Data', worksheet: 'Raw_Data', rawWorksheet: true }),
+  target({ name: 'Raw_Data · Table 1', worksheet: 'Raw_Data', range: 'A1:B3' }),
+  target({ name: 'ZOther', worksheet: 'ZOther', rawWorksheet: true }),
+  target({ name: 'ZOther · Table 1', worksheet: 'ZOther', range: 'A1:B3' }),
+];
+const missingRaw = twoSheet.filter((t) => !(t.rawWorksheet && t.name === 'Raw_Data'));
+
+test('two-sheet catalog with every raw entry: only the open sheet is listed', () => {
+  const ids = groupQueryTargets(twoSheet, 'Raw_Data').flatMap((g) => g.options.map((o) => o.id));
+  assert.deepEqual(ids, ['Raw_Data', 'Raw_Data · Table 1']);
+});
+
+test(
+  'missing raw entry for the open sheet never lists another sheet',
+  () => {
+    const ids = groupQueryTargets(missingRaw, 'Raw_Data').flatMap((g) => g.options.map((o) => o.id));
+    assert.ok(!ids.some((id) => id.startsWith('ZOther')), `foreign options: ${ids.join(', ')}`);
+    assert.ok(ids.includes('Raw_Data · Table 1'), 'the open sheet\'s own table must stay listed');
+  }
+);
+
+test(
+  'a catalog page holding only another sheet lists nothing for the open sheet',
+  () => {
+    const page = twoSheet.filter((t) => t.worksheet === 'ZOther');
+    const ids = groupQueryTargets(page, 'Raw_Data').flatMap((g) => g.options.map((o) => o.id));
+    assert.deepEqual(ids, []);
+  }
+);
+
+test('an empty catalog with an open sheet has no picker options', () => {
+  assert.deepEqual(groupQueryTargets([], 'Raw_Data'), []);
+});
+
+test('a page of derived tables without any raw entry stays scoped to the open sheet', () => {
+  assert.deepEqual(groupQueryTargets(twoSheet.filter((t) => !t.rawWorksheet), 'Raw_Data'), [
+    { label: 'Tables', options: [{ id: 'Raw_Data · Table 1', label: 'Table 1 — A1:B3' }] },
+  ]);
+});
