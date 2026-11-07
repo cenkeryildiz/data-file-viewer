@@ -9,27 +9,31 @@ DuckDB is the engine reading most of these formats under the hood; kdb+
 files are parsed directly in their own real format (see the kdb+ section
 below).
 
-### 0.0.21: native tables, MAT and PDF
+### 0.1.0: native tables, MAT and PDF
 
-Version 0.0.21 uses separate Rust workers for tables, read-only MATLAB Level-5
+Version 0.1.0 uses separate Rust workers for tables, read-only MATLAB Level-5
 files and the qualified PDF editor. Installing the extension needs no Python,
 Conda, Cargo or Node DuckDB binding. The current package supports **macOS Apple
 silicon (arm64)**; Windows, Linux and Intel Mac packages are not qualified for this
 version. Earlier cross-platform release notes below apply to their named versions.
 
-Download [data-file-viewer-0.0.21-darwin-arm64.vsix](https://github.com/cenkeryildiz/data-file-viewer/releases/download/v0.0.21/data-file-viewer-0.0.21-darwin-arm64.vsix),
+Download [data-file-viewer-0.1.0-darwin-arm64.vsix](https://github.com/cenkeryildiz/data-file-viewer/releases/download/v0.1.0/data-file-viewer-0.1.0-darwin-arm64.vsix),
 then use VS Code's **Extensions: Install from VSIX…** command, or:
 
 ```sh
-code --install-extension data-file-viewer-0.0.21-darwin-arm64.vsix
+code --install-extension data-file-viewer-0.1.0-darwin-arm64.vsix
 ```
 
+If upgrading from `kemal-local.data-file-viewer`, uninstall that older copy before
+installing this package so both extensions do not register the same editors.
+Keep your data files and existing `dataFileViewer` settings.
+
 The versioned GitHub release binds the VSIX checksum to its exact source commit.
-Its release notes record installed-package checks and limitations. Keep your
-previous VSIX if you need to reinstall an earlier version.
+Its release notes record installed-package checks and limitations. Earlier
+release packages are removed at the owner's request; source history is retained.
 
 Native qualification includes 541 default release Rust tests, 607 tests with
-fault-injection features, 1,190 passing host/unit cases, real VS Code workflows,
+fault-injection features, 1,190 passing Node test cases, real VS Code workflows,
 and a full 30-minute mixed-feature soak: 6,052 cycles, 1,008 verified edits and
 13 forced worker kills, with integrity, memory-growth and cleanup checks passing.
 The soak's sampled native-worker peak was 644.44 MiB against a 2,048 MiB budget;
@@ -39,7 +43,7 @@ MAT v7.3/HDF5 and object-value decoding remain unsupported. Large XLSX sheets
 above the 64 MiB decoded-sheet cache are reread; sparse worksheet extents can
 still be expensive. PDF support is the bounded profile described below, with
 advanced editing/math parity deferred. Physical PDF trackpad zoom was reported
-smooth by the user on this packaged version.
+smooth by the user on the qualified runtime; 0.1.0 retains those exact worker and UI bytes.
 
 ### 0.0.19: Worksheet preview button removed
 
@@ -690,7 +694,7 @@ the source and discards handles belonging to the previous generation.
 
 ## PDF editor
 
-> **Version 0.0.21:** macOS Apple silicon (arm64). Uses the retained, qualified
+> **Version 0.1.0:** macOS Apple silicon (arm64). Uses the retained, qualified
 > PDF MVP worker and UI; other platforms and full PDF parity are not qualified.
 
 **Supported (qualified profile):**
@@ -814,7 +818,7 @@ in `native/duckdb-third-party-licenses.txt`, runs vsce, then inspects the archiv
 
 ```sh
 scripts/stage-vsix.sh build-workers           # release workers, default features, path-remapped (heavy lock)
-scripts/stage-vsix.sh package /absolute/out/data-file-viewer-0.0.21-darwin-arm64.vsix
+scripts/stage-vsix.sh package /absolute/out/data-file-viewer-0.1.0-darwin-arm64.vsix
 ```
 
 `test/package.cjs` (run by the recipe) requires both workers to be executable Mach-O arm64
@@ -842,8 +846,8 @@ npm run test:package   # the same checks and more, on the newest VSIX
 
 The newest qualified package is published as a versioned GitHub release, with its
 VSIX SHA-256 and the exact source commit. [Releases](https://github.com/cenkeryildiz/data-file-viewer/releases)
-retain earlier versions for rollback. Version 0.0.21 ships only the qualified
-macOS arm64 artifact; older Windows artifacts belong to older releases.
+contain the current package. Version 0.1.0 ships only the qualified macOS arm64
+artifact; older release packages, including Windows artifacts, are removed.
 
 `.github/workflows/build.yml` is the retained legacy Node-backed pipeline. It runs
 only when manually dispatched, and its release job is disabled so it cannot

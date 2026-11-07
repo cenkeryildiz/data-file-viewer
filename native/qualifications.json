@@ -72,12 +72,12 @@
     "package": {
       "cwd": ".",
       "command": "DFV_NATIVE_DIR=\"$PWD/native\" DFV_WORKER_DIR=\"$DFV_DEFAULT_WORKERS\" scripts/stage-vsix.sh package \"$DFV_VSIX\"",
-      "state": "verified: final0.0.21/darwin-arm64,1326files,32728486bytes, exact runtime pins/notices/target/archive checks"
+      "state": "verified: final0.1.0/darwin-arm64,1326files,32728586bytes, exact runtime pins/notices/target/archive checks"
     },
     "packaged_workflows": {
       "cwd": ".",
       "command": "DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostRefusals.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostRange.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostPlot.cjs && DFV_VSIX=\"$DFV_VSIX\" node test/host/nativeHostLifecycle.cjs && DFV_MAT_ISOLATION=1 DFV_VSIX=\"$DFV_VSIX\" node test/host/matViewer.cjs; table format and PDF installed scripts additionally required",
-      "state": "verified: native suites/all11table formats/MAT/PDF editing-export-recovery/final fresh installed smoke; user trackpad smooth",
+      "state": "verified: full installed0.0.21campaign;0.1.0allruntimeentriesidentical, fresh0.1.0installedsmoke; physicalcheckinheritedunchangedruntime",
       "note": "MAT host runner accepts DFV_VSIX, clears development/backend/worker overrides, installs only in disposable profile and asserts installed worker paths; remaining table/PDF installed workflows run separately before credit"
     }
   },
@@ -348,7 +348,7 @@
     }
   ],
   "manual_pending": [],
-  "completion": "V24 source/release remote readback pending; no real-profile installation by agent",
+  "completion": "User now explicitly authorizes installing final0.1.0in realVSCode aftermatchingGitHubsource/assetverification",
   "manual_verified": [
     "2026-11-07 Europe/Madrid: user reports PDF trackpad zoom smooth in packaged0.0.21 darwin-arm64 VSIX"
   ]

@@ -1,14 +1,14 @@
 {
   "schema": "dfv-acceptance-candidate.v1",
   "recorded_at": "2026-11-07T13:48:24.519568+00:00",
-  "status": "qualified runtime and final package; source/release remote readback pending",
+  "status": "final0.1.0runtime/package qualified; matchingGitHubrelease and explicitrealCodeinstall/readback pending",
   "source_bases": {
     "native": "8c2585e + preserved integration",
     "ui": "9efc4bb + preserved integration"
   },
   "files": {
     ".vscodeignore": "2c58ae9020381dc68781958d8a2657d1c8494b1dee15385403b06e826d34c3ae",
-    "README.md": "fd01ce433ccae814082c57d86877b1766b0f8634218bc42717eee17547ac6e0b",
+    "README.md": "7194817709afebf01b6fd68a104531da60adb07e1db73a3b9b6d7055d1a4c367",
     "esbuild.js": "a653781a81f6b3aa6f72dd073b1a2ffcdfe4653305513803069b46f4063c5ba1",
     "media/main.css": "a21af31757741a49d51efc96ee168a42598137769926947ec7e09bf9c0f32390",
     "media/pdf-vscode/interface.css": "be3fdea5d2eaffc1625d9545b6d807aace7d1844eae9c61b24eb48d359e3d2ec",
@@ -361,8 +361,8 @@
     "native/pdf-mvp-assets.json": "08f40122e277ad7e273f5243682c3fdcdb52db6c00e148b9f9c94f396be4a827",
     "native/resource-policy.json": "5f0d1499a4426db7819734cebbb5f166a358678db91d5dc514dd7a3101dd412d",
     "native/rust-toolchain.toml": "d13306be0ecda81ce779baa290ffb417380d525928477f16200884b5169cca33",
-    "package-lock.json": "b1f47047d7cf72d7285c530a0692519726fde58726210a1a4f8c29feaea8a227",
-    "package.json": "7c38483bcb1be2257e139e693ff0297100ab18f278bf82166ba8174b0f84e6f3",
+    "package-lock.json": "a062199a146e7e401356a6c92603313d563fe37290fb1ace828398421d004f3d",
+    "package.json": "0027f0894a075c8878286d40a5a3cb6cf9b3b44e3c2f22916954290bebf5b1ac",
     "scripts/stage-vsix.sh": "7e78f5910fdc3c5f52d95caffa51325f6b09500ada32489cae3d34e134cc3657",
     "scripts/third_party_licenses.py": "d11ab1849e46a3362216c4e079bc0469b24945255fd8df3a8a19947dfc25175a",
     "src/backend/excel/detect.ts": "9c94dc990d6a2bb1cea353124b9a3c0dbed0d1017c472ca29355a45bc4bf39f3",
@@ -660,7 +660,7 @@
     "test/vsix_smoke/fixtures/marker_separate.pdf": "1174f39f7eddb87e011e62fb31c88633f26cfdbb24662c7462be054b0aa94dd0",
     "test/vsix_smoke/fixtures/LICENSE_DEJAVU": "d75938dec098f06f0ac3c00853065d94f020be1c3c62ef1dc2975ba15b4d9b0e"
   },
-  "inventory_sha256": "8b690c919d3f892943f1dde332f545dfd023ac2e8114864ae0781928fdfadc46",
+  "inventory_sha256": "6d918148080169d05bcfa14b2582afb0ae7eb7c7658a4d2b52d41e2054348e66",
   "pdf_runtime": "verified separately by native/pdf-mvp-assets.json; retained qualified MVP, not a fresh PDF-engine build",
   "exclusions": [
     "generated outputs, build directories, node_modules contents, private user inputs, advanced PDF parity, MOD-04 component archive (user decision)"
@@ -744,6 +744,16 @@
       "at": "2026-11-07T22:34:42.710249+01:00",
       "previous_inventory_sha256": "7944535037d7768b26ce6ebdc610de6a85952e2ed25b27b8a7f831262af88412",
       "reason": "source-only packaging default resolves this checkout native workspace; no packaged runtime content changed"
+    },
+    {
+      "at": "2026-11-07T22:41:59.661154+01:00",
+      "previous_inventory_sha256": "8b690c919d3f892943f1dde332f545dfd023ac2e8114864ae0781928fdfadc46",
+      "reason": "owner requested final0.1.0version and removal of older packages; README migration/retention policy and version metadata only; no runtime change",
+      "changed_paths": [
+        "README.md",
+        "package-lock.json",
+        "package.json"
+      ]
     }
   ]
 }

@@ -2,7 +2,7 @@
   "schema": "dfv-accepted-ports.v1",
   "accepted_at": "2026-11-07T14:16:18.638473+00:00",
   "scope": "V20/V21/V23 full native DFV with retained PDF MVP, final macOS arm64 VSIX qualified",
-  "candidate_inventory_sha256": "8b690c919d3f892943f1dde332f545dfd023ac2e8114864ae0781928fdfadc46",
+  "candidate_inventory_sha256": "6d918148080169d05bcfa14b2582afb0ae7eb7c7658a4d2b52d41e2054348e66",
   "platforms": {
     "qualified": "darwin-arm64 on macOS 15.8.2 / Apple M4 / 16 GiB",
     "not_qualified": [
@@ -276,9 +276,10 @@
       "distinctWorkersSeen": 2541
     },
     "installed_package": "all-format including kdb, native security/range/150kplot/lifecycle/EX07/PDFUI/MAT kill isolation; PDF render/rotate/export/text/Unicode/markers/annotations/pages/save/discard/restart/hot-exit/worker kill; final rebuilt archive smoke pass",
-    "final_runtime_vs_candidate": "README only changed; every other archive entry byte-identical",
+    "final_runtime_vs_candidate": "0.1.0workers/UI/dependencies identical to fully qualified0.0.21; onlyREADME/package.json/VSIXmanifest differ; fresh0.1.0disposableinstalled CSV/PDF/activation/worker smoke passed",
     "physical_trackpad": "user-reported smooth in packaged0.0.21",
-    "public_mat_reader": "focused genuine MATLAB oracle test passes without user-supplied research dataset; same >1050 variable assertion"
+    "public_mat_reader": "focused genuine MATLAB oracle test passes without user-supplied research dataset; same >1050 variable assertion",
+    "version_change": "0.1.0workers/UI/dependencies identical to fully qualified0.0.21; onlyREADME/package.json/VSIXmanifest differ; fresh0.1.0disposableinstalled CSV/PDF/activation/worker smoke passed"
   },
   "limits": [
     "XLSX sheets over the 64 MiB cache cap reload on every read; sparse extent still drives memory within the 10M-cell bound",
@@ -286,14 +287,14 @@
     "PDF advanced parity remains deferred",
     "resource samples every 100 ms may miss shorter peaks; Code/Chromium excluded from native budget"
   ],
-  "rollback": "Retain the earlier qualified MVP VSIX and current source bases; do not install in the real profile without authorization. Completed candidate source archive/commit is V24.",
+  "rollback": "Owner requests only current0.1.0release packages/install retained. Source history, original inputs, settings and recovery/user data remain preserved; never replay an unknown write.",
   "artifact": {
-    "version": "0.0.21",
+    "version": "0.1.0",
     "platform": "darwin-arm64",
-    "filename": "data-file-viewer-0.0.21-darwin-arm64.vsix",
-    "bytes": 32728486,
-    "sha256": "3e3e02d1f8b0cf48904428bea1d85797e22aec2c95f19ecb43ed614c5a9db9db",
-    "release_tag": "v0.0.21",
+    "filename": "data-file-viewer-0.1.0-darwin-arm64.vsix",
+    "bytes": 32728586,
+    "sha256": "ca0048712d0a16957f3bfb3a4a288f7f75b7c0b815c12b48391e117552a00b7e",
+    "release_tag": "v0.1.0",
     "repository": "cenkeryildiz/data-file-viewer"
   }
 }
