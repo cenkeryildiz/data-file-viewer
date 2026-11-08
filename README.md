@@ -11,7 +11,7 @@ below).
 
 ### 0.1.2: Preview-style PDF controls and worksheet fixes
 
-The local 0.1.2 candidate uses book, highlighter, pencil and page-grid icons for
+Version 0.1.2 uses book, highlighter, pencil and page-grid icons for
 Read, Annotate, Edit and Organize. Compact 28px toolbar controls and reduced header
 spacing leave more room for the PDF. Export stays at the top right. Selecting text
 does not open a floating action strip. In Annotate, use the marking dropdown for
@@ -36,9 +36,9 @@ oversized sheet leaves the cache. Numeric columns may include text-stored
 numbers; missing markers stay gaps. The plot's X axis choice can use another
 numeric column as well as the automatic date/period axis.
 
-0.1.2 is a local candidate; it has not been published or installed into the user's
-normal VS Code profile. The published 0.1.1 installation instructions below remain
-available for rollback.
+PDF text editing now handles pdfTeX (LaTeX) documents line by line: edit a word
+or a whole line; lines holding formulas are refused with a specific reason.
+Paragraph refill and native math are not part of 0.1.2.
 
 ### 0.1.1: earlier PDF editing controls
 
@@ -52,17 +52,17 @@ zoom remain available.
 
 ### Native tables, MAT and PDF
 
-Version 0.1.1 uses separate Rust workers for tables, read-only MATLAB Level-5
+Version 0.1.2 uses separate Rust workers for tables, read-only MATLAB Level-5
 files and the qualified PDF editor. Installing the extension needs no Python,
 Conda, Cargo or Node DuckDB binding. The current package supports **macOS Apple
 silicon (arm64)**; Windows, Linux and Intel Mac packages are not qualified for this
 version. Earlier cross-platform release notes below apply to their named versions.
 
-Download [data-file-viewer-0.1.1-darwin-arm64.vsix](https://github.com/cenkeryildiz/data-file-viewer/releases/download/v0.1.1/data-file-viewer-0.1.1-darwin-arm64.vsix),
+Download [data-file-viewer-0.1.2-darwin-arm64.vsix](https://github.com/cenkeryildiz/data-file-viewer/releases/download/v0.1.2/data-file-viewer-0.1.2-darwin-arm64.vsix),
 then use VS Code's **Extensions: Install from VSIX…** command, or:
 
 ```sh
-code --install-extension data-file-viewer-0.1.1-darwin-arm64.vsix
+code --install-extension data-file-viewer-0.1.2-darwin-arm64.vsix
 ```
 
 If upgrading from `kemal-local.data-file-viewer`, uninstall that older copy before
@@ -737,7 +737,7 @@ the source and discards handles belonging to the previous generation.
 
 ## PDF editor
 
-> **Version 0.1.1:** macOS Apple silicon (arm64). Uses the retained, qualified
+> **Version 0.1.2:** macOS Apple silicon (arm64). Uses the retained, qualified
 > PDF MVP worker and UI; other platforms and full PDF parity are not qualified.
 
 **Supported (qualified profile):**
@@ -862,7 +862,7 @@ in `native/duckdb-third-party-licenses.txt`, runs vsce, then inspects the archiv
 
 ```sh
 scripts/stage-vsix.sh build-workers           # release workers, default features, path-remapped (heavy lock)
-scripts/stage-vsix.sh package /absolute/out/data-file-viewer-0.1.1-darwin-arm64.vsix
+scripts/stage-vsix.sh package /absolute/out/data-file-viewer-0.1.2-darwin-arm64.vsix
 ```
 
 `test/package.cjs` (run by the recipe) requires both workers to be executable Mach-O arm64
@@ -890,7 +890,7 @@ npm run test:package   # the same checks and more, on the newest VSIX
 
 The newest qualified package is published as a versioned GitHub release, with its
 VSIX SHA-256 and the exact source commit. [Releases](https://github.com/cenkeryildiz/data-file-viewer/releases)
-contain the current package. Version 0.1.1 ships only the qualified macOS arm64
+contain the current package. Version 0.1.2 ships only the qualified macOS arm64
 artifact; older release packages, including Windows artifacts, are removed.
 
 `.github/workflows/build.yml` is the retained legacy Node-backed pipeline. It runs
