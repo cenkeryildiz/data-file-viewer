@@ -3285,8 +3285,9 @@ export class DuckDbFile {
     maxPoints = 0,
     xIsCategory = false,
     xIsRow = false,
-    xAsDate = false
-  ): Promise<QueryResult & { xAxisMode: 'time' | 'category'; note?: string }> {
+    xAsDate = false,
+    xAsValue = false
+  ): Promise<QueryResult & { xAxisMode: 'time' | 'category' | 'value'; note?: string }> {
     // Charting may be the first action taken on a detected table (the inline
     // sheet UI does not require a separate preview first). Prepare it before
     // the text-axis probe, or that probe and the chart query would each
@@ -3325,6 +3326,7 @@ export class DuckDbFile {
     }
 
     if (xAsDate) return this.runExplicitDateChart(baseSql, inner, xColumn, yColumns, maxPoints);
+    if (xAsValue) return this.runValueAxisChart(baseSql, inner, xColumn, yColumns, maxPoints);
 
     const x = quoteIdent(xColumn);
 
@@ -3368,6 +3370,50 @@ export class DuckDbFile {
     const sql =
       `select ${x}, ${ys} from ${wrapAsSubquery(inner)} as _chart where ${x} is not null`;
     return { ...(await this.runQuery(this.derivedQuery(baseSql, sql), maxPoints)), xAxisMode: 'category' };
+  }
+
+  /**
+   * WSF-3: a numeric `xColumn` against numeric series, drawn on a number line.
+   *
+   * Ordered by x (ties by the first series, so the result is reproducible). A row with no finite x, or with
+   * no finite value in any plotted column, has no place on the chart: it is left out and counted in `note`.
+   * Only counts and the column label are ever reported, never a cell value.
+   */
+  private async runValueAxisChart(
+    baseSql: string,
+    inner: string,
+    xColumn: string,
+    yColumns: string[],
+    maxPoints: number
+  ): Promise<QueryResult & { xAxisMode: 'value'; note?: string }> {
+    const label = `"${xColumn.length > 60 ? xColumn.slice(0, 57) + '...' : xColumn}"`;
+    if (yColumns.includes(xColumn)) {
+      throw new QueryPolicyError(`${label} is the x axis, so it cannot also be the plotted series.`);
+    }
+    const x = quoteIdent(xColumn);
+    const source = wrapAsSubquery(inner);
+    const described = await this.connection.runAndReadAll(`describe select ${x} from ${source} as _t`);
+    const type = String(described.getRows()[0]?.[1] ?? '').toUpperCase();
+    if (!/^(U?(TINYINT|SMALLINT|INTEGER|BIGINT|HUGEINT)|FLOAT|DOUBLE|DECIMAL.*)$/.test(type)) {
+      throw new QueryPolicyError(`${label} (${type}) is not numeric, so it cannot be a number axis.`);
+    }
+    const finite = (c: string) => `isfinite(try_cast(${c} as double))`;
+    const keep = `${finite(x)} and (${yColumns.map((c) => finite(quoteIdent(c))).join(' or ')})`;
+    const counts = (
+      await this.connection.runAndReadAll(
+        `select count(*), count(*) filter (where ${keep}) from ${source} as _t`
+      )
+    ).getRowsJson()[0] as unknown[];
+    const [total, kept] = counts.map(Number);
+    if (kept === 0) throw new QueryPolicyError(`No row has both a value in ${label} and a number to plot.`);
+    const ys = yColumns.map(quoteIdent).join(', ');
+    const sql = `select ${x}, ${ys} from ${source} as _chart where ${keep} order by 1 asc, 2 asc`;
+    const leftOut = total - kept;
+    return {
+      ...(await this.runQuery(this.derivedQuery(baseSql, sql), maxPoints)),
+      xAxisMode: 'value',
+      ...(leftOut > 0 ? { note: `${leftOut} row${leftOut === 1 ? '' : 's'} with no x value or no number left out` } : {}),
+    };
   }
 
   /**

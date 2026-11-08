@@ -100,8 +100,10 @@ test('backup of a dirty document is the recovery record: it survives the kill an
     for (let i = 0; i < 100 && !fx.warnings.length; i++) await sleep(100);
     assert.equal(fx.warnings.length, 1);
     assert.match(fx.warnings[0].text, /unsaved edit session\(s\) for original\.pdf can be restored/);
-    for (let i = 0; i < 100 && !(await t2.send('get_state')).value.dirty; i++) await sleep(100);
+    // Recovery restores asynchronously; a read can still be refused during adoption.
+    for (let i = 0; i < 100 && !(await t2.send('get_state')).value?.dirty; i++) await sleep(100);
     const state = (await t2.send('get_state')).value;
+    assert.ok(state, 'recovery must settle to a readable state');
     assert.equal(state.dirty, true, 'the unsaved edit is back');
     assert.equal(state.can_undo, true);
     assert.equal(sha(fx.source), before, 'original bytes unchanged');

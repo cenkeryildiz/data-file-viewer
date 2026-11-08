@@ -75,11 +75,15 @@ export function validateQueryMessage(message: unknown): asserts message is Recor
         (message.xIsCategory !== undefined && typeof message.xIsCategory !== 'boolean') ||
         (message.xIsRow !== undefined && typeof message.xIsRow !== 'boolean') ||
         (message.xDateColumn !== undefined && (!text(message.xDateColumn) || message.xIsRow === true)) ||
+        (message.xIsValue !== undefined && typeof message.xIsValue !== 'boolean') ||
+        (message.refresh !== undefined && typeof message.refresh !== 'boolean') ||
         !Array.isArray(message.yColumns) || !message.yColumns.length || message.yColumns.length > 100 || !message.yColumns.every(value => text(value))) reject();
       return;
     case 'sheetTableQuery': case 'sheetTableStats': case 'sheetTableChart': case 'sheetTableSql':
       if (!text(message.table) || (message.column !== undefined && !text(message.column))) reject();
-      if ((message.xIsRow !== undefined && typeof message.xIsRow !== 'boolean') ||
+      if ((message.xColumn !== undefined && !text(message.xColumn)) ||
+        (message.refresh !== undefined && typeof message.refresh !== 'boolean') ||
+        (message.xIsRow !== undefined && typeof message.xIsRow !== 'boolean') ||
         (message.xDateColumn !== undefined && (!text(message.xDateColumn) || message.xIsRow === true))) reject();
       validateTableFilters(message.filters, message.sort, message.limit);
       return;

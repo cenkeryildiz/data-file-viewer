@@ -53,7 +53,7 @@ const { duckdbFile, xlsxFile } = require('../../out-test/test/stress/generators/
     await duckdbFile(source,[
       {name:'nodate',columns:[{name:'id',type:'INTEGER'},{name:'Row',type:'DOUBLE'}],rows:[[1,10],[2,null],[3,30],[4,40]]},
       {name:'iso',columns:[{name:'seq',type:'INTEGER'},{name:'opened_at',type:'VARCHAR'},{name:'v',type:'DOUBLE'}],rows:[[1,'2024-01-03',3],[2,null,9],[3,'2024-01-01',1]]},
-      {name:'bad_dates',columns:[{name:'opened_at',type:'VARCHAR'},{name:'v',type:'DOUBLE'}],rows:[['2024-01-01',1],['03/04/2024',2]]},
+      {name:'pair',columns:[{name:'sven',type:'DOUBLE'},{name:'beta',type:'DOUBLE'}],rows:[[4,40],[1,10],[2,20],[null,5],[3,null],[1,9]]},
     ]);
     const original = await fs.readFile(source);
     const backend = selectBackend(process.cwd(),{...process.env,DFV_TABLE_STATE_DIR:path.join(dir,'state')});
@@ -136,16 +136,16 @@ const { duckdbFile, xlsxFile } = require('../../out-test/test/stress/generators/
       const result=await rendered(view);assert.equal(result.axis,'category');assert.deepEqual(result.labels,['1','2','3']);assert.deepEqual(result.series,[30,null,10]);assert.ok(result.canvas&&result.shapes>0);
       const q=await ink(view);assert.ok(q.tl+q.tr+q.bl+q.br>0,'series pixels reached the canvas '+JSON.stringify(q));
     });
-    await check('native explicit date override renders ordered dates and truthful missing-date note',async()=>{
-      await run('SELECT * FROM iso ORDER BY seq DESC;');await page.selectOption('#plot-axis','date:opened_at');
-      const {view,message}=await plot('v');
-      assert.equal(requests.filter(m=>m.command==='chartQuery').at(-1).xDateColumn,'opened_at');
-      assert.equal(message.xAxisMode,'time');assert.equal(message.note,'1 row with no date left out');assert.equal(message.truncated,false);
-      const result=await rendered(view);assert.equal(result.axis,'time');assert.deepEqual(result.series,[[Date.UTC(2024,0,1),1],[Date.UTC(2024,0,3),3]]);assert.ok(result.canvas&&result.shapes>0);assert.match(result.title,/1 row with no date left out/);
+    await check('native number axis renders x-ascending pairs, ties by y, and a truthful left-out note',async()=>{
+      await run('SELECT * FROM pair;');await page.selectOption('#plot-axis','col:sven');
+      const {view,message}=await plot('beta');
+      const sent=requests.filter(m=>m.command==='chartQuery').at(-1);assert.equal(sent.xIsValue,true);assert.equal(sent.xColumn,'sven');
+      assert.equal(message.xAxisMode,'value');assert.equal(message.note,'2 rows with no x value or no number left out');assert.equal(message.truncated,false);
+      const result=await rendered(view);assert.equal(result.axis,'value');assert.deepEqual(result.series,[[1,9],[1,10],[2,20],[4,40]]);assert.ok(result.canvas&&result.shapes>0);assert.match(result.title,/2 rows with no x value or no number left out/);
       const q=await ink(view);assert.ok(q.tl+q.tr+q.bl+q.br>0,'series pixels reached the canvas '+JSON.stringify(q));
     });
     await check('150000-point ramp (above the old 100000 backend cap) is delivered whole and painted corner to corner',async()=>{
-      await run('SELECT range::DOUBLE AS v FROM range(150000) ORDER BY 1;');await page.selectOption('#plot-axis','row');
+      await run('SELECT range::DOUBLE AS v FROM range(150000) ORDER BY 1;');
       const {view,message}=await plot('v');
       assert.equal(message.command,'chart');assert.equal(message.truncated,false);assert.equal(message.rows.length,150000);
       assert.deepEqual(message.rows[149999],[150000,149999]);
@@ -155,7 +155,7 @@ const { duckdbFile, xlsxFile } = require('../../out-test/test/stress/generators/
     });
     await check('native chart cap refuses drawing a silently truncated prefix',async()=>{
       stub.settings.set('dataFileViewer.chartMaxPoints',2);
-      await run('SELECT "Row" FROM nodate WHERE id < 4 ORDER BY id DESC;');await page.selectOption('#plot-axis','row');
+      await run('SELECT "Row" FROM nodate WHERE id < 4 ORDER BY id DESC;');
       const {view,message}=await plot('Row');assert.equal(message.command,'chart');assert.equal(message.truncated,true);assert.equal(message.maxPoints,2);
       await view.page.waitForFunction(()=>!nativeChart.inspectChart()&&document.querySelector('.chart-canvas').textContent.includes('Too many points'));
       assert.equal(await view.page.locator('canvas').count(),0);
@@ -163,17 +163,17 @@ const { duckdbFile, xlsxFile } = require('../../out-test/test/stress/generators/
     });
     await check('configured chart cap above 200k is refused explicitly without clamping',async()=>{
       stub.settings.set('dataFileViewer.chartMaxPoints',200001);
-      await run('SELECT "Row" FROM nodate ORDER BY id;');await page.selectOption('#plot-axis','row');
+      await run('SELECT "Row" FROM nodate ORDER BY id;');
       const {view,message}=await plot('Row');assert.equal(message.command,'chartError');
       assert.ok(chartFailures.at(-1) instanceof NativeError);assert.equal(chartFailures.at(-1).code,'resource_limit');assert.match(chartFailures.at(-1).message,/200,000 points/);
       await view.page.waitForFunction(()=>!nativeChart.inspectChart()&&document.querySelector('.chart-canvas').textContent.length>0);
       assert.equal(await view.page.locator('canvas').count(),0);
       stub.settings.delete('dataFileViewer.chartMaxPoints');
     });
-    await check('native malformed date override returns a typed refusal and visible chart error',async()=>{
-      await run('SELECT * FROM bad_dates;');await page.selectOption('#plot-axis','date:opened_at');
-      const {view,message}=await plot('v');assert.equal(message.command,'chartError');assert.ok(message.message.length>0);
-      assert.ok(chartFailures.at(-1) instanceof NativeError);assert.equal(chartFailures.at(-1).code,'malformed_value');
+    await check('native number axis refuses a result with no plottable row as a typed error and a visible chart error',async()=>{
+      await run('SELECT * FROM pair WHERE beta IS NULL;');await page.selectOption('#plot-axis','col:sven');
+      const {view,message}=await plot('beta');assert.equal(message.command,'chartError');assert.ok(message.message.length>0);
+      assert.ok(chartFailures.at(-1) instanceof NativeError);
       await view.page.waitForFunction(()=>!nativeChart.inspectChart()&&document.querySelector('.chart-canvas').textContent.length>0);
       assert.equal(await view.page.locator('canvas').count(),0);
     });

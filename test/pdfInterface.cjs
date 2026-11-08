@@ -162,6 +162,21 @@ async function main() {
       await page.waitForFunction(() => document.getElementById('toolbar').scrollWidth <= innerWidth);
       assert(await page.locator('#page-fit').isHidden());
       assert(await page.locator('#page-fit').isDisabled());
+      for (const mode of ['read','annotate','edit','organize']) {
+        const tab = page.locator(`[data-workspace-tab="${mode}"]`);
+        assert.equal((await tab.textContent()).trim(), '', 'Modes have icons instead of text labels');
+        assert(await tab.getAttribute('aria-label'));
+      }
+      const exportBox = await page.locator('#export').boundingBox();
+      const modeBox = await page.locator('#workspace-tabs').boundingBox();
+      for (const selector of ['#export', '#zoom-in', '[data-workspace-tab="read"]']) {
+        const control = await page.locator(selector).boundingBox();
+        assert(control && control.height >= 24 && control.height <= 30,
+          `${selector} must stay compact while keeping a usable pointer target`);
+      }
+      assert((await page.locator('#titlebar').boundingBox()).height <= 28, 'Document title row stays compact');
+      assert(exportBox && modeBox && Math.abs(exportBox.y-modeBox.y)<15 && exportBox.x>modeBox.x+modeBox.width,
+        'Export remains at the top-right beside the mode icons');
       for (const selector of ['#export', '#properties-toggle', '#zoom-in', '#ipsave', '#ipcancel']) {
         const box = await page.locator(selector).boundingBox();
         assert(box && box.x >= 0 && box.x + box.width <= width + 1 && box.y >= 0 && box.y + box.height <= 950, `${selector} outside ${width}px viewport`);
@@ -218,6 +233,19 @@ async function main() {
       paper.style.cssText = 'width:620px;min-height:760px;margin:0;padding:58px;background:white;color:#252a34;font:15px/1.75 Georgia,serif';
       paper.innerHTML = '<p style="font:11px system-ui;letter-spacing:2px;color:#697386">FIELD NOTES &nbsp; / &nbsp; DESIGN & ATTENTION</p><h1 style="font-size:40px;line-height:1.12;font-weight:500;margin:38px 0 24px">Space to think.<br>Room to read.</h1><p style="font-size:19px;line-height:1.6;color:#59616e">A quiet workspace for the ideas<br>that deserve your full attention.</p><hr style="border:0;border-top:1px solid #dddfe5;margin:32px 0"><p>Good design gives the important things room to breathe. The page stays at the centre, while navigation and notes sit close enough to help, and far enough away to let you focus.</p><h2 style="font-size:20px;font-weight:500;margin-top:30px">01 &nbsp; A considered reading experience</h2><p>Move through a document at your own pace. Keep an outline nearby, mark a passage worth returning to, or collect a thought without losing your place.</p><p style="font-size:12px;color:#697386;margin-top:44px">SAMPLE DOCUMENT · VISUAL PREVIEW &nbsp; / &nbsp; 01</p>';
     }, lightStyle);
+    await page.evaluate(() => PDFUI.setWorkspace('read'));
+    await page.evaluate(() => {
+      const parking = document.getElementById('workspace-parking');
+      for (const id of ['export-compact','recover-drafts']) {
+        const button=document.createElement('button');button.id=id;button.textContent=id;parking.append(button);
+      }
+      PDFUI.toolsChanged();
+    });
+    for (const mode of ['read','annotate','edit','organize']) {
+      await page.evaluate(mode=>PDFUI.setWorkspace(mode), mode);
+      await page.waitForFunction(mode => ['export-compact','recover-drafts'].every(id=>
+        document.getElementById(id).closest('#workspace-parking') ? mode!=='organize' : mode==='organize'),mode);
+    }
     await page.evaluate(() => PDFUI.setWorkspace('read'));
     const image = await page.locator('#pages article').screenshot({ animations: 'disabled' });
     await page.evaluate(src => {

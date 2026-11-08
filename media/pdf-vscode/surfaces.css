@@ -23,9 +23,9 @@ body[class*="vscode-"] :is(#editor-transition, #reading-view, #selection-note) h
   letter-spacing: -.025em;
 }
 body[class*="vscode-"] :is(#document-finder, #editor-transition, #page-selection, #draft-recovery, #reading-view, #selection-note, #external-link) button {
-  min-height: 36px;
-  padding: 7px 12px;
-  border-radius: 9px;
+  min-height: var(--control-h);
+  padding: 4px 8px;
+  border-radius: 6px;
 }
 body[class*="vscode-"] :is(#document-finder, #page-selection, #draft-recovery, #reading-view, #selection-note) :is(input:not([type="checkbox"]), select, textarea) {
   min-width: 0;
@@ -83,7 +83,7 @@ body[class*="vscode-"] :is(#draft-recovery, #selection-note) textarea {
 body[class*="vscode-"] #draft-records { gap: 8px; }
 body[class*="vscode-"] .nedit textarea { padding: 12px; border-radius: 10px; line-height: 1.6; resize: vertical; }
 body[class*="vscode-"] .nedit .erow { display: flex; flex-wrap: wrap; gap: 8px; }
-body[class*="vscode-"] .nedit .ebtn { min-height: 34px; border-radius: 9px; }
+body[class*="vscode-"] .nedit .ebtn { min-height: var(--control-h); border-radius: 6px; }
 
 /* This fallback keeps its original editor and Apply behavior. */
 body[class*="vscode-"] #editor:not(.inplace) {

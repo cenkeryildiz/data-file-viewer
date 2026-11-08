@@ -26,6 +26,11 @@ export class ChartPanel {
     private readonly fileName: string
   ) {}
 
+  /** Whether the chart tab is open; a refresh is only worth drawing for one that is. */
+  get isOpen(): boolean {
+    return this.panel !== undefined;
+  }
+
   /**
    * Show `message` in this document's chart tab, creating the tab if needed.
    *

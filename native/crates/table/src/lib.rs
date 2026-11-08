@@ -566,17 +566,22 @@ impl Lane for Tables {
                         })?;
                     let (x_is_text, x_is_category) =
                         (flag(args, "x_is_text")?, flag(args, "x_is_category")?);
-                    let axis = match (flag(args, "x_is_row")?, flag(args, "x_as_date")?) {
-                        (true, false) => ChartAxis::Rows,
-                        (false, true) => ChartAxis::Dates,
-                        (false, false) => ChartAxis::Automatic {
+                    let axis = match (
+                        flag(args, "x_is_row")?,
+                        flag(args, "x_as_date")?,
+                        flag(args, "x_as_value")?,
+                    ) {
+                        (true, false, false) => ChartAxis::Rows,
+                        (false, true, false) => ChartAxis::Dates,
+                        (false, false, true) => ChartAxis::Values,
+                        (false, false, false) => ChartAxis::Automatic {
                             text: x_is_text,
                             category: x_is_category,
                         },
-                        (true, true) => {
+                        _ => {
                             return Err(ErrorBody::new(
                                 MALFORMED_VALUE,
-                                "Choose row numbers or dates, not both.",
+                                "Choose one x axis: row numbers, dates or numbers.",
                             ));
                         }
                     };
@@ -587,7 +592,7 @@ impl Lane for Tables {
                         engine.run_chart_query_axis_wire(sql, x, &ys, max_points, axis)
                     })?;
                     let page = self.store(&id, revision, control, result, sql, page_size)?;
-                    let mut answer = json!({"x_axis_mode":if axis==XAxis::Time {"time"} else {"category"},"result":page});
+                    let mut answer = json!({"x_axis_mode":match axis {XAxis::Time => "time", XAxis::Category => "category", XAxis::Value => "value"},"result":page});
                     if let Some(note) = note {
                         answer["note"] = json!(note);
                     }

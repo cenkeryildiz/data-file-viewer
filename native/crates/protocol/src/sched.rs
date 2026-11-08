@@ -31,7 +31,7 @@ impl Default for Limits {
     fn default() -> Self {
         Self {
             queued: 8,
-            deadline_ms: 30_000,
+            deadline_ms: 90_000,
         }
     }
 }

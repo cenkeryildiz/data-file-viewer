@@ -211,10 +211,31 @@ async function main() {
     });
 
     // ---- annotate ----
+    await run('Preview palette and markup styles', async () => {
+      await tab('annotate'); await $('#page-number').fill('1'); await $('#page-number').press('Enter'); await sleep(400);
+      for (const [selector, kind] of [
+        ...[0,1,2,3,4].map(i=>[`[data-color="${i}"]`,'Highlight']),
+        ['[data-kind="Underline"]','Underline'], ['[data-kind="StrikeOut"]','StrikeOut'],
+      ]) {
+        await dblWord(0,72+40,PH-700-9);
+        assert.equal(await $('#selection-actions').count(),0,'Selecting text must not open an action popup');
+        await $('#markup-menu-toggle').click();
+        await $(`#markgroup ${selector}`).click();
+        await until('one verified palette mark',async()=>/1 verified edit/.test(await text('#editinfo')),20000);
+        assert.equal(await $('#markup-toggle').getAttribute('aria-pressed'),'false','One-shot markup stays off');
+        await openNotes();
+        await until('palette annotation listed',async()=>(await $('#notes .note').count())===1);
+        assert.match(await $('#notes .note').first().innerText(),new RegExp(kind==='StrikeOut'?'strike':kind,'i'));
+        await $('#undo').click();
+        await until('palette undo',async()=>(await $('#notes .note').count())===0 && /No edits/.test(await text('#editinfo')));
+      }
+      return 'five colors, underline and strikethrough applied from the real menu and individually undone';
+    });
     await run('highlight annotation', async () => {
       await tab('annotate'); await $('#page-number').fill('1'); await $('#page-number').press('Enter'); await sleep(400);
       await dblWord(0, 72 + 40, PH - 700 - 9); // inside "Alphaone"
       await until('selection enables highlight swatch', async () => !(await $('#markgroup [data-color="0"]').isDisabled()), 15000);
+      await $('#markup-menu-toggle').click();
       await $('#markgroup [data-color="0"]').click();
       await until('1 verified edit', async () => /1 verified edit/.test(await text('#editinfo')), 20000);
       await $('#notes-toggle').click(); await until('comments panel', () => F.evaluate(() => !document.getElementById('notes').classList.contains('hidden')));
@@ -227,8 +248,8 @@ async function main() {
     await run('comment annotation', async () => {
       await $('#page-number').fill('2'); await $('#page-number').press('Enter'); await sleep(400);
       await dblWord(1, 72 + 40, PH - 700 - 9); // inside "Betatwo"
-      await until('selection popup', async () => !(await F.evaluate(() => document.getElementById('selection-actions').hidden)), 15000);
-      await $('#selection-actions [data-selection="note"]').click();
+      await until('note action enabled', async () => !(await $('#markup-note').isDisabled()), 15000);
+      await $('#markup-note').click();
       await until('note dialog', () => F.evaluate(() => document.getElementById('selection-note').open));
       await $('#selection-note-source').fill('smoke comment 42');
       await $('#selection-note-apply').click();

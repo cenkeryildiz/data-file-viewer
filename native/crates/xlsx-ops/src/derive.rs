@@ -2,8 +2,8 @@
 //! and one detected table (typed per column from the cells' own kinds). The workbook is never written.
 use crate::{ErrKind, OpsError};
 use dfv_table_duckdb::duckdb::quote_ident;
-use dfv_table_duckdb::locale::js_trim;
-use dfv_table_duckdb::text::is_excel_error;
+use dfv_table_duckdb::locale::{NumberLocale, js_trim, parse_en, parse_eu};
+use dfv_table_duckdb::text::{TextColumnVerdict, classify_text_column, is_excel_error};
 use dfv_table_xlsx::sheet_tables::{RowSpan, SheetTable};
 use dfv_table_xlsx::xlsx_read::{Sheet, Style, Value as XValue, XlCell};
 use duckdb::Connection;
@@ -26,6 +26,9 @@ impl ColType {
         }
     }
 }
+
+/// A column's type, whether markers read as empty beside it, and how its text-stored numbers are written.
+type Kind = (ColType, bool, NumberLocale);
 
 /// One cell as a typed read sees it.
 enum Seen {
@@ -167,34 +170,57 @@ impl Typer<'_> {
 
     /// Per column: the one type every value fits, else text that keeps every cell exactly. Markers
     /// become empty only beside values of a single type; in a text column they are values.
-    fn column_types(&self, table: &SheetTable) -> Vec<(ColType, bool)> {
+    /// A column of numbers with some stored as text (`3.03e-09` typed in as text) is numeric: it converts only
+    /// when it holds real numbers too and every text cell parses. A column that is all text stays text, since
+    /// it may be identifiers such as `007`.
+    fn column_types(&self, table: &SheetTable) -> Vec<Kind> {
         (table.region.left..table.region.right)
             .map(|col| {
                 let (mut num, mut date, mut boolean, mut text) = (false, false, false, false);
+                let mut texts: Vec<Option<String>> = vec![];
                 for span in &table.data_rows {
                     for row in span.start..span.end {
                         match self.classify(self.cell(row, col)) {
                             Seen::Num(_) => num = true,
                             Seen::Date(_) => date = true,
                             Seen::Bool(_) => boolean = true,
-                            Seen::Text => text = true,
+                            Seen::Text => {
+                                text = true;
+                                if let Some(XlCell {
+                                    value: XValue::Text(s),
+                                    ..
+                                }) = self.cell(row, col)
+                                {
+                                    texts.push(Some(s.clone()));
+                                }
+                            }
                             Seen::Blank(Some(_)) => {}
                             Seen::Blank(None) | Seen::Error | Seen::Marker(_) => {}
                         }
                     }
                 }
+                let en = NumberLocale::En;
+                if num
+                    && text
+                    && !date
+                    && !boolean
+                    && let TextColumnVerdict::Numeric { locale, .. } =
+                        classify_text_column(&texts, self.null_text)
+                {
+                    return (ColType::Double, true, locale);
+                }
                 match (num, date, boolean, text) {
-                    (true, false, false, false) => (ColType::Double, true),
-                    (false, true, false, false) => (ColType::Timestamp, true),
-                    (false, false, true, false) => (ColType::Boolean, true),
-                    (false, false, false, text) => (ColType::Varchar, !text),
-                    _ => (ColType::Varchar, false),
+                    (true, false, false, false) => (ColType::Double, true, en),
+                    (false, true, false, false) => (ColType::Timestamp, true, en),
+                    (false, false, true, false) => (ColType::Boolean, true, en),
+                    (false, false, false, text) => (ColType::Varchar, !text, en),
+                    _ => (ColType::Varchar, false, en),
                 }
             })
             .collect()
     }
 
-    fn value(&self, row: usize, col: usize, kind: (ColType, bool)) -> Value {
+    fn value(&self, row: usize, col: usize, kind: Kind) -> Value {
         let cell = self.cell(row, col);
         match (self.classify(cell), kind.0) {
             (Seen::Error | Seen::Blank(None), _) => Value::Null,
@@ -203,6 +229,15 @@ impl Typer<'_> {
             (Seen::Num(f), ColType::Double) => Value::Double(f),
             (Seen::Date(m), ColType::Timestamp) => Value::Timestamp(TimeUnit::Microsecond, m),
             (Seen::Bool(b), ColType::Boolean) => Value::Boolean(b),
+            (Seen::Text, ColType::Double) => {
+                let parse = if kind.2 == NumberLocale::En {
+                    parse_en
+                } else {
+                    parse_eu
+                };
+                cell.and_then(|c| parse(&c.text()))
+                    .map_or(Value::Null, Value::Double)
+            }
             (Seen::Blank(_), t) if t != ColType::Varchar => Value::Null,
             // Text columns keep each cell exactly as the file holds it.
             (_, ColType::Varchar) => cell.map_or(Value::Null, |c| Value::Text(c.text())),
@@ -217,7 +252,7 @@ impl Typer<'_> {
         name: &str,
         table: &SheetTable,
         names: &[String],
-    ) -> Result<(), OpsError> {
+    ) -> Result<usize, OpsError> {
         let kinds = self.column_types(table);
         let columns: Vec<(String, &str)> = names
             .iter()
@@ -238,7 +273,30 @@ impl Typer<'_> {
             });
         fill(db, name, rows).inspect_err(|_| {
             let _ = db.execute_batch(&format!("drop table if exists {}", quote_ident(name)));
-        })
+        })?;
+        Ok(self.converted_text_cells(table, &kinds))
+    }
+
+    /// How many text cells were read as numbers in the numeric columns that hold some.
+    fn converted_text_cells(&self, table: &SheetTable, kinds: &[Kind]) -> usize {
+        kinds
+            .iter()
+            .enumerate()
+            .filter(|(_, k)| k.0 == ColType::Double)
+            .map(|(i, _)| {
+                table
+                    .data_rows
+                    .iter()
+                    .flat_map(|RowSpan { start, end }| *start..*end)
+                    .filter(|&row| {
+                        matches!(
+                            self.classify(self.cell(row, table.region.left + i)),
+                            Seen::Text
+                        )
+                    })
+                    .count()
+            })
+            .sum()
     }
 }
 

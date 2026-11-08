@@ -1,4 +1,4 @@
-// PLOT-02/03 in the real grid webview: the "Plot axis" choice decides what a plot
+// PLOT-02/03 in the real grid webview: the "X axis" choice decides what a plot
 // button asks the host for. Uses installed Chrome. From the repository root:
 // npm ci && npx tsc -p tsconfig.test.json && node test/browser/plotAxis.cjs
 const assert = require('node:assert/strict');
@@ -23,6 +23,7 @@ const { duckdbFile } = require('../../out-test/test/stress/generators/_write');
     const source = path.join(dir, 'axis.duckdb');
     await duckdbFile(source, [
       { name: 'nodate', columns: [{ name: 'v', type: 'DOUBLE' }], rows: [[3], [null], [5]] },
+      { name: 'pair', columns: [{ name: 'sven', type: 'DOUBLE' }, { name: 'beta', type: 'DOUBLE' }], rows: [[2, 20], [1, 10], [3, null]] },
       { name: 'iso', columns: [{ name: 'opened_at', type: 'VARCHAR' }, { name: 'v', type: 'DOUBLE' }],
         rows: [['2024-01-01', 1], ['2024-01-02', 2]] },
       { name: 'dated', columns: [{ name: 'Date', type: 'DATE' }, { name: 'v', type: 'DOUBLE' }],
@@ -71,44 +72,55 @@ const { duckdbFile } = require('../../out-test/test/stress/generators/_write');
 
     // No date column: Automatic already offers the plot, against row numbers.
     await run('SELECT * FROM nodate;');
-    assert.deepEqual(await options(), ['Automatic', 'Row numbers', 'v']);
+    assert.deepEqual(await options(), ['Automatic', 'v']);
     assert.match(await page.locator('.th-plot-btn').first().getAttribute('title'), /against row numbers/);
     await page.locator('.th-plot-btn').first().click();
     await page.waitForTimeout(50);
-    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', xColumn: 'Row', xIsText: false, xIsCategory: false, xIsRow: true, yColumns: ['v'] });
+    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', xColumn: 'Row', xIsText: false, xIsCategory: false, xIsRow: true, xIsValue: false, yColumns: ['v'] });
 
-    // A column the automatic rules do not recognise, read as dates on request.
-    await run('SELECT * FROM iso;');
-    assert.deepEqual(await options(), ['Automatic', 'Row numbers', 'opened_at', 'v']);
-    await page.selectOption('#plot-axis', 'date:opened_at');
-    assert.match(await page.locator('.th-plot-btn').first().getAttribute('title'), /against opened_at/);
+    // Any column can be the x axis: a number column is a number line, whatever it is called.
+    await run('SELECT * FROM pair;');
+    assert.deepEqual(await options(), ['Automatic', 'sven', 'beta']);
+    await page.selectOption('#plot-axis', 'col:sven');
+    assert.match(await page.locator('.th-plot-btn').first().getAttribute('title'), /against sven/);
+    assert.equal(await page.locator('.th-plot-btn').count(), 1, 'the x column is not offered as its own series');
     await page.locator('.th-plot-btn').first().click();
     await page.waitForTimeout(50);
-    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', xColumn: 'opened_at', xIsText: false, xIsCategory: false, xIsRow: false, xDateColumn: 'opened_at', yColumns: ['v'] });
+    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', xColumn: 'sven', xIsText: false, xIsCategory: false, xIsRow: false, xIsValue: true, yColumns: ['beta'] });
 
-    // The chosen date column is the axis, so it is not offered as its own series.
-    await run('SELECT * FROM nodate;');
+    // The chart follows the grid: changing the x axis, or running another query, redraws the open chart.
+    await page.selectOption('#plot-axis', 'auto');
+    await page.waitForTimeout(50);
+    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', refresh: true, xColumn: 'Row', xIsText: false, xIsCategory: false, xIsRow: true, xIsValue: false, yColumns: ['beta'] });
+    await run('SELECT * FROM pair WHERE sven < 3;');
+    await page.waitForTimeout(50);
+    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', refresh: true, xColumn: 'Row', xIsText: false, xIsCategory: false, xIsRow: true, xIsValue: false, yColumns: ['beta'] });
+    const asked = chartRequests.length;
+    await run('SELECT sven FROM pair;');
+    await page.waitForTimeout(50);
+    assert.equal(chartRequests.length, asked, 'a result without the plotted column asks for no chart');
+    await page.selectOption('#plot-axis', 'auto');
+
+    // A text column is probed for dates by the host, as the automatic text axis is.
+    await run('SELECT * FROM iso;');
     assert.equal(await page.locator('#plot-axis').inputValue(), 'auto', 'a choice naming a column the new result lacks resets to Automatic');
-    await page.selectOption('#plot-axis', 'date:v');
-    assert.equal(await page.locator('.th-plot-btn').count(), 0);
+    await page.selectOption('#plot-axis', 'col:opened_at');
+    await page.locator('.th-plot-btn').first().click();
+    await page.waitForTimeout(50);
+    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', xColumn: 'opened_at', xIsText: true, xIsCategory: false, xIsRow: false, xIsValue: false, yColumns: ['v'] });
 
-    // Row numbers override a date column that Automatic would have used.
+    // Automatic uses the date column; the column choice can override it with a number column.
     await page.selectOption('#plot-axis', 'auto');
     await run('SELECT * FROM dated;');
     assert.match(await page.locator('.th-plot-btn').first().getAttribute('title'), /against Date/);
-    await page.selectOption('#plot-axis', 'row');
     await page.locator('.th-plot-btn').first().click();
     await page.waitForTimeout(50);
-    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', xColumn: 'Row', xIsText: false, xIsCategory: false, xIsRow: true, yColumns: ['v'] });
-    await page.selectOption('#plot-axis', 'auto');
-    await page.locator('.th-plot-btn').first().click();
-    await page.waitForTimeout(50);
-    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', xColumn: 'Date', xIsText: false, xIsCategory: false, xIsRow: false, yColumns: ['v'] });
+    assert.deepEqual(chartRequests.at(-1), { command: 'chartQuery', xColumn: 'Date', xIsText: false, xIsCategory: false, xIsRow: false, xIsValue: false, yColumns: ['v'] });
 
     assert.deepEqual(outbound, []);
     assert.deepEqual(errors, []);
     assert.deepEqual(responses.filter(message => message.command === 'error'), [], 'every requested query completed without cancellation or a stale result');
     assert.deepEqual(await fs.readFile(source), original, 'the plot choice never touches the source');
-    console.log('Plot axis browser workflow passed: Automatic row fallback, Row numbers override, a named column read as dates, and reset when the column is gone.');
+    console.log('Plot axis browser workflow passed: Automatic row fallback, a number column as x, a text column probed for dates, and reset when the column is gone.');
   } finally { await document?.session.close(); await browser.close(); await fs.rm(dir, { recursive: true, force: true }); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

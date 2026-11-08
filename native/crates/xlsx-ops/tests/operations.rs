@@ -552,16 +552,29 @@ fn declared_corpus_tables_match_ground_truth_names_ranges_columns_and_logical_ro
         for (g, w) in got.iter().zip(want) {
             assert_eq!(g.name, w["declaredName"].as_str().unwrap(), "{name}: name");
             assert_eq!(g.provenance, "explicit", "{name}: provenance");
-            assert_eq!(range(&g.table.region), w["range"].as_str().unwrap(), "{name}: range");
+            assert_eq!(
+                range(&g.table.region),
+                w["range"].as_str().unwrap(),
+                "{name}: range"
+            );
             assert_eq!(
                 g.table.columns,
-                w["columns"].as_array().unwrap().iter().map(|c| c.as_str().unwrap().to_owned()).collect::<Vec<_>>(),
+                w["columns"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|c| c.as_str().unwrap().to_owned())
+                    .collect::<Vec<_>>(),
                 "{name}: columns"
             );
-            let mut stmt = db.prepare(&format!("select * from \"{}\"", g.name)).unwrap();
+            let mut stmt = db
+                .prepare(&format!("select * from \"{}\"", g.name))
+                .unwrap();
             let rows: Vec<Vec<String>> = stmt
                 .query_map([], |r| {
-                    (0..g.table.columns.len()).map(|i| r.get::<_, duckdb::types::Value>(i).map(cell_text)).collect()
+                    (0..g.table.columns.len())
+                        .map(|i| r.get::<_, duckdb::types::Value>(i).map(cell_text))
+                        .collect()
                 })
                 .unwrap()
                 .map(Result::unwrap)
@@ -570,10 +583,16 @@ fn declared_corpus_tables_match_ground_truth_names_ranges_columns_and_logical_ro
                 .as_array()
                 .unwrap()
                 .iter()
-                .map(|r| r.as_array().unwrap().iter().map(|v| match v {
-                    Value::String(s) => s.clone(),
-                    other => other.to_string(),
-                }).collect())
+                .map(|r| {
+                    r.as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|v| match v {
+                            Value::String(s) => s.clone(),
+                            other => other.to_string(),
+                        })
+                        .collect()
+                })
                 .collect();
             assert_eq!(rows, expected, "{name}/{}: logical rows", g.name);
         }
@@ -599,4 +618,90 @@ fn detector_column_metadata_equals_the_derived_query_columns_for_every_corpus_fi
         }
     }
     assert!(checked >= 10, "{checked}");
+}
+
+fn inline(r: &str, t: &str) -> String {
+    format!(r#"<c r="{r}" t="inlineStr"><is><t>{t}</t></is></c>"#)
+}
+
+#[test]
+fn numbers_stored_as_text_are_read_as_numbers_only_beside_real_numbers() {
+    let mut rows = format!(
+        r#"<row r="1">{}{}{}</row>"#,
+        inline("A1", "beta"),
+        inline("B1", "code"),
+        inline("C1", "mixed")
+    );
+    // (beta, code, mixed): numbers, text numbers, markers, identifiers, words.
+    let data = [
+        ("<v>1.5</v>", "007", "<v>1</v>"),
+        ("TEXT:3.5e-09", "008", "TEXT:abc"),
+        ("TEXT:NA", "009", "<v>2</v>"),
+        ("<v>4</v>", "010", "<v>3</v>"),
+        ("TEXT:-2.25", "011", "<v>4</v>"),
+        ("<v>5</v>", "012", "<v>5</v>"),
+    ];
+    for (i, (a, b, c)) in data.iter().enumerate() {
+        let n = i + 2;
+        let cell = |col: &str, v: &str| match v.strip_prefix("TEXT:") {
+            Some(t) => inline(&format!("{col}{n}"), t),
+            None if v.starts_with('<') => format!(r#"<c r="{col}{n}">{v}</c>"#),
+            None => inline(&format!("{col}{n}"), v),
+        };
+        rows += &format!(
+            r#"<row r="{n}">{}{}{}</row>"#,
+            cell("A", a),
+            cell("B", b),
+            cell("C", c)
+        );
+    }
+    let sheet = format!(
+        "{}<sheetData>{rows}</sheetData></worksheet>",
+        common::SHEET_OPEN
+    );
+    let db = Connection::open_in_memory().unwrap();
+    let mut ops = XlsxOps::attach(
+        &db,
+        common::one_sheet(&sheet, &[]),
+        Options::default(),
+        &|| false,
+    )
+    .unwrap();
+    ops.prepare_all(&db, &|| false).unwrap();
+    let table = ops.detected_tables("S")[0].name.clone();
+    let types: Vec<String> = db
+        .prepare(&format!(
+            r#"select typeof(beta), typeof(code), typeof(mixed) from "{table}" limit 1"#
+        ))
+        .unwrap()
+        .query_row([], |r| {
+            Ok((0..3).map(|i| r.get::<_, String>(i).unwrap()).collect())
+        })
+        .unwrap();
+    assert_eq!(types, ["DOUBLE", "VARCHAR", "VARCHAR"]);
+    let sum: f64 = db
+        .query_row(&format!(r#"select sum(beta) from "{table}""#), [], |r| {
+            r.get(0)
+        })
+        .unwrap();
+    assert!((sum - (1.5 + 3.5e-9 + 4.0 - 2.25 + 5.0)).abs() < 1e-12);
+    let nulls: i64 = db
+        .query_row(
+            &format!(r#"select count(*) from "{table}" where beta is null"#),
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(nulls, 1);
+    let codes: String = db
+        .query_row(&format!(r#"select code from "{table}" limit 1"#), [], |r| {
+            r.get(0)
+        })
+        .unwrap();
+    assert_eq!(codes, "007");
+    assert!(
+        ops.take_warnings()
+            .iter()
+            .any(|w| w.contains("2 numbers stored as text"))
+    );
 }

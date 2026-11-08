@@ -169,3 +169,60 @@ fn explicit_dates_refuse_mixed_offsets_and_never_hide_invalid_values_behind_the_
     assert_eq!(r.rows.len(), 1);
     assert!(note.unwrap().contains("UTC offset +02:00 not applied"));
 }
+
+#[test]
+fn value_axis_orders_by_x_drops_rows_missing_either_value_and_counts_them() {
+    let f = Fixture::new(
+        "select * from (values (3.0, 30.0), (1.0, 10.0), (2.0, null), (null, 5.0), \
+         (4.0, 40.0), (1.0, 9.0), ('NaN'::double, 7.0)) as t(sven, beta)",
+    );
+    let e = f.engine();
+    let table = e.list_tables().unwrap().remove(0);
+    let query = format!("select * from \"{table}\"");
+    let (r, axis, note) = e
+        .run_chart_query_axis_wire(&query, "sven", &["beta"], 10, ChartAxis::Values)
+        .unwrap();
+    assert_eq!(axis, XAxis::Value);
+    assert_eq!(
+        note.as_deref(),
+        Some("3 rows with no x value or no number left out")
+    );
+    let xs: Vec<&str> = r
+        .rows
+        .iter()
+        .map(|row| row[0]["v"].as_str().unwrap())
+        .collect();
+    let ys: Vec<&str> = r
+        .rows
+        .iter()
+        .map(|row| row[1]["v"].as_str().unwrap())
+        .collect();
+    assert_eq!(xs, ["1", "1", "3", "4"]);
+    // The tie at x = 1 is ordered by y, so the result is reproducible.
+    assert_eq!(ys, ["9.0", "10.0", "30.0", "40.0"]);
+}
+
+#[test]
+fn value_axis_refuses_text_x_the_series_itself_and_an_empty_result() {
+    let f = Fixture::new("select * from (values ('a', 1.0), ('b', null)) as t(name, beta)");
+    let e = f.engine();
+    let table = e.list_tables().unwrap().remove(0);
+    let query = format!("select * from \"{table}\"");
+    let err = |x: &str, ys: &[&str]| {
+        e.run_chart_query_axis_wire(&query, x, ys, 10, ChartAxis::Values)
+            .unwrap_err()
+            .to_string()
+    };
+    assert!(err("name", &["beta"]).contains("not numeric"));
+    assert!(err("beta", &["beta"]).contains("cannot also be a plotted series"));
+    let g = Fixture::new("select * from (values (1.0, null::double)) as t(sven, beta)");
+    let e2 = g.engine();
+    let table = e2.list_tables().unwrap().remove(0);
+    let query = format!("select * from \"{table}\"");
+    assert!(
+        e2.run_chart_query_axis_wire(&query, "sven", &["beta"], 10, ChartAxis::Values)
+            .unwrap_err()
+            .to_string()
+            .contains("No row has both")
+    );
+}

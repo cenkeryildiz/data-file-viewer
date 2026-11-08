@@ -13,7 +13,7 @@
     "maximum_pending_serialized_bytes": 33554432,
     "reserved_control_bytes": 8388608,
     "read_watchdog_ms": 35000,
-    "read_watchdog_basis": "Native 30000ms cooperative read deadline plus 5000ms host grace; deferred while a mutation or untimed lifecycle operation is pending",
+    "read_watchdog_basis": "Native 90000ms cooperative read deadline plus 5000ms host grace; deferred while a mutation or untimed lifecycle operation is pending",
     "mutation_watchdog_ms": null,
     "accounting": "Wire request frames including newline, and serialized operations waiting in the host mutation queue; incoming frames separately capped at 8MiB",
     "limitation": "Mutation/open/restore/close execution ceilings remain unqualified. Global RSS/IPC/CPU/temp qualification is separate."

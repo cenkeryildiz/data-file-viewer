@@ -6,6 +6,7 @@
 
 import {
   toSeriesPoints,
+  toValuePoints,
   toCategoryLabels,
   toCategoryValues,
   finiteExtent,
@@ -64,7 +65,7 @@ type ChartMessage =
       yColumns: string[];
       columns: string[];
       rows: unknown[][];
-      xAxisMode: 'time' | 'category';
+      xAxisMode: 'time' | 'category' | 'value';
       // What the host did to the data that the chart alone would not show (rows without a date left out, ...).
       note?: string;
       // Absent whenever the file does not declare one, which is most files.
@@ -276,13 +277,15 @@ interface TipParts {
 }
 
 /** What the pointer is on: the point's label and one row per series that has a number there. */
-function tipParts(params: TooltipParam[], isCategory: boolean, frequency?: SeriesFrequency): TipParts | null {
+function tipParts(params: TooltipParam[], isCategory: boolean, frequency?: SeriesFrequency, isValue = false): TipParts | null {
   if (!params || params.length === 0) return null;
   const first = params[0];
   const header = isCategory
     ? (first.axisValueLabel ?? '')
-    : pointDateLabel((first.value as [number, unknown])?.[0], frequency);
-  const timestamp = !isCategory ? (first.value as [number, unknown])?.[0] : undefined;
+    : isValue
+      ? formatTooltipNumber((first.value as [number, unknown])?.[0])
+      : pointDateLabel((first.value as [number, unknown])?.[0], frequency);
+  const timestamp = !isCategory && !isValue ? (first.value as [number, unknown])?.[0] : undefined;
   const exactX = timestamp != null && Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : '';
   const rows: TipParts['rows'] = [];
   for (const p of params) {
@@ -352,6 +355,7 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
     return;
   }
   const isCategory = message.xAxisMode === 'category';
+  const isValue = message.xAxisMode === 'value';
   // Optional throughout: undefined means every date label falls back to its
   // plain form, and nothing else about the chart changes.
   const frequency = message.frequency ?? undefined;
@@ -390,7 +394,7 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
     // Gaps stay in the DATA as nulls -- dropping the point would move the
     // series in x, not just close a hole. Whether the line bridges them is a
     // rendering choice, and seriesShape() makes it (connectNulls, matching R).
-    return isCategory ? toCategoryValues(ys) : toSeriesPoints(xs, ys);
+    return isCategory ? toCategoryValues(ys) : isValue ? toValuePoints(xs, ys) : toSeriesPoints(xs, ys);
   });
 
   const positions = data.map(points => points.flatMap((point, index) => {
@@ -454,7 +458,7 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
   const xExtent = isCategory
     ? undefined
     : finiteExtent(data.flat().map((point) => (Array.isArray(point) ? point[0] : null)));
-  const xRange = xExtent ? padTimeRange(xExtent) : undefined;
+  const xRange = xExtent ? (isValue ? padValueRange(xExtent) : padTimeRange(xExtent)) : undefined;
   // Shared by both axes. The minor lines are the ones between the labelled
   // ticks; ECharts only draws them on value/time/log axes, which is why the
   // category axis below leaves them off rather than asking for lines that
@@ -501,7 +505,7 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
       // R's tooltip block: no move transition on the box.
       transitionDuration: 0,
       formatter: (params: unknown) => {
-        const parts = tipParts(params as TooltipParam[], isCategory, frequency);
+        const parts = tipParts(params as TooltipParam[], isCategory, frequency, isValue);
         showReadout(parts);
         return formatTooltip(parts);
       },
@@ -530,6 +534,16 @@ function render(message: Extract<ChartMessage, { command: 'chart' }>): void {
           data: labels,
           ...axis,
         }
+      : isValue
+        ? {
+            type: 'value',
+            ...axis,
+            ...minor,
+            min: xRange?.min,
+            max: xRange?.max,
+            axisLabel: { ...axis.axisLabel, formatter: formatAxisNumber, hideOverlap: true },
+            axisLine: { ...axis.axisLine, onZero: false },
+          }
       : {
           type: 'time',
           ...axis,

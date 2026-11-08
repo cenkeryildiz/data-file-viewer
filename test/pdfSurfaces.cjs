@@ -168,24 +168,12 @@ function section(source, start, end) {
     if(shots){await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.screenshot({path:path.join(shots,'recovery-light.png')});}
     await page.locator('#draft-recovery button[aria-label="Close draft recovery"]').click();
     console.log('PASS original recovery: exact readonly source, select/copy preparation, reachable controls and no engine writes');
-    await page.addScriptTag({content:read('viewerReading.js')});
-    await page.locator('#reading-toggle').click();
-    await page.waitForFunction(()=>document.querySelector('#reading-text').textContent.includes('engine order'));
-    assert.equal(await page.locator('#reading-text').textContent(),'Read in engine order.\nKeep α and β.');
-    await page.setViewportSize({width:320,height:640});
-    for(const selector of ['#reading-text','#reading-after','#reading-view button[aria-label="Close reading view"]']) {
-      const el=page.locator(selector); if(await el.isDisabled()) continue; await el.focus();
-      const b=await el.boundingBox();assert(b && b.x>=0 && b.x+b.width<=321 && b.y+b.height<=641,selector+' must remain reachable');
-    }
-    await page.setViewportSize({width:1000,height:750});
-    if(shots){await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.screenshot({path:path.join(shots,'reading-text-light.png')});}
-    assert.deepEqual(errors,[]);
-    console.log('PASS original reading text: original engine order, Unicode and reachable narrow controls');
-    await page.locator('#reading-view button[aria-label="Close reading view"]').click();
-    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    assert(!read('index.html').includes('src="/static/viewerReading.js"'), 'Read text is not loaded');
+    assert.equal(await page.locator('#reading-toggle').count(),0);
     await page.evaluate(()=>{
       window.SEL={generation:1,page:0,chars:[],range:[0,1],dragging:false};SEL.chars.geo='geo';
       window.MARKUP={active:null,busy:false};
+      window.editorOpen=()=>false;
       window.selectionRects=()=>[[10,10,40,20]];window.clearSelection=()=>{SEL.range=null;};
       window.copySelection=async()=>{};window.applyMark=async()=>{};
       window.attempts=0;window.mutate=async()=>{attempts++;return null;};
@@ -194,14 +182,8 @@ function section(source, start, end) {
       document.querySelector('#pages .page').append(band);
     });
     await page.addScriptTag({content:read('viewerSelectionActions.js')});
-    await page.evaluate(()=>PDFSelectionActions.show(true));
-    assert.equal(await page.evaluate(()=>document.activeElement.dataset.selection),'copy');
-    await page.keyboard.press('ArrowRight');
-    assert.equal(await page.evaluate(()=>document.activeElement.dataset.selection),'highlight');
-    if(shots){await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.screenshot({path:path.join(shots,'selection-actions-light.png')});}
-    await page.keyboard.press('End');
-    assert.equal(await page.evaluate(()=>document.activeElement.dataset.selection),'note');
-    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#selection-actions').count(),0);
+    await page.evaluate(()=>PDFSelectionActions.openNote());
     assert(await page.locator('#selection-note').isVisible());
     assert(await page.locator('#selection-note-apply').isDisabled());
     assert(await page.locator('#selection-note-apply').evaluate(el=>{
@@ -222,7 +204,7 @@ function section(source, start, end) {
     await page.setViewportSize({width:1000,height:750});
     if(shots){await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.screenshot({path:path.join(shots,'selection-note-retained-light.png')});}
     assert.deepEqual(errors,[]);
-    console.log('PASS original selection actions: arrow navigation, empty-note guard, source retained after refusal and failed recovery, one attempt');
+    console.log('PASS toolbar notes: no selection popup, empty-note guard, retained source after refusal and failed recovery, one attempt');
     await page.locator('#selection-note-discard').click();
     await page.evaluate(()=>{
       document.getElementById('sidebar').classList.remove('hidden');document.getElementById('sidebar-resize').classList.remove('panel-collapsed');
@@ -248,16 +230,16 @@ function section(source, start, end) {
     assert.equal(await page.locator('#outline-tree [role="treeitem"]').count(),1);
     assert((await page.locator('#outline-tree').textContent()).includes('α + β'));
     await page.locator('#outline-filter').fill('');
-    for(const sidebarWidth of [160,192,300]) {
+    for(const sidebarWidth of [128,144,192,300]) {
       await page.evaluate(width=>document.documentElement.style.setProperty('--left-panel-w',width+'px'),sidebarWidth);
       assert.equal(Math.round((await page.locator('#sidebar').boundingBox()).width),sidebarWidth);
       assert(await page.locator('#outline-panel').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Outline controls must wrap within the sidebar');
     }
-    await page.evaluate(()=>document.documentElement.style.setProperty('--left-panel-w','192px'));
+    await page.evaluate(()=>document.documentElement.style.setProperty('--left-panel-w','144px'));
     if(shots){await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.screenshot({path:path.join(shots,'outline-live-light.png')});}
     assert.deepEqual(await page.evaluate(()=>outlineRequests),['get_navigation']);
     assert.deepEqual(errors,[]);
-    console.log('PASS original outline: nested keyboard navigation, Unicode filter and 160–300px sidebar without analysis calls');
+    console.log('PASS original outline: nested keyboard navigation, Unicode filter and 128–300px sidebar without analysis calls');
     await page.evaluate(()=>{
       document.getElementById('sidebar').classList.add('hidden');document.getElementById('sidebar-resize').classList.add('panel-collapsed');
       const panel=document.getElementById('notes');panel.classList.remove('hidden');
@@ -274,5 +256,71 @@ function section(source, start, end) {
     }
     assert.deepEqual(errors,[]);
     console.log('PASS comments: long unbroken references, authors and actions wrap at 260–420px without changing text');
+    const marks = await browser.newPage({viewport:{width:1000,height:750}});
+    await marks.setContent(read('index.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,''));
+    await marks.addStyleTag({content:read('style.css')});
+    await marks.addStyleTag({content:fs.readFileSync(path.join(layer,'interface.css'),'utf8')});
+    await marks.evaluate(()=>{
+      window.$=selector=>document.querySelector(selector);
+      window.S={doc:{doc:'mark-doc',pages:[{geo:'mark-geo'}],palette:[[1,.86,.24],[.55,.86,.45],[.45,.74,.98],[.98,.62,.78],[.76,.62,.95]]},editOn:false};
+      window.SEL={page:0,range:[0,1],chars:[]};SEL.chars.geo='mark-geo';
+      window.rgb=c=>'rgb('+c.map(x=>Math.round(x*255)).join(',')+')';
+      window.hasEditor=false;window.editorOpen=()=>hasEditor;window.requestEditorTransition=async()=>false;
+      window.formulaMode=()=>{};window.applyStyle=()=>{};window.annotateStyleButtons=()=>{};window.toast=()=>{};
+      window.markCalls=[];window.refuse=false;
+      window.mutate=async(op,body)=>{markCalls.push({op,body});return refuse?null:{};};
+      window.selectionRects=()=>[[10,10,40,20]];window.clearSelection=()=>{SEL.range=null;};
+      window.selectionText=()=> 'Selected text';
+      document.body.append(document.getElementById('markgroup'));
+    });
+    const source=read('viewer.js');
+    await marks.addScriptTag({content:'const TEXT_COLORS=[]; '+section(source,'const MARKUP =','/* A selection has settled')+
+      section(source,'function finishSelection()','async function copySelection()')+
+      section(source,"document.addEventListener('copy'",'/* Text colours offered')+
+      section(source,'async function applyMark(','/* ----------------------------- text editing')});
+    await marks.evaluate(()=>buildMarkGroup());
+    await marks.locator('#markup-menu-toggle').click();
+    assert.deepEqual(await marks.locator('#markup-menu button').allTextContents(),['Yellow','Green','Blue','Pink','Purple','Underline','Strikethrough']);
+    await marks.getByRole('menuitemradio',{name:'Green',exact:true}).click();
+    await marks.waitForFunction(()=>markCalls.length===1 && !MARKUP.busy);
+    assert.equal(await marks.evaluate(()=>MARKUP.active),null,'One-shot choice does not arm repeated markup');
+    assert.deepEqual(await marks.evaluate(()=>markCalls[0].body.color),[.55,.86,.45]);
+    await marks.locator('#markup-toggle').click();
+    await marks.evaluate(()=>{SEL.range=[0,1];finishSelection();finishSelection();});
+    await marks.waitForFunction(()=>markCalls.length===2 && !MARKUP.busy);
+    await marks.locator('#markup-menu-toggle').click();
+    await marks.getByRole('menuitemradio',{name:'Strikethrough',exact:true}).click();
+    await marks.evaluate(()=>{SEL.range=[0,1];finishSelection();});
+    await marks.waitForFunction(()=>markCalls.length===3 && !MARKUP.busy);
+    assert.equal(await marks.evaluate(()=>markCalls[2].body.kind),'StrikeOut');
+    await marks.locator('#markup-toggle').click();
+    await marks.evaluate(()=>{SEL.range=[0,1];finishSelection();});
+    assert.equal(await marks.evaluate(()=>markCalls.length),3,'Neutral selection never marks text');
+    assert.equal(await marks.locator('#selection-actions').count(),0);
+    await marks.locator('#markup-menu-toggle').click();
+    await marks.keyboard.press('Home');assert.equal(await marks.evaluate(()=>document.activeElement.textContent),'Yellow');
+    await marks.keyboard.press('End');assert.equal(await marks.evaluate(()=>document.activeElement.textContent),'Strikethrough');
+    await marks.keyboard.press('Escape');assert.equal(await marks.locator('#markup-menu-toggle').getAttribute('aria-expanded'),'false');
+    assert.equal(await marks.evaluate(()=>document.activeElement.id),'markup-menu-toggle');
+    await marks.locator('#markup-menu-toggle').click();
+    await marks.setViewportSize({width:320,height:750});
+    await marks.waitForFunction(()=>document.getElementById('markup-menu').hidden);
+    await marks.setViewportSize({width:1000,height:750});
+    await marks.evaluate(()=>{const event=new ClipboardEvent('copy',{bubbles:true,cancelable:true,clipboardData:new DataTransfer()});document.getElementById('stage').dispatchEvent(event);window.copied=event.clipboardData.getData('text/plain');});
+    assert.equal(await marks.evaluate(()=>copied),'Selected text');
+    assert.equal(await marks.evaluate(()=>{
+      const input=document.createElement('textarea');document.body.append(input);
+      const event=new ClipboardEvent('copy',{bubbles:true,cancelable:true,clipboardData:new DataTransfer()});
+      input.dispatchEvent(event);input.remove();return event.defaultPrevented;
+    }),false,'Copying an editor/input keeps its native clipboard behavior');
+    await marks.locator('#markup-toggle').click();
+    await marks.evaluate(()=>{refuse=true;finishSelection();});
+    await marks.waitForFunction(()=>markCalls.length===4 && !MARKUP.busy);
+    assert.equal(await marks.evaluate(()=>MARKUP.active),null,'Refused/uncertain annotations disarm repeat mode');
+    await marks.evaluate(()=>{hasEditor=true;SEL.range=[0,1];});
+    await marks.locator('#markup-toggle').click();
+    assert.equal(await marks.evaluate(()=>MARKUP.active),null,'Cancelled editor transition keeps marking off');
+    await marks.close();
+    console.log('PASS Preview marking: seven choices, one-shot/repeat, neutral selection, no duplicates, copy, menu keyboard, refusal and draft guard');
   } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

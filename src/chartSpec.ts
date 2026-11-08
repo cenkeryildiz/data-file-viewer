@@ -24,7 +24,7 @@ export type StatsKind = 'numeric' | 'datetime' | 'other';
  * such as Year: it is an axis, but it must not be cast to a timestamp or
  * offered as its own y series.
  */
-export type XAxisKind = 'datetime' | 'text' | 'category' | 'row' | 'date';
+export type XAxisKind = 'datetime' | 'text' | 'category' | 'row' | 'date' | 'value';
 
 /**
  * The `row` kind has no column: its x values are the 1-based position of each
@@ -35,17 +35,17 @@ export type XAxisKind = 'datetime' | 'text' | 'category' | 'row' | 'date';
 export const ROW_AXIS_LABEL = 'Row';
 
 /**
- * The plot-only axis choice (PLOT-03). Empty means Automatic. `row` forces row
- * numbers even when the result has a date column; `dateColumn` reads that one
- * column as dates whatever it is called. Neither renames, retypes or rewrites
- * anything: the choice only changes the plot query.
+ * The plot-only axis choice (WSF-3). Empty means Automatic: the date/period
+ * column, else the row position. `column` plots against that one column instead:
+ * a numeric column becomes a number line (`value`), a date column a time axis,
+ * anything else is probed for dates as the automatic text axis is. The choice
+ * never renames, retypes or rewrites anything: it only changes the plot query.
  *
- * A `date` axis is the explicit kind: runChartQuery must read every value of the
- * column as a date or refuse, rather than apply the automatic rate-based guess.
+ * The `row` and `date` kinds remain for the host and worker (the row fallback,
+ * and the exact date reading); nothing in the toolbar selects them any more.
  */
 export interface AxisChoice {
-  row?: boolean;
-  dateColumn?: string;
+  column?: string;
 }
 
 export interface XAxis {
@@ -131,9 +131,15 @@ export function pickXAxis(columns: string[], kinds: StatsKind[]): XAxis | undefi
  */
 export function pickPlotAxis(columns: string[], kinds: StatsKind[], choice: AxisChoice = {}): XAxis | undefined {
   if (columns.length !== kinds.length) return undefined;
-  if (choice.row) return { column: ROW_AXIS_LABEL, kind: 'row' };
-  // Not checked against `columns`: the host refuses a column the table lacks, by name.
-  if (choice.dateColumn !== undefined) return { column: choice.dateColumn, kind: 'date' };
+  const chosen = choice.column === undefined ? -1 : columns.indexOf(choice.column);
+  if (chosen >= 0) {
+    const name = columns[chosen];
+    if (kinds[chosen] === 'datetime') return { column: name, kind: 'datetime' };
+    if (kinds[chosen] !== 'numeric') return { column: name, kind: 'text' };
+    // A numeric period label (Year, Dönem) stays a category/year axis; any other number is a number line.
+    const periodLabel = TEXT_AXIS_NAMES.includes(name.trim().toLowerCase()) || isDateColumnName(name);
+    return { column: name, kind: periodLabel ? 'category' : 'value' };
+  }
   return pickXAxis(columns, kinds) ?? { column: ROW_AXIS_LABEL, kind: 'row' };
 }
 
@@ -173,6 +179,20 @@ export function toSeriesPoints(xs: unknown[], ys: unknown[]): [number, number | 
     const at = toEpochMs(xs[i]);
     if (at === undefined) continue;
     points.push([at, toFiniteNumber(ys[i])]);
+  }
+  return points;
+}
+
+/**
+ * Rows as ECharts wants them for a number line: [x, y] pairs with a finite x
+ * (the host already ordered them), y a number or null for a gap.
+ */
+export function toValuePoints(xs: unknown[], ys: unknown[]): [number, number | null][] {
+  const points: [number, number | null][] = [];
+  for (let i = 0; i < xs.length; i += 1) {
+    const x = toFiniteNumber(xs[i]);
+    if (x === null) continue;
+    points.push([x, toFiniteNumber(ys[i])]);
   }
   return points;
 }

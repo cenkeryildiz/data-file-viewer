@@ -90,7 +90,7 @@ root.innerHTML = `
         <button id="query-use" disabled>Use in SQL</button>
         <button id="query-more" hidden>More tables</button>
         <button id="query-restore" hidden>Restore draft</button>
-        <label for="plot-axis" title="Only changes how a plot is drawn; the data and the query are untouched">Plot axis</label>
+        <label for="plot-axis" title="Only changes how a plot is drawn; the data and the query are untouched">X axis</label>
         <select id="plot-axis"></select>
       </div>
       <div id="editor" class="editor"></div>
@@ -506,7 +506,7 @@ function applySelection(): void {
 // chartView.ts). All this half does is decide which columns are worth
 // offering a button for, and ask the host to plot one.
 
-/** Plot-only axis choice (PLOT-03); empty is Automatic. Never changes the data or the query. */
+/** Plot-only x column (WSF-3); empty is automatic. Never changes the data or the query. */
 let axisChoice: AxisChoice = {};
 
 /** The columns the axis choice can name: the result's, or every detected table's on a worksheet. */
@@ -518,19 +518,17 @@ function axisColumns(): string[] {
 
 function refreshAxisChoice(): void {
   const columns = axisColumns();
-  if (axisChoice.dateColumn !== undefined && !columns.includes(axisChoice.dateColumn)) axisChoice = {};
-  const dates = document.createElement('optgroup');
-  dates.label = 'Read column as dates';
-  for (const column of columns) dates.append(new Option(column, `date:${column}`));
-  plotAxisEl.replaceChildren(new Option('Automatic', 'auto'), new Option('Row numbers', 'row'), dates);
-  plotAxisEl.value = axisChoice.row ? 'row' : axisChoice.dateColumn !== undefined ? `date:${axisChoice.dateColumn}` : 'auto';
+  if (axisChoice.column !== undefined && !columns.includes(axisChoice.column)) axisChoice = {};
+  plotAxisEl.replaceChildren(new Option('Automatic', 'auto'), ...columns.map((column) => new Option(column, `col:${column}`)));
+  plotAxisEl.value = axisChoice.column !== undefined ? `col:${axisChoice.column}` : 'auto';
 }
 
 plotAxisEl.addEventListener('change', () => {
   const value = plotAxisEl.value;
-  axisChoice = value === 'row' ? { row: true } : value.startsWith('date:') ? { dateColumn: value.slice(5) } : {};
+  axisChoice = value.startsWith('col:') ? { column: value.slice(4) } : {};
   renderedHeaderKey = undefined;
   renderResults(true);
+  refreshPlot();
 });
 
 /** The x axis for what is currently on screen, or undefined if it has not got one. */
@@ -539,11 +537,36 @@ function chartXAxis(): XAxis | undefined {
   return pickPlotAxis(data.state.lastResult.columns, data.state.lastResult.columnStatsKind, axisChoice);
 }
 
-function requestChart(yColumn: string): void {
+/**
+ * The plot the user last asked for. While its chart tab is open it is redrawn when the x axis or the
+ * query changes, so the chart never shows an older question than the grid. The host ignores a refresh
+ * whose chart tab was closed, so closing the chart ends the refreshing.
+ */
+let activePlot: { y: string; table?: DetectedSheetTable } | undefined;
+/** The rows the chart was last asked about; a new query result is a new array. */
+let plottedRows: unknown;
+
+function refreshPlot(): void {
+  if (!activePlot) return;
+  if (activePlot.table) requestInlineChart(activePlot.table, activePlot.y, true);
+  else if (plottableColumns(data.state.lastResult?.columns ?? [], data.state.lastResult?.columnStatsKind ?? [], axisChoice).includes(activePlot.y)) requestChart(activePlot.y, true);
+}
+
+function refreshPlotForNewResult(): void {
+  const rows = data.state.lastResult?.rows;
+  if (rows === plottedRows) return;
+  plottedRows = rows;
+  // A live tick re-runs the query many times a second; the chart follows only on request there.
+  if (activePlot && !activePlot.table && !data.state.liveEnabled) refreshPlot();
+}
+
+function requestChart(yColumn: string, refresh = false): void {
   const x = chartXAxis();
   if (!x) return;
+  if (!refresh) { activePlot = { y: yColumn }; plottedRows = data.state.lastResult?.rows; }
   vscode.postMessage({
     command: 'chartQuery',
+    ...(refresh ? { refresh: true } : {}),
     xColumn: x.column,
     // Whether the x column is a VARCHAR that merely claims to be a date. The
     // host is what settles time-axis-vs-category, since only it can ask the
@@ -551,8 +574,7 @@ function requestChart(yColumn: string): void {
     xIsText: x.kind === 'text',
     xIsCategory: x.kind === 'category',
     xIsRow: x.kind === 'row',
-    // The chosen column is the axis; xColumn above already names it.
-    xDateColumn: x.kind === 'date' ? x.column : undefined,
+    xIsValue: x.kind === 'value',
     yColumns: [yColumn],
   });
 }
@@ -809,15 +831,16 @@ function requestInlineStats(anchor: HTMLElement, table: DetectedSheetTable, colu
   });
 }
 
-function requestInlineChart(table: DetectedSheetTable, column: string): void {
+function requestInlineChart(table: DetectedSheetTable, column: string, refresh = false): void {
   if (running) return;
+  if (!refresh) { activePlot = { y: column, table }; plottedRows = data.state.lastResult?.rows; }
   const current = inlineStateFor(table.name);
   vscode.postMessage({
     command: 'sheetTableChart',
+    ...(refresh ? { refresh: true } : {}),
     table: table.name,
     column,
-    xIsRow: axisChoice.row,
-    xDateColumn: axisChoice.dateColumn,
+    xColumn: axisChoice.column,
     filters: filtersForMessage(current),
     sort: current.sort,
     limit: sheetTableDisplayLimit(table),
@@ -1764,6 +1787,7 @@ function applyEffect(effect: Effect): void {
       break;
     case 'render':
       renderResults(effect.preserveScroll);
+      refreshPlotForNewResult();
       break;
     case 'invalidateOrder':
       displayOrderCache.invalidate();
@@ -1817,6 +1841,8 @@ function applyEffect(effect: Effect): void {
         totalRows: effect.message.totalRows,
       };
       renderResults(true);
+      // An inline table's own query changed (filter, sort, limit): redraw the chart it feeds.
+      if (activePlot?.table?.name === effect.message.table) refreshPlot();
       break;
     }
     case 'sheetTableStatsResult':

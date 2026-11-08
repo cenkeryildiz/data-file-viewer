@@ -909,12 +909,11 @@ function visiblePageChoice(viewport, candidates, fallback) {
   // The order tools appear in, bar first then More. Units added later by other
   // scripts are found by id when the page has loaded.
   const ORDER = [
-    ['reading-toggle', 'read'],
     ['markgroup', 'annotate'],
     ['text-toggle', 'edit'], ['formula-toggle', 'edit'], ['stylegroup', 'edit'],
     ['organize-pages', 'organize'], ['select-pages', 'organize'], ['rot-l', 'organize'], ['rot-r', 'organize'], ['del', 'organize'],
     ['move-earlier', 'organize'], ['move-later', 'organize'],
-    ['export-compact', 'all'], ['recover-drafts', 'all'],
+    ['export-compact', 'organize'], ['recover-drafts', 'organize'],
   ];
   const extra = [];
   let current = 'read', switching = false, signature = '', frame = 0;

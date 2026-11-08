@@ -1,12 +1,15 @@
 /* Layout only: the viewer still owns tools, panel state and the live draft. */
 body[class*="vscode-"] {
+  --control-h: 28px;
+  --icon: 16px;
+  --text-ui: .8125rem;
   --ui-edge: color-mix(in srgb, var(--ink) 12%, transparent);
   --ui-shadow: 0 2px 6px color-mix(in srgb, var(--ink) 4%, transparent),
     0 16px 40px color-mix(in srgb, var(--ink) 7%, transparent);
 }
 body[class*="vscode-"] #titlebar {
-  min-height: 34px;
-  padding: 6px 20px;
+  min-height: 24px;
+  padding: 2px 10px;
   border-bottom: 0;
 }
 body[class*="vscode-"] #titlebar .brand,
@@ -15,24 +18,25 @@ body[class*="vscode-"] #docname { text-align: start; font-size: var(--text-meta)
 
 body[class*="vscode-"] #toolbar {
   height: auto;
-  min-height: 60px;
+  min-height: 40px;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 4px;
+  padding: 4px 8px;
   border-bottom-color: var(--ui-edge);
 }
-body[class*="vscode-"] #toolbar .tbtn { border-radius: 9px; }
+body[class*="vscode-"] #toolbar .tbtn { border-radius: 6px; }
 body[class*="vscode-"] #workspace-tabs {
-  padding: 4px;
+  padding: 2px;
   gap: 2px;
   border: 1px solid var(--ui-edge);
-  border-radius: 13px;
+  border-radius: 8px;
   background: color-mix(in srgb, var(--chrome-2) 55%, var(--chrome));
 }
 body[class*="vscode-"] #workspace-tabs .wtab {
-  min-height: 32px;
-  padding-inline: 14px;
-  border-radius: 9px;
+  min-height: var(--control-h);
+  width: 28px;
+  padding-inline: 5px;
+  border-radius: 6px;
   box-shadow: none;
 }
 body[class*="vscode-"] #workspace-tabs .wtab[aria-pressed="true"] {
@@ -42,32 +46,56 @@ body[class*="vscode-"] #workspace-tabs .wtab[aria-pressed="true"] {
   box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 12%, transparent);
 }
 body[class*="vscode-"] #workspace-tools {
-  padding-top: 10px;
-  gap: 8px;
+  padding-top: 4px;
+  gap: 4px;
 }
-body[class*="vscode-"] #workspace-tools-bar { gap: 6px; }
-body[class*="vscode-"] #navigation { gap: 4px; }
+body[class*="vscode-"] #workspace-tools-bar { gap: 4px; }
+body[class*="vscode-"] #navigation { gap: 2px; order: 0; flex-basis: auto; justify-content: flex-start; }
 body[class*="vscode-"] #navigation label { white-space: nowrap; }
-body[class*="vscode-"] #document-actions { gap: 6px; }
-body[class*="vscode-"] #export { padding-inline: 18px; }
+body[class*="vscode-"] #document-actions { gap: 4px; }
+body[class*="vscode-"] #export { padding-inline: 10px; }
+#toolbar-heading { display: flex; flex: 1 0 100%; align-items: center; gap: 8px; min-width: 0; }
+#export-actions { margin-left: auto; }
+#workspace-tabs .wtab svg { width: var(--icon); height: var(--icon); fill: none; }
+#markup-menu {
+  position: fixed; z-index: 1000; min-width: 160px; max-width: calc(100vw - 16px);
+  padding: 4px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--chrome); color: var(--ink); box-shadow: var(--ui-shadow);
+}
+#markup-menu button {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 28px; padding: 4px 8px;
+  border: 0; border-radius: 5px; background: transparent; color: inherit;
+  font: inherit; text-align: left; cursor: pointer;
+}
+#markup-menu button:hover, #markup-menu button:focus-visible { background: var(--chrome-2); outline: 2px solid var(--focus); outline-offset: -2px; }
+#markup-menu button[aria-checked="true"] { font-weight: 600; background: var(--chrome-2); }
+#markup-menu button[aria-checked="true"]::after { content: '✓'; margin-left: auto; }
+#markup-menu svg, .mark-swatch { width: 16px; height: 16px; flex: 0 0 16px; }
+#markup-menu svg { fill: currentColor; }
+.mark-swatch { border-radius: 50%; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+#markup-menu hr { margin: 6px 8px; border: 0; border-top: 1px solid var(--line); }
+#markup-toggle[aria-pressed="true"] { background: var(--chrome-2); box-shadow: inset 0 0 0 1px var(--focus); }
+#markup-toggle svg { fill: none; }
 body[class*="vscode-"] #tools-more-list { border-radius: 16px; padding: 12px; box-shadow: var(--ui-shadow); }
+body[class*="vscode-"] .ebtn { min-height: var(--control-h); padding: 4px 8px; }
 body[class*="vscode-"] .sidebar-head { padding: 10px; }
 body[class*="vscode-"] #sidebar-tabs [role="tab"] { padding: 6px 10px; }
 body[class*="vscode-"] #properties-toggle:disabled { display: none; }
 body[class*="vscode-"] #workspace-tools:has(#workspace-tools-bar:empty):has(#tools-more[hidden]) { display: none; }
 
 body[class*="vscode-"] #sidebar { background: var(--chrome); border-color: var(--ui-edge); }
-body[class*="vscode-"] .sidebar-head { gap: 4px; padding: 12px 8px; border-color: var(--ui-edge); }
+body[class*="vscode-"] #sidebar.panel-drawer { width: min(var(--left-panel-w), calc(100vw - 48px)) !important; }
+body[class*="vscode-"] .sidebar-head { gap: 2px; padding: 6px 4px; flex-wrap: wrap; border-color: var(--ui-edge); }
 body[class*="vscode-"] #sidebar-tabs {
-  flex-wrap: nowrap;
-  padding: 3px;
+  flex-wrap: wrap;
+  padding: 2px;
   border: 1px solid var(--ui-edge);
   border-radius: 11px;
   background: var(--chrome);
 }
 body[class*="vscode-"] #sidebar-tabs [role="tab"] {
   flex: 1;
-  padding: 4px 7px;
+  padding: 3px 4px;
   font-size: var(--text-meta);
   border-radius: 7px;
 }
@@ -76,12 +104,12 @@ body[class*="vscode-"] #sidebar-tabs [aria-selected="true"] {
   background: var(--chrome-2);
   box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 8%, transparent);
 }
-body[class*="vscode-"] #sidebar-close { min-width: 26px; padding-inline: 4px; border-radius: 8px; }
-body[class*="vscode-"] #rail { padding: 12px; }
-body[class*="vscode-"] #rail .thumb { padding: 12px; border-radius: 14px; margin-bottom: 10px; }
+body[class*="vscode-"] #sidebar-close { min-width: 24px; padding-inline: 3px; border-radius: 6px; }
+body[class*="vscode-"] #rail { padding: 6px; }
+body[class*="vscode-"] #rail .thumb { padding: 6px; border-radius: 8px; margin-bottom: 6px; }
 body[class*="vscode-"] #rail .thumb.sel { background: var(--panel-on); }
-body[class*="vscode-"] #rail .shot { max-width: 128px; margin-inline: auto; border-radius: 4px; }
-body[class*="vscode-"] #rail .no { margin-top: 10px; text-decoration: none; }
+body[class*="vscode-"] #rail .shot { max-width: 96px; margin-inline: auto; border-radius: 4px; }
+body[class*="vscode-"] #rail .no { margin-top: 4px; text-decoration: none; }
 body[class*="vscode-"] .panel-resize { background: linear-gradient(90deg, transparent 2px, var(--ui-edge) 2px, var(--ui-edge) 3px, transparent 3px); }
 body[class*="vscode-"] .panel-resize:hover,
 body[class*="vscode-"] .panel-resize:focus-visible,
@@ -226,8 +254,8 @@ body[class*="vscode-"] #properties .properties-actions {
 body[class*="vscode-"] #properties .properties-actions button {
   flex: 1;
   min-width: 0;
-  min-height: 42px;
-  border-radius: 11px;
+  min-height: 32px;
+  border-radius: 8px;
   white-space: normal;
 }
 body[class*="vscode-"] #properties .ipgrow { line-height: 1.5; }
@@ -259,8 +287,7 @@ body.vscode-high-contrast #workspace-tabs .wtab[aria-pressed="true"],
 body.vscode-high-contrast-light #workspace-tabs .wtab[aria-pressed="true"] { border-color: var(--focus); box-shadow: inset 0 -2px var(--focus); }
 
 @media (max-width: 800px) {
-  body[class*="vscode-"] #toolbar { padding: 6px; gap: 6px; }
-  body[class*="vscode-"] #workspace-tabs .wtab { padding-inline: 8px; }
+  body[class*="vscode-"] #toolbar { padding: 4px; gap: 4px; }
   body[class*="vscode-"] #navigation { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {

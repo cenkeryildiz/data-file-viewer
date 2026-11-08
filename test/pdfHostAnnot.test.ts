@@ -2,7 +2,7 @@ import vscodeStub from './stress/stubs/vscode';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createPdfHost } from '../src/pdfHost';
@@ -47,6 +47,27 @@ async function withHost(fn: (h: Awaited<ReturnType<typeof createPdfHost>>, dir: 
 }
 
 const RECT = [[20, 84, 110, 104]];
+
+test('pdfHost annotations: all five highlight colors export and undo without changing the source', { skip }, () => withHost(async (host, dir) => {
+  const source = readFileSync(join(dir, 'in.pdf'));
+  const info: any = await host.request('get_document_info', {});
+  assert.equal(info.palette.length, 5);
+  for (const color of info.palette) {
+    const state: any = await host.request('get_document_info', {});
+    await host.request('annot.mark', { page: 0, kind: 'Highlight', rects: RECT, color, geo: state.pages[0].geo });
+    const out = join(dir, 'color.pdf');
+    await host.exportTo(uri(out));
+    const colors: number[][] = JSON.parse(execFileSync(PY, ['-I', '-c',
+      'import sys,json,pymupdf\nd=pymupdf.open(sys.argv[1])\nprint(json.dumps([a.colors["stroke"] for a in d[0].annots()]))', out], { encoding: 'utf8' }));
+    assert.equal(colors.length, 1);
+    color.forEach((value: number, index: number) => assert.ok(Math.abs(colors[0][index] - value) < 1e-6));
+    const undo: any = await host.request('get_state', {});
+    await host.request('undo', { change_id: undo.undo_change_id, revision: undo.revision });
+    await host.exportTo(uri(join(dir, 'undone.pdf')));
+    assert.deepEqual(annotations(join(dir, 'undone.pdf')), []);
+  }
+  assert.deepEqual(readFileSync(join(dir, 'in.pdf')), source);
+}));
 
 test('pdfHost annotations: highlight, underline, strikeout and a note reach the exported PDF', { skip }, () => withHost(async (host, dir) => {
   const geo = async (page = 0) => ((await host.request('get_document_info', {})) as any).pages[page].geo as string;

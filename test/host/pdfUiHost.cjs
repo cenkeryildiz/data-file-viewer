@@ -28,6 +28,19 @@ const { scan } = require('../browser/a11yScan.cjs');
     await frame.waitForFunction(() => document.querySelector('#pages .page img')?.complete && document.querySelector('#pages .page img').naturalWidth > 0, null, { timeout: 30000 });
     await host.wait('webview narrowed', async () => (await frame.evaluate(() => innerWidth)) <= 420);
     const width = await frame.evaluate(() => innerWidth);
+    if (!await frame.locator('#sidebar').isVisible()) await frame.locator('#rail-toggle').click();
+    await host.wait('narrow sidebar visible', async () => frame.locator('#sidebar').isVisible());
+    assert.equal(Math.round((await frame.locator('#sidebar').boundingBox()).width), 144, 'Left drawer uses the compact default width');
+    assert.equal(await frame.locator('#sidebar-resize').getAttribute('aria-valuemin'), '128');
+    for (const selector of ['#sidebar-tab-pages', '#sidebar-tab-outline', '#sidebar-close']) {
+      const box = await frame.locator(selector).boundingBox(), sidebar = await frame.locator('#sidebar').boundingBox();
+      assert.ok(box && box.x >= sidebar.x && box.x + box.width <= sidebar.x + sidebar.width + 1, `${selector}: fits narrow sidebar`);
+    }
+    await frame.locator('#sidebar-close').click();
+    for (const selector of ['#export', '#zoom-in', '[data-workspace-tab="read"]']) {
+      const box = await frame.locator(selector).boundingBox();
+      assert.ok(box && box.height >= 24 && box.height <= 30, `${selector}: compact usable control`);
+    }
     const noScroll = () => frame.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.body.scrollWidth <= innerWidth);
     const inside = selector => frame.evaluate(s => { const r = document.querySelector(s)?.getBoundingClientRect(); return !!r && r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1; }, selector);
     const settingsFile = path.join(host.user, 'User', 'settings.json');
@@ -49,6 +62,31 @@ const { scan } = require('../browser/a11yScan.cjs');
     await host.page.keyboard.press('Enter');
     await host.wait('zoom label changed by keyboard', async () => (await label()) !== start, 10000);
     console.log(`PASS PDF host keyboard: Enter on Zoom in moved ${start} -> ${await label()}.`);
+    for (const mode of ['read','annotate','edit','organize']) {
+      const tab=frame.locator(`[data-workspace-tab="${mode}"]`);
+      assert.equal((await tab.textContent()).trim(),'');
+      assert.ok(await tab.getAttribute('aria-label'));
+      await tab.click();
+      await frame.waitForFunction(mode=>PDFUI.workspace()===mode,mode);
+      for (const id of ['export-compact','recover-drafts']) {
+        assert.equal(await frame.locator('#'+id).evaluate(el=>!!el.closest('#workspace-parking')),mode!=='organize');
+      }
+    }
+    assert.equal(await frame.locator('#reading-toggle').count(),0);
+    assert.equal(await frame.locator('#selection-actions').count(),0);
+    const exportBox=await frame.locator('#export').boundingBox();
+    const modesBox=await frame.locator('#workspace-tabs').boundingBox();
+    assert.ok(exportBox && modesBox && Math.abs(exportBox.y-modesBox.y)<15 && exportBox.x>modesBox.x+modesBox.width);
+    await frame.locator('[data-workspace-tab="annotate"]').click();
+    await frame.locator('#markup-menu-toggle').click();
+    assert.deepEqual(await frame.locator('#markup-menu button').allTextContents(),['Yellow','Green','Blue','Pink','Purple','Underline','Strikethrough']);
+    await frame.getByRole('menuitemradio',{name:'Purple',exact:true}).click();
+    assert.equal(await frame.locator('#markup-toggle').getAttribute('aria-pressed'),'false');
+    await frame.locator('#markup-toggle').click();
+    assert.equal(await frame.locator('#markup-toggle').getAttribute('aria-pressed'),'true');
+    await frame.locator('#markup-toggle').click();
+    assert.equal(await frame.locator('#markup-toggle').getAttribute('aria-pressed'),'false');
+    console.log('PASS Preview host: icon modes, top-right Export, Organize-only utilities, no popup/Read text, marking palette and mode toggle.');
     assert.deepEqual(await fs.readFile(pdf), before, 'the PDF changed');
     host.stop(); await host.allExited(); await host.profileIsolation();
   } finally { await host.cleanup(); }

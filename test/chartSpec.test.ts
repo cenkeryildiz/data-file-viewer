@@ -7,6 +7,7 @@ import {
   pickPlotAxis,
   plottableColumns,
   toSeriesPoints,
+  toValuePoints,
   toCategoryLabels,
   toCategoryValues,
   toEpochMs,
@@ -132,17 +133,24 @@ test('pickPlotAxis keeps a date axis and falls back to row numbers only without 
   assert.equal(pickPlotAxis(['A', 'B'], ['numeric']), undefined);
 });
 
-test('the axis choice: Row numbers overrides a date column, a named column is read as dates (PLOT-03)', () => {
-  const cols = ['Date', 'opened', 'v'];
-  const kinds: Array<'datetime' | 'other' | 'numeric'> = ['datetime', 'other', 'numeric'];
+test('the axis choice: any column can be the x axis, a number column becomes a number line (WSF-3)', () => {
+  const cols = ['Date', 'sven', 'Year', 'name', 'v'];
+  const kinds: Array<'datetime' | 'other' | 'numeric'> = ['datetime', 'numeric', 'numeric', 'other', 'numeric'];
   assert.deepEqual(pickPlotAxis(cols, kinds, {}), { column: 'Date', kind: 'datetime' });
-  assert.deepEqual(pickPlotAxis(cols, kinds, { row: true }), { column: 'Row', kind: 'row' });
-  assert.deepEqual(pickPlotAxis(cols, kinds, { dateColumn: 'opened' }), { column: 'opened', kind: 'date' });
-  // The chosen column is the axis, so it is not offered as its own series, and a numeric one is dropped too.
-  assert.deepEqual(plottableColumns(['yr', 'v'], ['numeric', 'numeric'], { dateColumn: 'yr' }), ['v']);
-  assert.deepEqual(plottableColumns(cols, kinds, { row: true }), ['v']);
-  // A column the table lacks is the host's to refuse by name; it never silently falls back.
-  assert.deepEqual(pickPlotAxis(['v'], ['numeric'], { dateColumn: 'gone' }), { column: 'gone', kind: 'date' });
+  assert.deepEqual(pickPlotAxis(cols, kinds, { column: 'sven' }), { column: 'sven', kind: 'value' });
+  assert.deepEqual(pickPlotAxis(cols, kinds, { column: 'Date' }), { column: 'Date', kind: 'datetime' });
+  // A numeric period label keeps its year/category reading rather than becoming a number line.
+  assert.deepEqual(pickPlotAxis(cols, kinds, { column: 'Year' }), { column: 'Year', kind: 'category' });
+  // Text is probed for dates host-side, exactly as the automatic text axis is.
+  assert.deepEqual(pickPlotAxis(cols, kinds, { column: 'name' }), { column: 'name', kind: 'text' });
+  // The chosen column is the axis, so it is not offered as its own series.
+  assert.deepEqual(plottableColumns(cols, kinds, { column: 'sven' }), ['Year', 'v']);
+  // A choice the result lacks falls back to Automatic instead of guessing.
+  assert.deepEqual(pickPlotAxis(['v'], ['numeric'], { column: 'gone' }), { column: 'Row', kind: 'row' });
+});
+
+test('toValuePoints pairs finite x with y and keeps y gaps as nulls', () => {
+  assert.deepEqual(toValuePoints([1, 'x', 2, null, 3], [10, 20, null, 40, '5']), [[1, 10], [2, null], [3, 5]]);
 });
 
 test('the x column is never offered as its own y', () => {

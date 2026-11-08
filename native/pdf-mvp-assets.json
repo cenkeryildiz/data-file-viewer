@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "scope": "Retained qualified PDF worker/fonts and versioned UI; post0.1.0 usability patch qualification recorded separately.",
+  "scope": "0.1.2 consolidated pdfTeX worker and Preview-style UI; native math disabled",
   "provenance": {
     "artifact": "data-file-viewer-0.0.20-integrated-20261031-r4.vsix",
     "artifact_sha256": "281a8f573d07524db0ad8a15a911c3480a718e9cc448124adfba6e1ecb644a76",
@@ -22,13 +22,19 @@
           "previous_sha256": "88799979eb5f6f3333de1b2e86cd990a7f9208848d943b0f546c49d5cc5ec207"
         }
       ]
+    },
+    "preview_ui": {
+      "source_base": "bc53b59 + inherited worksheet/UI changes",
+      "native_pdf_source": "e2a0f8e50177977b09683027dcd13ab96b053120",
+      "reference": "https://support.apple.com/en-ca/guide/preview/prvw757d4d5b/mac",
+      "qualification": "Restored qualified baseline, compact Preview UI and narrower left sidebar; native and browser checks pass; final package host checks pending"
     }
   },
   "files": [
     {
       "path": "bin/dfv-pdf",
-      "bytes": 11517400,
-      "sha256": "af044680f79db92fee47998c290669d6d97d7cc1122aa3d0b57627be995e8138"
+      "bytes": 10173520,
+      "sha256": "0014b95a5bc7f8686ab365399358a9d672dd1da7d019108c06402359d4e97ee6"
     },
     {
       "path": "licenses/OFL-Inter.txt",
@@ -52,8 +58,8 @@
     },
     {
       "path": "web/static/index.html",
-      "bytes": 9391,
-      "sha256": "9e2efa6778c72b7d01c1ac12e10e63c96cc246b6884f3e6b9cfe947fe8abf735"
+      "bytes": 10163,
+      "sha256": "590f3d31da4e23975e13e0ab3f992c0dbe8e586149032b61541304270ef661d6"
     },
     {
       "path": "web/static/outline.js",
@@ -62,13 +68,13 @@
     },
     {
       "path": "web/static/style.css",
-      "bytes": 52618,
-      "sha256": "d3370729d268bc305b8b193327a141611ab7e8e477b0eeb732e0c63dd10b0996"
+      "bytes": 52022,
+      "sha256": "bcc2c9ab701ea5ff62b9c201e8c0f7641d6e2c8ba1296ae6ae97bc49e826431b"
     },
     {
       "path": "web/static/viewer.js",
-      "bytes": 242347,
-      "sha256": "b79bc6de3e222d11ea398fc75c061efb1d0ebbf756ef53c8eaa736a547ce29b1"
+      "bytes": 245186,
+      "sha256": "298f55f96a4c441c16c76e9c85401f438cf742ec62b0149c87f956f834e76db2"
     },
     {
       "path": "web/static/viewerDraftRecovery.js",
@@ -97,13 +103,13 @@
     },
     {
       "path": "web/static/viewerSelectionActions.js",
-      "bytes": 8145,
-      "sha256": "e63990e18b02501f8b15eae04d16fcc3ac4841760567fb6899aefe93f423c3ec"
+      "bytes": 4204,
+      "sha256": "187b484c316f3fa913dc77fc02585cde55f15d24ccf4ff677940f354aa793c4f"
     },
     {
       "path": "web/static/workspace.js",
-      "bytes": 62626,
-      "sha256": "59cecd7c549d13b7e332ab1213e97e23d13db36e2962639a9b0b05ffe0feebf0"
+      "bytes": 62604,
+      "sha256": "468cadbf8615dc1c3479f43e49267d9bcade6b43868467a39ae110cbd896a37b"
     }
   ]
 }

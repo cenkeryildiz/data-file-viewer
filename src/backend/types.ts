@@ -304,7 +304,7 @@ export interface DocumentFile {
   buildDetectedTableQuery(table: string, filters?: readonly DetectedTableFilter[], sort?: DetectedTableSort, limit?: number): Promise<string>;
   runDetectedTableQuery(table: string, filters?: readonly DetectedTableFilter[], sort?: DetectedTableSort, limit?: number): Promise<DetectedTableQueryResult>;
   runQuery(sql: string, maxRows?: number, selectedWorksheet?: string): Promise<QueryResult>;
-  runChartQuery(baseSql: string, xColumn: string, yColumns: string[], xIsText?: boolean, maxPoints?: number, xIsCategory?: boolean, xIsRow?: boolean, xAsDate?: boolean): Promise<QueryResult & { xAxisMode: 'time' | 'category'; note?: string }>;
+  runChartQuery(baseSql: string, xColumn: string, yColumns: string[], xIsText?: boolean, maxPoints?: number, xIsCategory?: boolean, xIsRow?: boolean, xAsDate?: boolean, xAsValue?: boolean): Promise<QueryResult & { xAxisMode: 'time' | 'category' | 'value'; note?: string }>;
   runSortedQuery(baseSql: string, column: string, direction: 'asc' | 'desc', maxRows?: number): Promise<QueryResult & { sortedSql: string }>;
   countMatchingRows(sql: string): Promise<number | undefined>;
   getColumnTopValues(baseSql: string, column: string, limit?: number): Promise<TopValuesStats>;

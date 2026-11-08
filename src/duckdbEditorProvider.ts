@@ -1108,7 +1108,7 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
       | { command: 'setLiveRefreshInterval'; intervalMs: number }
       | { command: 'runCombinedQuery'; table: string }
       | { command: 'retrySheetPreparation'; sheet: string }
-      | { command: 'chartQuery'; xColumn: string; xIsText: boolean; xIsCategory?: boolean; xIsRow?: boolean; xDateColumn?: string; yColumns: string[] }
+      | { command: 'chartQuery'; xColumn: string; xIsText: boolean; xIsCategory?: boolean; xIsRow?: boolean; xDateColumn?: string; xIsValue?: boolean; refresh?: boolean; yColumns: string[] }
       | {
           command: 'sheetTableQuery';
           table: string;
@@ -1128,6 +1128,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
           command: 'sheetTableChart';
           table: string;
           column: string;
+          refresh?: boolean;
+          xColumn?: string;
           xIsRow?: boolean;
           xDateColumn?: string;
           filters: DetectedTableFilter[];
@@ -1719,6 +1721,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
       }
 
       if (message.command === 'sheetTableChart') {
+        // A refresh redraws a chart that is open; it never opens one the user closed.
+        if (message.refresh && !chartPanels.get(message.table)?.isOpen) return;
         const cap = getChartMaxPoints();
         const chartPanel = chartPanels.get(message.table) ?? new ChartPanel(this.context.extensionUri, basename(document.uri.fsPath));
         chartPanels.set(message.table, chartPanel);
@@ -1736,9 +1740,12 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
             if (yIndex === -1 || probe.columnStatsKind[yIndex] !== 'numeric') {
               throw new Error(`"${message.column}" is not numeric, so it cannot be plotted.`);
             }
-            const choice: AxisChoice = { row: message.xIsRow === true, dateColumn: message.xDateColumn };
-            if (choice.dateColumn !== undefined && !probe.columns.includes(choice.dateColumn)) {
-              throw new QueryPolicyError('This table has no such column to read as dates. Change the plot axis.');
+            const choice: AxisChoice = { column: message.xColumn };
+            if (choice.column !== undefined && !probe.columns.includes(choice.column)) {
+              throw new QueryPolicyError('This table has no such column for the x axis. Change the x axis.');
+            }
+            if (choice.column === message.column) {
+              throw new QueryPolicyError('The x axis cannot also be the plotted column. Change the x axis.');
             }
             const x = pickPlotAxis(probe.columns, probe.columnStatsKind, choice);
             if (!x) throw new Error('This table cannot be plotted.');
@@ -1750,7 +1757,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
               cap,
               x.kind === 'category',
               x.kind === 'row',
-              x.kind === 'date'
+              x.kind === 'date',
+              x.kind === 'value'
             );
           });
           chartPanel.reveal(label, {
@@ -1805,6 +1813,7 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
         const chartTable = document.lastQueriedBaseTable ?? baseTableOfSelect(document.lastSql);
         const chartKey = chartTable ?? '(query)';
         const label = chartTable ? `${chartTable} — ${series}` : series;
+        if (message.refresh && !chartPanels.get(chartKey)?.isOpen) return;
         let chartPanel = chartPanels.get(chartKey);
         if (!chartPanel) {
           chartPanel = new ChartPanel(this.context.extensionUri, basename(document.uri.fsPath));
@@ -1820,7 +1829,8 @@ export class DuckDBEditorProvider implements vscode.CustomReadonlyEditorProvider
               cap,
               message.xIsCategory === true,
               message.xIsRow === true,
-              xAsDate
+              xAsDate,
+              message.xIsValue === true
             )
           );
           // Read after the chart query, and never allowed to fail the chart:

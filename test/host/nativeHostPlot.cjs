@@ -1,8 +1,8 @@
 // V14.3: native PLOT workflows in an ACTUAL unpacked VS Code (native Rust table worker, disposable profile, no VSIX).
-// Real SQL typed by keyboard, real Plot-axis select and plot-button click, then the real ECharts canvas in the chart webview.
+// Real SQL typed by keyboard, real X-axis select and plot-button click, then the real ECharts canvas in the chart webview.
 // Pixel assertions are directional (a falling series inks top-left/bottom-right, a rising one bottom-left/top-right), so the
 // query order, the date ordering and the 150k delivery are proven on the painted canvas, not on an intercepted request.
-// Refusals: chart cap (2 points, and a configured 200001) and a malformed date axis show a visible message and no canvas.
+// Refusals: chart cap (2 points, and a configured 200001) and text that is not dates falls back to a category axis (drawn, never guessed as dates).
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
@@ -13,7 +13,7 @@ const { launch } = require('./nativeHostHarness.cjs');
   try {
     const iso = path.join(host.sources, 'iso.csv'), bad = path.join(host.sources, 'bad_dates.csv');
     await fs.writeFile(iso, 'seq,opened_at,v\n1,2024-01-03,3\n2,,9\n3,2024-01-01,1\n');
-    await fs.writeFile(bad, 'opened_at,v\n2024-01-01,1\nnot-a-date,2\n');
+    await fs.writeFile(bad, 'opened_at,w\n2024-01-01,1\nnot-a-date,2\n');
     const before = await host.tree(host.sources);
     await host.start(iso);
     let frame = await host.frame('#run-btn', 'grid editor');
@@ -57,25 +57,25 @@ const { launch } = require('./nativeHostHarness.cjs');
 
     // 1. row axis honours query order: ORDER BY DESC must draw a FALLING line (an ascending re-sort would rise).
     await run(frame, 'SELECT range::DOUBLE AS falling FROM range(1, 5) ORDER BY falling DESC;', 4);
-    await plot(frame, 'falling', 'row');
+    await plot(frame, 'falling', 'auto');
     let chart = await painted(null, 'falling');
     let q = await ink(chart);
     assert.ok(q.tl > 20 && q.br > 20, `falling series inks top-left and bottom-right ${JSON.stringify(q)}`);
     assert.ok(q.bl + q.tr <= 0.1 * (q.tl + q.br), `falling series leaves bottom-left/top-right empty ${JSON.stringify(q)}`);
     console.log(`PASS actual host row-axis plot follows ORDER BY DESC (falling line) ${JSON.stringify(q)}`);
 
-    // 2. date axis: dates sorted ascending regardless of row order, the null-date row left out and said so.
+    // 2. chosen text column read as dates: sorted ascending regardless of row order, the row with no date left out.
     await run(frame, 'SELECT * FROM iso ORDER BY seq DESC;', 3);
-    await plot(frame, 'v', 'date:opened_at');
-    chart = await painted(null, '1 row with no date left out');
+    await plot(frame, 'v', 'col:opened_at');
+    chart = await painted(null, 'v by opened_at');
     q = await ink(chart);
     assert.ok(q.bl > 20 && q.tr > 20, `date-ordered rising series ${JSON.stringify(q)}`);
     assert.ok(q.tl + q.br <= 0.1 * (q.bl + q.tr), `rising series leaves the opposite corners empty ${JSON.stringify(q)}`);
-    console.log(`PASS actual host date-axis plot: ISO dates ordered, missing-date note in the title ${JSON.stringify(q)}`);
+    console.log(`PASS actual host chosen-column plot: ISO dates ordered, row without a date left out ${JSON.stringify(q)}`);
 
     // 3. 150,000 points (above the old 100,000 backend cap) are delivered whole: a full ramp from corner to corner.
     await run(frame, 'SELECT range::DOUBLE AS ramp FROM range(150000) ORDER BY 1;', 150000);
-    await plot(frame, 'ramp', 'row');
+    await plot(frame, 'ramp', 'auto');
     chart = await painted(null, 'ramp');
     q = await ink(chart);
     assert.ok(q.bl > 20 && q.tr > 20, `150k ramp inked at both ends ${JSON.stringify(q)}`);
@@ -92,14 +92,14 @@ const { launch } = require('./nativeHostHarness.cjs');
     await setCap(2);
     await host.wait('configured cap of 2 takes effect', async () => {
       await run(frame, 'SELECT range::DOUBLE AS capped FROM range(1, 5) ORDER BY capped DESC;', 4);
-      await plot(frame, 'capped', 'row');
+      await plot(frame, 'capped', 'auto');
       return !!await refusal('too many points', 'cap-2 refusal').catch(() => false);
     }, 60000);
     console.log('PASS actual host chart cap 2: "Too many points" shown, no canvas, no truncated prefix drawn.');
     await setCap(200001);
     await host.wait('configured cap above 200k is refused', async () => {
       await run(frame, 'SELECT range::DOUBLE AS beyond FROM range(1, 4) ORDER BY beyond;', 3);
-      await plot(frame, 'beyond', 'row');
+      await plot(frame, 'beyond', 'auto');
       return !!await refusal('^(?!.*too many points).+$', 'over-200k refusal').catch(() => false); // a different, non-canvas message
     }, 60000);
     const over = await refusal('^(?!.*too many points).+$', 'over-200k message');
@@ -108,11 +108,11 @@ const { launch } = require('./nativeHostHarness.cjs');
     await setCap(200000);
     await host.wait('default cap restored: a plain chart draws again', async () => {
       await run(frame, 'SELECT range::DOUBLE AS restored FROM range(1, 4) ORDER BY restored;', 3);
-      await plot(frame, 'restored', 'row');
+      await plot(frame, 'restored', 'auto');
       return !!await painted(null, 'restored').catch(() => false);
     }, 90000); // the first chart panel now shows a canvas, so only the next document's message can be a non-canvas chart
 
-    // 5. malformed date axis: typed refusal visible in the chart, no canvas, worker alive.
+    // 5. a chosen text column that is not dates is drawn on a category axis, never guessed as dates; worker alive.
     host.open(bad);
     const badFrame = await host.wait('bad_dates editor', async () => {
       for (const f of host.page.frames()) if (!f.isDetached() && await f.locator('#query-target option', { hasText: 'bad_dates' }).count().catch(() => 0)) return f;
@@ -121,16 +121,9 @@ const { launch } = require('./nativeHostHarness.cjs');
     await badFrame.waitForFunction(() => document.querySelector('td[data-r="0"][data-c="0"]'), null, { timeout: 30000 }) // initial automatic query painted
       .catch(async e => { throw new Error(`${e.message} | ${(await badFrame.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 500)}`); });
     await run(badFrame, 'SELECT * FROM bad_dates;', 2);
-    await badFrame.selectOption('#plot-axis', 'date:opened_at');
-    await badFrame.locator('.th-plot-btn[title^="Plot v against"]').click();
-    const badChart = await host.wait('malformed-date chart message', async () => {
-      for (const f of host.page.frames()) {
-        if (f.isDetached() || !await f.locator('.chart-canvas').count().catch(() => 0)) continue;
-        const t = await f.locator('.chart-canvas').textContent().catch(() => '');
-        if (t && !await f.locator('canvas').count()) return t;
-      }
-    }, 20000);
-    console.log(`INFO malformed date chart message: ${badChart.slice(0, 200)}`);
+    await plot(badFrame, 'w', 'col:opened_at');
+    await painted(null, 'w by opened_at');
+    console.log('INFO text that is not dates was drawn on a category axis');
     assert.equal(host.workers().length, 2, 'both documents keep their worker after the refusal');
 
     // 6. integrity: sources, network, profile.
@@ -140,6 +133,6 @@ const { launch } = require('./nativeHostHarness.cjs');
     assert.deepEqual(locks, ['bad_dates.csv.dfv.lock', 'iso.csv.dfv.lock']);
     assert.deepEqual(after, before, 'CSV sources are byte-identical and nothing else was added beside them');
     host.stop(); await host.allExited(); await host.profileIsolation();
-    console.log('Actual unpacked VS Code native plot gate passed: row/date/150k/cap/malformed on the real canvas, sources unchanged, no sockets, real profile untouched.');
+    console.log('Actual unpacked VS Code native plot gate passed: row/chosen-column/150k/cap/category fallback on the real canvas, sources unchanged, no sockets, real profile untouched.');
   } finally { await host.cleanup(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

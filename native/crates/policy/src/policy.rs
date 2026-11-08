@@ -25,7 +25,7 @@ pub const QUERY_LIMITS: Limits = Limits {
     filters: 100,
     filter_chars: 4000,
     queued_requests: 8,
-    deadline_ms: 30_000,
+    deadline_ms: 90_000,
 };
 
 /// Why a request was refused, before anything reached the engine.

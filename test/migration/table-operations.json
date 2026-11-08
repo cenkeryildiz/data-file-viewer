@@ -12,7 +12,7 @@
     "filters": "100",
     "filterChars": "4000",
     "queuedRequests": "8",
-    "deadlineMs": "30_000",
+    "deadlineMs": "90_000",
     "helper_depth_for_errors": "2",
     "route_depth": "6"
   },
@@ -769,10 +769,17 @@
           "optional": true,
           "default": "false",
           "serializable": true
+        },
+        {
+          "name": "xAsValue",
+          "type": "boolean",
+          "optional": true,
+          "default": "false",
+          "serializable": true
         }
       ],
       "result": {
-        "type": "QueryResult & { xAxisMode: \"time\" | \"category\"; note?: string | undefined; }",
+        "type": "QueryResult & { xAxisMode: \"time\" | \"category\" | \"value\"; note?: string | undefined; }",
         "envelope": "ReadReply"
       },
       "errors": [
@@ -805,6 +812,21 @@
           "error": "QueryPolicyError",
           "message": "${…} of ${…} values in ${…} are not recognised dates. Dates are read as ISO yyyy-mm-dd[ hh:mm:ss] or four-digit years; day/month text is ambiguous and plain numbers are not epoch times, so nothing was guessed.",
           "via": "src/duckdbConnection.ts::DuckDbFile.runExplicitDateChart"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "${…} (${…}) is not numeric, so it cannot be a number axis.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.runValueAxisChart"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "${…} is the x axis, so it cannot also be the plotted series.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.runValueAxisChart"
+        },
+        {
+          "error": "QueryPolicyError",
+          "message": "No row has both a value in ${…} and a number to plot.",
+          "via": "src/duckdbConnection.ts::DuckDbFile.runValueAxisChart"
         }
       ],
       "cancellation": "Cancellable. QueryWorker.cancel sends {method:\"cancel\"} then SIGKILLs the reader; every pending reply rejects \"Query cancelled.\" and no partial result is delivered. Deadline QUERY_LIMITS.deadlineMs stops the reader the same way. The next call starts a new reader.",
@@ -2238,6 +2260,7 @@
     }
   ],
   "reuse_cross_check": {
+    "status": "not_available",
     "path": "../../Python/pdf_creator/tests/_evidence/d04/gridcraft-reuse.json",
     "sha256": "b2e19cbab38230372da87d72a8b36c0d6b343e2c2c388522fb544513be442103",
     "viewer_commit": "e13541eb14b74a8a6eb39b0a62f0ff76c0161d54",
@@ -2249,9 +2272,9 @@
     "source_sha256": {
       "src/sheetRowMap.ts": "63c4db960d5d181b54853ebe56c185ed3c986d6beaf9d8738261f4dca41245d4",
       "src/queryCatalog.ts": "1195864fbf9f148929b62de23b71121ecd62fbad43513259c0284d60a386b143",
-      "src/chartSpec.ts": "4113d1575b67b784149894f0fe9c26b59e502182d542b8ceb2927e63a9c854a2",
+      "src/chartSpec.ts": "798c5f7d47ed8892105e5d419ca1936cd76800a0717db278f274808c88e4c687",
       "src/numericLocale.ts": "c8747576f9a771ea42220252790643f74c2d979f66e83b277c38c0de51ce2cbc",
-      "src/backend/types.ts": "a77f5878b03d95c638984373d71a4893b57795bd789093ccd4ba58168408b530",
+      "src/backend/types.ts": "99debf59ddb50d21866b3c9a251796b71901529c17b9bb328e0a8f90735bb192",
       "src/sheetTables.ts": "0e2a6aae009cc5c148812ef0bc5240f107217adcc617b6cf986b4b7786380509",
       "src/textColumns.ts": "15c3c71cbfbe79b5c1f6e645cb0b792b4a8507ae6e8e978f8ee3323bdabc6471",
       "src/zipPatch.ts": "b761e1141d0681d5a45023979e65ca249a3b4ce7f159658434d79c755f89d4a1",
@@ -2266,32 +2289,32 @@
       "src/backend/native.ts": "d085e0740a10afb9bd9ef6598f8cb390184eff67cc6933fcc95d79f324159b63",
       "src/queryPolicy.ts": "6d128ee6bb9bca9ddea26fb6a4468a227d6df47802655a49e01f56db22c2ad87",
       "src/contentSignature.ts": "e4365e1d35e1c6f825bcf9c784e3f0f5a57d762b5c8459663a813dc9d2a048c3",
-      "src/queryMessages.ts": "a67e496dffd6b180dd5dddb441282e380d43bb728c3499bf8f12cbaf4d0d7211",
+      "src/queryMessages.ts": "32b793cbd206620212dd2cc1949227776e4b1477397644575a94f8026a13c592",
       "src/xlsxBudget.ts": "e6d4372680693a8e474735fd93e7bc97404b3a5328666638b29f5b6974a7953f",
       "src/kdbParser.ts": "0db3d388fa83176e42b5f31e641ac652d8fec95dc48c948de4f5c5222c8bd1d9",
       "src/xlsxWrite.ts": "9d6687d7678b715eed9687b030b97cb3f43d7fcfcebf2db2ada27d4a7a4622e7",
       "src/sqliteTypes.ts": "02b7d36a9efddd961c597f3dd749f6e45057428fe53e03b9edf7012f921f90b1",
-      "src/duckdbConnection.ts": "3b3293da0ac134ff9d3c6a99d44f7cd57a4ed2ac75723112751ae19c829c6516",
+      "src/duckdbConnection.ts": "122b7835b7f9fda0bf0aba6449b6bf0aeeb328afa9a18e5ca85e6c9f63ddfd60",
       "src/queryProtocol.ts": "dfc554963cba88c43e273256bdf2a78c646e52f5588a6c5f92448771c8363cfa",
       "src/backend/nativeOperations.ts": "8ba2ef7919b23a12e694f68207c300e82ffda3595f73ee2209cdf39eebfc78f2",
-      "src/backend/nativeDocument.ts": "f3a425288735414e6997f3d0d0744dcb8ebcfcafdf391624715a271d75443b34",
+      "src/backend/nativeDocument.ts": "fe517719232e756a2d6bbe950d3af1cf26cb153c177ba2662655f771505cdc0f",
       "src/queryWorker.ts": "0731ad44067406079bfe9f722001fb985b0bf98d997c937c5e30c8ced86d6388",
-      "src/queryDiagnostics.ts": "d7dea19a0dade6db1b99fb1b1fd55f6ab166cedd6e68a7b17ab9cfc8770fd13a",
+      "src/queryDiagnostics.ts": "59cb25ffbc1a3fb1f2438771810b72314bd500cc3a7cd8c51d719d462c3b57eb",
       "src/viewerFile.ts": "7fb7fcdd6aac8264212cee7ec6817914050a6ffbcd126cb01a9aeece376b1f31",
       "src/backend/reference.ts": "f199549d42a9d5bb54e4d5c7ca2faf037f479498d9545aabcae301287421e9a8",
       "src/backend/nativeSelect.ts": "fce9d18836084b0291f8446a0edfc931378c497bd270b890d94def06cd499869",
       "src/backend/session.ts": "047667e1e58b568ceae651ef49b23274dad8c7cd519d2b0023653bc963a73ff2",
       "src/chartDetail.ts": "f5aeaa140e421199be1106beabbefa5d54c6e954714b1065ce82e025cb7c7b2d",
       "src/chartPanel.ts": "963f10f981b24a8c30f159e6a73765336896d5f8fa91e590d994eeef86889d44",
-      "src/chartView.ts": "1a2b4d34480d6a54734f67213d5f021bfa664e0471a5dc236e169421f6ffaae5",
+      "src/chartView.ts": "0fb71c58c73a4eb0e89a9e9e51707e0acfaf845e6c47e0f83a0458d7bd76f049",
       "src/sqlSafety.ts": "dd8f04f94ef549c2fd16c8e52754b5fe5b5b143989fa1c8355258382dadd6da3",
       "src/liveRefresh.ts": "ad74a7d6724b7a2926dfad7a4322f7dbdeea9d2a3e0eef2b005c020c6af6bf30",
       "src/sqlDraftStore.ts": "3ae97ba09e1078044c8a4bf02b2ddd3c03eea83820c1512967db8927cb462bad",
-      "src/queryRange.ts": "2e94de37f770f22dad95c89d6ac274687efbbb3f180e5f4917567e0d834f2ad0",
-      "src/duckdbEditorProvider.ts": "5f9bf3be1fcf60aba39b7f16f56dbbba8b6d0be245a9ca0937a57fec62e14c34",
+      "src/queryRange.ts": "cf5fb4e939d769911a1c290ae4fd5f665c4e8c2344063a4232b2b0db8a6ef7d0",
+      "src/duckdbEditorProvider.ts": "0baf36fbeb3f9476960f3e3a788d72e4efb0cd9b97f66a9b0c1affda7e8f8ec4",
       "src/sourceDrafts.ts": "d7ce390f516f5943e982c6c238db9e347c76677f11a9d85cdc84da171fa59693",
       "src/pdfHost.ts": "2f54f1fbb0f6d2e09a52b64169034130b0a8cbd9eb6100cb9e943a21d2b50b48",
-      "src/pdfEditorProvider.ts": "b79d6f1c49741d144401a026fd05facde7b09cb2b7986e254651aaf95a0d88e0",
+      "src/pdfEditorProvider.ts": "6a9796c8b3770b60fb86931b8670108b270289e2962a4def12b04389db259f88",
       "src/features/mat/protocol.ts": "4cdc42a00269b6e8ff06d3be1d99731d7d80613ce91e8f98b1b1a92733698459",
       "src/features/mat/client.ts": "1504c98786940a5c79c043fff720dd6d9ddb91c9fd879737577449859a19c83e",
       "src/features/mat/provider.ts": "52bb01aa1cf4040737ad1d531f9c445f4cdc57b621f6a4f677b635916807f5d1",
@@ -2310,7 +2333,7 @@
       "src/queryWorkerEntry.ts": "f6445b4e39d7cb5197cd2245c22292be50b8969b67bc942567a33d83ce6c21f8",
       "src/sheetHighlight.ts": "aee34200a19226d47aa0120765a6c7ec79887feb31ec330fa971f2784db5bf3a",
       "src/virtualWindow.ts": "381f879736a52001b233ef1d5c1771eadd2f1d588c6a9e73f4b7489f84cd54cc",
-      "src/webview.ts": "bb4d839c8b69d8880ab274ca2d0e295eef5f67a5e9d8c35234ac1a2adfe3fc39",
+      "src/webview.ts": "e1ca05c68a90b1dfad113a723d0f572654b55c4b961c85dfb1a6c038343e90fb",
       "src/webviewState.ts": "d3c3848082aad4528c1fc1a74f94c59d28989dab8a57213d5a8e7c841b0e518e"
     }
   }

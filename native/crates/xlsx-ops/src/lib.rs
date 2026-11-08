@@ -211,7 +211,11 @@ struct Sheet {
     tables: Vec<String>,
 }
 
-type Staged = (usize, dfv_table_xlsx::xlsx_read::Sheet, Vec<Vec<Option<String>>>);
+type Staged = (
+    usize,
+    dfv_table_xlsx::xlsx_read::Sheet,
+    Vec<Vec<Option<String>>>,
+);
 
 pub struct XlsxOps {
     package: Package,
@@ -636,12 +640,15 @@ impl XlsxOps {
             if hit && self.sheets[at].pending {
                 self.prepare_sheet(db, at);
             }
-            // A sheet that never became readable explains why its tables do not exist.
+            // A sheet that never became readable explains why its tables do not exist; one
+            // evicted from the cache is reread below, as the query path does.
             let s = &self.sheets[at];
-            if hit && !s.raw && table != s.name {
+            if hit && !s.raw && !s.ever_loaded && table != s.name {
                 return Err(OpsError::new(
                     ErrKind::Invalid,
-                    s.status.message.clone().unwrap_or_default(),
+                    s.status.message.clone().unwrap_or_else(|| {
+                        "The sheet could not be read, so it has no tables.".into()
+                    }),
                 ));
             }
         }
@@ -676,7 +683,8 @@ impl XlsxOps {
                 retryable,
             };
         };
-        if self.sheets[at].cells > DETECTION_MAX_CELLS || self.options.table_mode == TableMode::Off {
+        if self.sheets[at].cells > DETECTION_MAX_CELLS || self.options.table_mode == TableMode::Off
+        {
             self.staged = None;
         }
         if self.sheets[at].cells > DETECTION_MAX_CELLS {
@@ -897,6 +905,7 @@ impl XlsxOps {
         };
         let sheet_name = reference.name.clone();
         let mut skipped = 0;
+        let mut converted = 0;
         for (i, (table, declared_name, provenance, reason)) in candidates.into_iter().enumerate() {
             if cancel() {
                 return Err(OpsError::new(ErrKind::Interrupted, "Cancelled."));
@@ -924,7 +933,9 @@ impl XlsxOps {
             let started = Instant::now();
             let created = typer.create_table(db, &name, &table, &columns);
             self.metrics.record("derived_preparation", started);
-            if created.is_err() {
+            if let Ok(n) = created {
+                converted += n;
+            } else {
                 if provenance != "heuristic" {
                     return Err(OpsError::new(
                         ErrKind::Engine,
@@ -953,6 +964,14 @@ impl XlsxOps {
                     reason,
                 },
             );
+        }
+        if converted > 0 {
+            self.warnings.push(format!(
+                "Sheet \"{sheet_name}\": {converted} number{} stored as text in numeric columns {} read as numbers in its tables; \
+                 the sheet itself shows them exactly as the file has them.",
+                if converted == 1 { "" } else { "s" },
+                if converted == 1 { "was" } else { "were" }
+            ));
         }
         Ok(skipped)
     }
@@ -1450,6 +1469,25 @@ mod cache_tests {
         );
         ops.trim_cache(&db).unwrap();
         assert_eq!(ops.metrics()["cache_estimated_bytes"], "0");
+    }
+    #[test]
+    fn detected_table_requests_reread_an_evicted_sheet_every_time() {
+        let (db, mut ops) = book();
+        ops.prepare_selected(&db, "Sheet", &|| false).unwrap();
+        let name = ops.detected_tables("Sheet")[0].name.clone();
+        ops.cache_max_bytes = 1;
+        for _ in 0..5 {
+            ops.trim_cache(&db).unwrap();
+            ops.prepare_for(&db, &name).unwrap();
+            let rows: i64 = db
+                .query_row(
+                    &format!("select count(*) from {}", quote_ident(&name)),
+                    [],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            assert!(rows > 0);
+        }
     }
     #[test]
     fn cancelled_cold_preparation_does_not_publish_a_cache_object() {

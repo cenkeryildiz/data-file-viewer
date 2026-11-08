@@ -89,7 +89,7 @@
   --control-h:   32px;
   --icon:        18px;
   /* panel widths: initial values; viewer.js sets the remembered ones on <main> */
-  --left-panel-w:  192px;
+  --left-panel-w:  144px;
   --right-panel-w: 304px;
   /* type: rem, so the browser text size scales the chrome */
   --font-ui:     -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
@@ -841,11 +841,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 #reading-text { white-space:pre-wrap; overflow-wrap:anywhere; max-height:45vh; overflow:auto; padding:var(--space-3); border:1px solid var(--line); font:1rem/1.6 system-ui,sans-serif; }
 #reading-text:focus { outline:2px solid var(--focus); outline-offset:2px; }
 #reading-error { color:var(--danger); }
-
-#selection-actions { position:fixed; z-index:600; display:flex; flex-wrap:wrap; gap:var(--space-1); max-width:calc(100vw - 16px); padding:6px; border:1px solid var(--line); border-radius:6px; background:var(--chrome-2); box-shadow:0 3px 12px #0004; }
-#selection-actions[hidden] { display:none; }
-#selection-actions button { min-height:var(--control-h); padding:var(--space-1) 10px; font:inherit; color:var(--ink); background:var(--chrome); border:1px solid var(--control-line); border-radius:3px; }
-#selection-actions button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
 
 /* Selection-linked comments retain readable source and reachable actions. */
 #selection-note { width: min(520px, calc(100vw - 48px)); max-height: calc(100vh - 48px); overflow: auto; color: var(--ink); background: var(--chrome-2); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }

@@ -10,7 +10,7 @@ export const QUERY_LIMITS = Object.freeze({
   filters: 100,
   filterChars: 4000,
   queuedRequests: 8,
-  deadlineMs: 30_000,
+  deadlineMs: 90_000,
 });
 
 export class QueryPolicyError extends Error {

@@ -360,13 +360,13 @@ export class NativeDocument implements DocumentFile {
     if (typeof r.sql !== 'string') throw malformed();
     return { ...NativeDocument.result(r), sortedSql: r.sql };
   }
-  async runChartQuery(baseSql: string, xColumn: string, yColumns: string[], xIsText = false, maxPoints = 0, xIsCategory = false, xIsRow = false, xAsDate = false): Promise<QueryResult & { xAxisMode: 'time' | 'category'; note?: string }> {
+  async runChartQuery(baseSql: string, xColumn: string, yColumns: string[], xIsText = false, maxPoints = 0, xIsCategory = false, xIsRow = false, xAsDate = false, xAsValue = false): Promise<QueryResult & { xAxisMode: 'time' | 'category' | 'value'; note?: string }> {
     const pointLimit = maxPoints === 0 ? 200000 : maxPoints;
     const r = await this.paged('runChartQuery', {
       sql: baseSql, x_column: xColumn, y_columns: yColumns, x_is_text: xIsText, x_is_category: xIsCategory, max_points: pointLimit,
-      ...(xIsRow ? { x_is_row: true } : {}), ...(xAsDate ? { x_as_date: true } : {}),
+      ...(xIsRow ? { x_is_row: true } : {}), ...(xAsDate ? { x_as_date: true } : {}), ...(xAsValue ? { x_as_value: true } : {}),
     }, pointLimit, raw => raw.result);
-    if (r.raw.x_axis_mode !== 'time' && r.raw.x_axis_mode !== 'category') throw malformed();
+    if (r.raw.x_axis_mode !== 'time' && r.raw.x_axis_mode !== 'category' && r.raw.x_axis_mode !== 'value') throw malformed();
     if (r.raw.note !== undefined && typeof r.raw.note !== 'string') throw malformed();
     return { ...NativeDocument.result(r), xAxisMode: r.raw.x_axis_mode, ...(r.raw.note === undefined ? {} : { note: r.raw.note }) };
   }

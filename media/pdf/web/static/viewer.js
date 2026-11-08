@@ -235,7 +235,14 @@ async function settled() {
 }
 
 // An error as it is shown: the server's message, and which request it was.
-const explain = (e) => (e.requestId ? `${e.message} (request ${e.requestId})` : e.message);
+// Refusals whose raw text means nothing to a reader: the text is laid out in a way the editor cannot change yet.
+const UNEDITABLE_LAYOUT = "This PDF's text is laid out in a way the editor cannot change yet (typical of LaTeX/pdfTeX output). The file was not changed.";
+const FORMULA_REFUSAL = "That is part of a formula; the editor changes the text beside it, not the formula.";
+const PLAIN_REFUSALS = { overlay_source_mismatch: UNEDITABLE_LAYOUT, text_edit_source_unsupported: UNEDITABLE_LAYOUT, formula_not_editable: FORMULA_REFUSAL };
+const explain = (e) => {
+  const message = PLAIN_REFUSALS[e.code] ?? e.message;
+  return e.requestId ? `${message} (request ${e.requestId})` : message;
+};
 
 /* ----------------------------- the request coordinator -----------------------------
  *
@@ -1964,56 +1971,45 @@ document.addEventListener("click", (ev) => {
  * takes a colour you read AGAINST rather than through, which Config_PDF.py
  * chooses (UNDERLINE_COLOR, STRIKEOUT_COLOR), so there is nothing to pick.
  */
-const MARKUP = { active: null, busy: false, doc: null };
+const MARKUP = { active: null, choice: {kind:"Highlight", color:null}, busy: false, doc: null };
 function setActiveMarkup(kind) {
-  MARKUP.active = kind ? {kind, color:null} : null;
+  MARKUP.active = kind ? {kind, color:kind === "Highlight" ? MARKUP.choice.color : null} : null;
   syncMarkGroup();
 }
+
+window.addEventListener('resize', () => {
+  const menu = $('#markup-menu'), toggle = $('#markup-menu-toggle');
+  if (menu) menu.hidden = true;
+  toggle?.setAttribute('aria-expanded', 'false');
+});
 
 const MARKS = [
   ["Underline", "Underline", "M4 15.5h12V17H4zM5.5 3h1.8v6.1a2.7 2.7 0 0 0 5.4 0V3h1.8v6.1a4.5 4.5 0 0 1-9 0z"],
   ["StrikeOut", "Strikethrough", "M3 9.3h14v1.6H3zM10 3c2.6 0 4.2 1.2 4.5 3.1h-1.9C12.3 5.2 11.4 4.6 10 4.6c-1.6 0-2.6.7-2.6 1.7 0 .7.4 1.2 1.4 1.6H6.2A2.7 2.7 0 0 1 5.6 6C5.6 4.2 7.3 3 10 3zm3 9.4c0 2-1.7 3.2-4.2 3.2-2.7 0-4.4-1.3-4.6-3.4h1.9c.2 1.2 1.2 1.9 2.8 1.9 1.6 0 2.5-.6 2.5-1.6 0-.6-.3-1-1-1.4h2.1c.3.4.5.8.5 1.3z"],
 ];
 
-/* Everything you can do to selected words, in the toolbar, beside Edit Text.
- *
- * Persistent controls remain discoverable before selection. The optional
- * viewerSelectionActions popup is an additional entry point to the same
- * handlers; it never replaces these toolbar controls or owns mutation state.
- *
- * Colour swatches ARE the highlight control: clicking one highlights the
- * selection in it, there and then. Arming a colour and then pressing a
- * separate button is two gestures for one intention, and the second one was
- * the one people forgot. Clicking the same colour over the same words again
- * takes the highlight off -- see annot.mark.
- *
- * Built here rather than written into index.html so the palette comes from the
- * document (Config_PDF.py's MARK_COLORS) and the icons have one definition.
- */
+/* Preview-style single-selection markup and persistent marking share applyMark. */
 function buildMarkGroup() {
   const host = $("#markgroup");
   if (!host) return;
-  if (MARKUP.doc !== S.doc?.doc) { MARKUP.active = null; MARKUP.doc = S.doc?.doc; }
-  const palette = (S.doc && S.doc.palette) || [];
+  const palette = S.doc?.palette || [];
+  if (MARKUP.doc !== S.doc?.doc) {
+    MARKUP.active = null; MARKUP.doc = S.doc?.doc;
+    MARKUP.choice = {kind:'Highlight', color:palette[0] || null};
+  }
+  const colors = ['Yellow', 'Green', 'Blue', 'Pink', 'Purple'];
   host.innerHTML = `
-    <label class="repeat-mark-label">After selection
-      <select id="repeat-mark" aria-label="Repeat markup after each selection">
-        <option value="">Select only</option><option value="Highlight">Highlight</option><option value="Underline">Underline</option>
-      </select>
-    </label>
-    <select id="repeat-mark-color" aria-label="Repeated highlight color">
-      ${palette.map((c,i) => `<option value="${i}">Color ${i + 1}</option>`).join('')}
-    </select>
-    <span id="repeat-mark-status" role="status"></span>
-    ${palette.map((c, i) =>
-      `<button class="tbtn mswatch" data-color="${i}" disabled
-               style="background:${rgb(c)}"></button>`).join("")}
-    ${MARKS.map(([kind, label, path]) =>
-      `<button class="tbtn" data-kind="${kind}" disabled>
-         <svg viewBox="0 0 20 20"><path d="${path}"/></svg>
-       </button>`).join("")}
-    <span class="tsep"></span>
-    <button class="tbtn" data-act="copy" disabled>Copy</button>`;
+    <button id="markup-toggle" type="button" class="tbtn" aria-label="Highlight mode" aria-pressed="false" title="Highlight mode">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 12 8-9 5 5-8 9H4zm-2 6h13" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
+    <button id="markup-menu-toggle" type="button" class="tbtn" aria-label="Marking style" aria-haspopup="menu" aria-expanded="false" aria-controls="markup-menu">⌄</button>
+    <div id="markup-menu" role="menu" aria-label="Marking style" hidden>
+      ${palette.map((c,i)=>`<button type="button" role="menuitemradio" aria-checked="false" data-color="${i}"><span class="mark-swatch" style="background:${rgb(c)}" aria-hidden="true"></span>${colors[i] || 'Color '+(i+1)}</button>`).join('')}
+      <hr role="separator">
+      ${MARKS.map(([kind,label,path])=>`<button type="button" role="menuitemradio" aria-checked="false" data-kind="${kind}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="${path}"/></svg>${label}</button>`).join('')}
+    </div>
+    <button id="markup-note" type="button" class="tbtn" aria-label="Add note" title="Add note to selected text"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3h14v10h-7l-4 4v-4H3z"/></svg></button>
+    <span id="repeat-mark-status" class="sr-only" role="status"></span>`;
   // Text styling changes the content, so it lives with the Edit tools (UI-01).
   const styles = `
     <button class="tbtn" data-style="bold" disabled><b>B</b></button>
@@ -2024,26 +2020,55 @@ function buildMarkGroup() {
   const styleHost = $("#stylegroup");
   if (styleHost) styleHost.innerHTML = styles; else host.insertAdjacentHTML("beforeend", styles);
 
-  host.querySelector('#repeat-mark').onchange = async ev => {
-    const kind = ev.target.value; // Other mode handlers may redraw this select.
-    if (kind && editorOpen() && !(await requestEditorTransition("markup"))) { syncMarkGroup(); return; }
-    if (kind) {
-      if (S.editOn) document.getElementById('text-toggle').click();
-      formulaMode(false);
-    }
-    setActiveMarkup(kind);
-    if (MARKUP.active) MARKUP.active.color = MARKUP.active.kind === 'Highlight' ? palette[0] : null;
-    syncMarkGroup();
+  const menu = host.querySelector('#markup-menu');
+  const toggle = host.querySelector('#markup-menu-toggle');
+  function closeMenu(focus = false) {
+    menu.hidden = true; toggle.setAttribute('aria-expanded','false');
+    if (focus) toggle.focus();
+  }
+  async function prepareMarkup() {
+    const doc = S.doc?.doc;
+    if (!doc || MARKUP.busy) return false;
+    if (editorOpen() && !(await requestEditorTransition('markup'))) return false;
+    if (S.doc?.doc !== doc) return false;
+    if (S.editOn) document.getElementById('text-toggle').click();
+    formulaMode(false);
+    return true;
+  }
+  host.querySelector('#markup-toggle').onclick = async () => {
+    if (MARKUP.active) { setActiveMarkup(null); return; }
+    if (await prepareMarkup()) setActiveMarkup(MARKUP.choice.kind);
   };
-  host.querySelector('#repeat-mark-color').onchange = ev => {
-    if (MARKUP.active?.kind === 'Highlight') MARKUP.active.color = palette[Number(ev.target.value)];
+  toggle.onclick = () => {
+    if (!menu.hidden) return closeMenu(true);
+    menu.hidden = false; toggle.setAttribute('aria-expanded','true');
+    const rect = toggle.getBoundingClientRect();
+    menu.style.left = Math.max(8, Math.min(rect.left, innerWidth-menu.offsetWidth-8))+'px';
+    menu.style.top = Math.max(8, Math.min(rect.bottom+4, innerHeight-menu.offsetHeight-8))+'px';
+    menu.querySelector('[aria-checked="true"],button')?.focus();
   };
-  host.querySelectorAll("[data-color]").forEach((el) => {
-    el.onclick = () => applyMark("Highlight", palette[Number(el.dataset.color)]);
+  menu.onkeydown = ev => {
+    if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); closeMenu(true); return; }
+    const items = [...menu.querySelectorAll('button:not(:disabled)')];
+    const index = items.indexOf(document.activeElement);
+    if (!['ArrowDown','ArrowUp','Home','End'].includes(ev.key) || !items.length) return;
+    ev.preventDefault(); ev.stopPropagation();
+    const next = ev.key === 'Home' ? 0 : ev.key === 'End' ? items.length-1 : (index+(ev.key === 'ArrowDown' ? 1 : items.length-1))%items.length;
+    items[next].focus();
+  };
+  host.onfocusout = ev => { if (!host.contains(ev.relatedTarget)) closeMenu(); };
+  host.querySelectorAll('[data-color],[data-kind]').forEach(button => {
+    button.onclick = async () => {
+      if (!(await prepareMarkup())) return;
+      const kind = button.dataset.kind || 'Highlight';
+      const color = kind === 'Highlight' ? palette[Number(button.dataset.color)] : null;
+      MARKUP.choice = {kind,color};
+      if (MARKUP.active) setActiveMarkup(kind); else syncMarkGroup();
+      closeMenu(true);
+      if (SEL.range && SEL.page !== null) await applyMark(kind,color);
+    };
   });
-  host.querySelectorAll("[data-kind]").forEach((el) => {
-    el.onclick = () => applyMark(el.dataset.kind);
-  });
+  host.querySelector('#markup-note').onclick = () => globalThis.PDFSelectionActions?.openNote();
   markControls("[data-style]").forEach((el) => {
     el.onclick = () => applyStyle({ [el.dataset.style]: true });
   });
@@ -2051,7 +2076,6 @@ function buildMarkGroup() {
     el.onclick = () =>
       applyStyle({ color: el.dataset.tcolor.split(",").map(Number) });
   });
-  host.querySelector('[data-act="copy"]').onclick = copySelection;
   syncMarkGroup();
 }
 
@@ -2062,21 +2086,21 @@ const markControls = (sel) => document.querySelectorAll(`#markgroup ${sel}, #sty
 function syncMarkGroup() {
   globalThis.PDFSelectionActions?.sync();
   const host = $("#markgroup");
-  if (!host) return;
+  if (!host?.querySelector('#markup-toggle')) return;
   const live = SEL.page !== null && !!SEL.range;
   const say = (el, when, without) => { el.title = live ? when : without; };
 
-  markControls("button").forEach((el) => { el.disabled = !live || MARKUP.busy; });
-  const repeat = host.querySelector('#repeat-mark');
-  if (repeat) {
-    repeat.value = MARKUP.active?.kind || '';
-    repeat.disabled = MARKUP.busy;
-    const color = host.querySelector('#repeat-mark-color');
-    color.hidden = MARKUP.active?.kind !== 'Highlight'; color.disabled = MARKUP.busy;
-    const index = S.doc?.palette?.findIndex(c => c.join(',') === MARKUP.active?.color?.join(','));
-    color.value = String(index >= 0 ? index : 0);
-    host.querySelector('#repeat-mark-status').textContent = MARKUP.busy ? 'Applying mark…' : MARKUP.active ? `${MARKUP.active.kind} armed · Esc stops` : '';
-  }
+  document.querySelectorAll('#stylegroup button').forEach(el => { el.disabled = !live || MARKUP.busy; });
+  host.querySelectorAll('button').forEach(el => { el.disabled = !S.doc || MARKUP.busy || (el.id === 'markup-note' && !live); });
+  host.querySelector('#markup-toggle').setAttribute('aria-pressed',String(!!MARKUP.active));
+  const label = MARKUP.choice.kind === 'Highlight' ? 'Highlight' : MARKUP.choice.kind === 'StrikeOut' ? 'Strikethrough' : 'Underline';
+  host.querySelector('#markup-toggle').title = label+' mode'+(MARKUP.active ? ' · click to stop' : '');
+  host.querySelector('#markup-toggle').setAttribute('aria-label',label+' mode');
+  host.querySelector('#repeat-mark-status').textContent = MARKUP.busy ? 'Applying mark…' : MARKUP.active ? label+' mode on · Esc stops' : '';
+  host.querySelectorAll('[data-color],[data-kind]').forEach(el => {
+    const checked = el.dataset.kind ? MARKUP.choice.kind === el.dataset.kind : MARKUP.choice.kind === 'Highlight' && (S.doc?.palette?.[Number(el.dataset.color)] || []).join(',') === MARKUP.choice.color?.join(',');
+    el.setAttribute('aria-checked',String(checked));
+  });
   host.querySelectorAll("[data-color]").forEach((el) =>
     say(el, "Highlight in this colour — the same colour over the same words removes it",
         "Highlight — select some text on the page first"));
@@ -2110,7 +2134,6 @@ function finishSelection() {
     void applyMark(MARKUP.active.kind, MARKUP.active.color);
   } else {
     annotateStyleButtons();
-    globalThis.PDFSelectionActions?.show();
   }
 }
 
@@ -2122,6 +2145,12 @@ async function copySelection() {
     toast("The browser would not give this page the clipboard.", "err");
   }
 }
+
+document.addEventListener('copy', event => {
+  if (!SEL.range || !SEL.chars || event.target.closest?.('input,textarea,[contenteditable="true"]') || !event.clipboardData) return;
+  event.clipboardData.setData('text/plain', selectionText(SEL.chars, SEL.range));
+  event.preventDefault();
+});
 
 /* Text colours offered for the selected words.
  *
@@ -4851,7 +4880,7 @@ $("#outline-toggle").onclick = (e) => panelToggle("left", "outline", e.currentTa
  */
 const PANEL_PREFS_KEY = "pdfstudio.ui";
 const PANEL_PREFS_VERSION = 1;
-const PANEL_LIMITS = { left: { min: 160, max: 300, initial: 192 }, right: { min: 260, max: 420, initial: 304 } };
+const PANEL_LIMITS = { left: { min: 128, max: 300, initial: 144 }, right: { min: 260, max: 420, initial: 304 } };
 const PANEL_BOTH_MIN = 1200, PANEL_DOCK_MIN = 900, PANEL_STAGE_MIN = 560, PANEL_SEPARATOR = 6;
 const PANEL_TABS = ["pages", "outline"];
 

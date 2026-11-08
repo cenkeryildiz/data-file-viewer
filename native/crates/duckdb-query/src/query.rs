@@ -85,13 +85,20 @@ pub enum Direction {
 pub enum XAxis {
     Time,
     Category,
+    /// A number line: the points are `(x, y)` pairs ordered by x.
+    Value,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum ChartAxis {
-    Automatic { text: bool, category: bool },
+    Automatic {
+        text: bool,
+        category: bool,
+    },
     Rows,
     Dates,
+    /// A numeric column against another: x ascending, rows lacking either value left out and counted.
+    Values,
 }
 
 /// How many non-null values a chart samples before deciding a text column can be a time axis, and how
@@ -708,6 +715,75 @@ impl Engine {
         Ok((self.guarded(|| self.wire_once(&sql, max_points))?, axis))
     }
 
+    /// A numeric x against numeric y series. Rows with no finite x, or with no finite value in any plotted
+    /// column, have no place on the chart; they are counted in the note, never named or quoted.
+    fn value_axis_chart(
+        &self,
+        source: &str,
+        x: &str,
+        ys: &str,
+        y_columns: &[&str],
+        max_points: usize,
+    ) -> Result<(WireQueryResult, XAxis, Option<String>), Error> {
+        let ty: String = self.conn.query_row(
+            &format!("describe select {x} from {source} as _t"),
+            [],
+            |r| r.get(1),
+        )?;
+        let numeric = matches!(
+            ty.as_str(),
+            "TINYINT"
+                | "SMALLINT"
+                | "INTEGER"
+                | "BIGINT"
+                | "HUGEINT"
+                | "UTINYINT"
+                | "USMALLINT"
+                | "UINTEGER"
+                | "UBIGINT"
+                | "UHUGEINT"
+                | "FLOAT"
+                | "DOUBLE"
+        ) || ty.starts_with("DECIMAL");
+        if !numeric {
+            return Err(Error::Invalid(
+                "This column is not numeric, so it cannot be a number axis.".into(),
+            ));
+        }
+        // isfinite drops NaN and infinity as well as NULL.
+        let finite = |c: &str| format!("system.main.isfinite(try_cast({c} as double))");
+        let any_y = y_columns
+            .iter()
+            .map(|c| finite(&quote_ident(c)))
+            .collect::<Vec<_>>()
+            .join(" or ");
+        let keep = format!("{} and ({any_y})", finite(x));
+        let counts = self.one_row(&format!(
+            "select system.main.count(*), system.main.count(*) filter (where {keep}) from {source} as _t"
+        ))?;
+        let (total, kept) = (int(&counts[0]), int(&counts[1]));
+        if kept == 0 {
+            return Err(Error::Invalid(
+                "No row has both an x value and a number to plot.".into(),
+            ));
+        }
+        let left_out = total - kept;
+        // Ties in x keep a stable, reproducible order (by the plotted values).
+        let sql =
+            format!("select {x}, {ys} from {source} as _chart where {keep} order by 1 asc, 2 asc");
+        let note = (left_out > 0).then(|| {
+            format!(
+                "{left_out} row{} with no x value or no number left out",
+                if left_out == 1 { "" } else { "s" }
+            )
+        });
+        Ok((
+            self.guarded(|| self.wire_once(&sql, max_points))?,
+            XAxis::Value,
+            note,
+        ))
+    }
+
     /// Explicit axes preserve the query's rows and limit; date interpretation checks every value.
     pub fn run_chart_query_axis_wire(
         &self,
@@ -751,11 +827,16 @@ impl Engine {
             ));
         }
         if y_columns.contains(&x_column) {
-            return Err(Error::Invalid(
-                "The date axis cannot also be a plotted series.".into(),
-            ));
+            return Err(Error::Invalid(if matches!(axis, ChartAxis::Values) {
+                "The x axis cannot also be a plotted series.".into()
+            } else {
+                "The date axis cannot also be a plotted series.".into()
+            }));
         }
         let x = quote_ident(x_column);
+        if matches!(axis, ChartAxis::Values) {
+            return self.value_axis_chart(&source, &x, &ys, y_columns, max_points);
+        }
         let ty: String = self.conn.query_row(
             &format!("describe select {x} from {source} as _t"),
             [],

@@ -27,6 +27,20 @@
      moves into the labelled More menu (workspace.js measures it). Tools of the
      other workspaces wait, hidden, in #workspace-parking. -->
 <div id="toolbar" role="toolbar" aria-label="Document tools">
+  <div id="toolbar-heading">
+  <div class="tgroup fixed-group" id="workspace-tabs" role="group" aria-label="Workspace">
+    <button type="button" class="tbtn wtab" data-workspace-tab="read" aria-pressed="true" aria-label="Read" title="Read"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4q4-2 8 0v13q-4-2-8 0zm8 0q4-2 8 0v13q-4-2-8 0"/></svg></button>
+    <button type="button" class="tbtn wtab" data-workspace-tab="annotate" aria-pressed="false" aria-label="Annotate" title="Annotate"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m5 12 7-8 4 4-7 8H5zm-2 6h12"/></svg></button>
+    <button type="button" class="tbtn wtab" data-workspace-tab="edit" aria-pressed="false" aria-label="Edit" title="Edit"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 13 9-9 3 3-9 9-4 1zM11 6l3 3"/></svg></button>
+    <button type="button" class="tbtn wtab" data-workspace-tab="organize" aria-pressed="false" aria-label="Organize" title="Organize"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h6v6H3zm8 0h6v6h-6zM3 11h6v6H3zm8 0h6v6h-6z"/></svg></button>
+  </div>
+  <div id="export-actions" class="tgroup">
+    <button id="export" class="tbtn primary" title="Export a copy">
+      <svg viewBox="0 0 20 20"><path d="M10 2l4.5 4.5-1.4 1.4L11 5.8V13H9V5.8L6.9 7.9 5.5 6.5zM3.5 15h13v2.5h-13z"/></svg>
+      <span>Export</span>
+    </button>
+  </div>
+  </div>
   <div class="tgroup fixed-group" id="panel-actions">
     <button id="rail-toggle" class="tbtn panel on" title="Pages" aria-controls="sidebar" aria-expanded="true">
       <svg viewBox="0 0 20 20"><rect x="2.5" y="2.5" width="6" height="6" rx="1"/><rect x="2.5" y="11.5" width="6" height="6" rx="1"/><rect x="11.5" y="2.5" width="6" height="6" rx="1"/><rect x="11.5" y="11.5" width="6" height="6" rx="1"/></svg>
@@ -47,12 +61,6 @@
     </button>
   </div>
 
-  <div class="tgroup fixed-group" id="workspace-tabs" role="group" aria-label="Workspace">
-    <button type="button" class="tbtn wtab" data-workspace-tab="read" aria-pressed="true">Read</button>
-    <button type="button" class="tbtn wtab" data-workspace-tab="annotate" aria-pressed="false">Annotate</button>
-    <button type="button" class="tbtn wtab" data-workspace-tab="edit" aria-pressed="false">Edit</button>
-    <button type="button" class="tbtn wtab" data-workspace-tab="organize" aria-pressed="false">Organize</button>
-  </div>
 
   <div class="tspacer"></div>
 
@@ -71,10 +79,6 @@
     <button id="notes-toggle" class="tbtn wide panel" title="Highlights, notes and comments" aria-controls="notes" aria-expanded="false">
       <svg viewBox="0 0 20 20"><path d="M3 3.6h14v9.2h-7.2L6 17v-4.2H3z"/></svg>
       <span>Comments</span>
-    </button>
-    <button id="export" class="tbtn primary" title="Export a copy">
-      <svg viewBox="0 0 20 20"><path d="M10 2l4.5 4.5-1.4 1.4L11 5.8V13H9V5.8L6.9 7.9 5.5 6.5zM3.5 15h13v2.5h-13z"/></svg>
-      <span>Export</span>
     </button>
   </div>
 
@@ -132,7 +136,7 @@
     <div id="outline-panel" role="tabpanel" aria-labelledby="sidebar-tab-outline" hidden></div>
   </aside>
   <div id="sidebar-resize" class="panel-resize" role="separator" tabindex="0" aria-orientation="vertical"
-       aria-controls="sidebar" aria-label="Resize sidebar" aria-valuemin="160" aria-valuemax="300" aria-valuenow="192"></div>
+       aria-controls="sidebar" aria-label="Resize sidebar" aria-valuemin="128" aria-valuemax="300" aria-valuenow="144"></div>
   <section id="stage" tabindex="0" aria-label="PDF document"><div id="pages"></div></section>
   <div id="notes-resize" class="panel-resize panel-collapsed" role="separator" tabindex="0" aria-orientation="vertical"
        aria-controls="notes" aria-label="Resize comments" aria-valuemin="260" aria-valuemax="420" aria-valuenow="304"></div>
@@ -163,7 +167,6 @@
 <script src="/static/workspace.js"></script>
 <script src="/static/viewerOrganize.js"></script>
 <script src="/static/viewerDraftRecovery.js"></script>
-<script src="/static/viewerReading.js"></script>
 <script src="/static/viewerSelectionActions.js"></script>
 <script src="/static/outline.js"></script>
 </body>

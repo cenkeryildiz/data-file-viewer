@@ -143,7 +143,7 @@ test('open offers recoveries left by an earlier session; Save As cancel keeps th
     assert.equal(((await second.send('get_state')).value).dirty, true);
 
     stub.window.showSaveDialog = async () => undefined;
-    await assert.rejects(fx.provider.saveCustomDocument(second.doc), /cancelled/i);
+    await assert.rejects(fx.provider.saveCustomDocument(second.doc), { name: 'Canceled' });
     assert.equal(((await second.send('get_state')).value).dirty, true, 'a cancelled save leaves the edits unsaved');
   } finally { fx.close(); }
 });

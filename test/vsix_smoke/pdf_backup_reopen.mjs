@@ -6,7 +6,7 @@
 // Env: DFV_VSCODE_EXECUTABLE, DFV_CODE_CLI (default `code`), DFV_SMOKE_PDF, DFV_SMOKE_TIMEOUT_MS (default 90000).
 //
 // Everything runs in a disposable --user-data-dir/--extensions-dir (the real VS Code profile is never touched).
-// Steps: a  open the PDF, rotate one page (unsaved); remember the exact page pixels
+// Steps: a  open the PDF at a fixed zoom, rotate one page (unsaved); remember the exact page pixels
 //        b  SIGTERM VS Code so it shuts down in order and writes its hot-exit backups, then kill stragglers (with --kill: SIGKILL only;
 //           observed: VS Code then does NOT reopen the tab on its own, so step c fails by design - use pdf_restart.mjs for that path)
 //        c  relaunch the SAME profile and do NOT open the PDF: VS Code must reopen the dirty tab on its own
@@ -98,6 +98,8 @@ async function main() {
       await launch();
       execFileSync(codeCli(), [...profileArgs, '-r', pdf], { stdio: 'pipe', timeout: 30000, env });
       const frame = await pdfFrame('PDF editor frame');
+      await frame.locator('#zoomlbl').fill('100');
+      await frame.locator('#zoomlbl').press('Enter');
       first = await nonBlank(frame, 'non-blank page image');
       await frame.locator('[data-workspace-tab="organize"]').click();
       if (!await frame.locator('#rail .thumb').first().isVisible()) await frame.locator('#rail-toggle').click();
@@ -126,8 +128,12 @@ async function main() {
 
     await step('d. reopened tab is dirty and shows the edited page; no extra restore prompt', async () => {
       const frame = await pdfFrame('PDF editor frame');
-      const p = await nonBlank(frame, 'non-blank page image after reopen');
+      await nonBlank(frame, 'non-blank page image after reopen');
       await sleep(4000); // time for the provider's own offer (or an automatic restore) to settle
+      // Fit zoom follows the restored window layout; compare exact pixels at the same explicit zoom.
+      await frame.locator('#zoomlbl').fill('100');
+      await frame.locator('#zoomlbl').press('Enter');
+      await nonBlank(frame, 'restored page rendered at the original zoom', p => p.w === rotated.w && p.h === rotated.h);
       const dirty = await page().locator('.tab.dirty').count();
       const offers = await page().locator('.notification-toast', { hasText: 'Restore unsaved edits' }).count();
       const q = await pixels(await pdfFrame('PDF editor frame after settle'));

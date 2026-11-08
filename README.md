@@ -9,7 +9,38 @@ DuckDB is the engine reading most of these formats under the hood; kdb+
 files are parsed directly in their own real format (see the kdb+ section
 below).
 
-### 0.1.1: clearer PDF editing and controls
+### 0.1.2: Preview-style PDF controls and worksheet fixes
+
+The local 0.1.2 candidate uses book, highlighter, pencil and page-grid icons for
+Read, Annotate, Edit and Organize. Compact 28px toolbar controls and reduced header
+spacing leave more room for the PDF. Export stays at the top right. Selecting text
+does not open a floating action strip. In Annotate, use the marking dropdown for
+Yellow, Green, Blue, Pink, Purple, Underline or Strikethrough. Choosing a style
+marks the current selection once; turn on the pen button to mark subsequent
+selections automatically, then click it again or press Escape to stop. Copy with
+Command-C (Ctrl-C elsewhere), and use Add note for a selected passage.
+Reduce file size and Recover drafts are available only in Organize. The separate
+Read text control has been removed; text selection, search and copying remain.
+Reduce file size removes superseded PDF revisions and unused objects in a verified
+copy without lowering image quality. Local draft checkpoints can be discarded
+individually through Recover drafts; deleting those frees local disk space.
+
+This candidate adds bounded single-line/word editing for supported pdfTeX PDFs.
+It refuses formula pieces, missing subset glyphs and unsupported or oversized
+edits. Full pdfTeX paragraph reflow, single-line fallback fonts and some lines
+with multiple text operators remain unsupported. Existing basic paragraph
+editing retains its previously tested profile.
+
+Worksheet fixes allow repeated detected-table and plot requests after an
+oversized sheet leaves the cache. Numeric columns may include text-stored
+numbers; missing markers stay gaps. The plot's X axis choice can use another
+numeric column as well as the automatic date/period axis.
+
+0.1.2 is a local candidate; it has not been published or installed into the user's
+normal VS Code profile. The published 0.1.1 installation instructions below remain
+available for rollback.
+
+### 0.1.1: earlier PDF editing controls
 
 Selecting **Edit** activates text editing; click outlined text, then Apply.
 Cancelling Save or Export leaves your edit intact without an error notification.
@@ -418,14 +449,16 @@ the complete table; its chart uses exactly the filtered, display-limited rows.
   clicking it opens that column as a line chart in its own VS Code tab beside
   the grid. Plotting a second column redraws the same tab rather than opening
   another one. The x axis is the result's date column when it has one, and
-  otherwise the 1-based row number of the rows on screen. The **Plot axis**
-  choice beside the query table picker overrides this for plots only:
-  *Row numbers*, or *Read column as dates* for any column whatever its name.
-  Dates are read as ISO text or four-digit years; day/month text such as
-  03/04/2024, plain integers (never epoch times), and mixed UTC offsets are
-  refused with a count instead of being guessed, rows with no date are left
-  out and counted in the chart heading, and nothing in the file or the query
-  is changed.
+  otherwise the 1-based row number of the rows on screen. The **X axis**
+  choice beside the query table picker plots against any other column
+  instead: a number column draws one point per row pair on a number line
+  (ordered by x, ties by y), a date column or text read as dates draws a time
+  axis, and other text draws a category axis. Rows with no x value or no
+  number are left out and counted in the chart heading, and nothing in the
+  file or the query is changed. In worksheets, numbers stored as text
+  (`3.03e-09`) are read as numbers in a column that also holds real numbers
+  and where every text cell parses; "NA", "N/A" and Excel error cells read as
+  empty. A column that is all text stays text.
 
   The chart opens showing the whole series, and you **drag across the plot**
   to zoom into a range — the scroll wheel zooms too, and **double-clicking**
@@ -724,7 +757,8 @@ the source and discards handles belonging to the previous generation.
 - A named, previewed Inter Regular font fallback can be explicitly accepted when
   offered. The original PDF fonts remain preserved.
 
-**Disabled or unsupported:** math and LaTeX; universal font compatibility
+**Disabled or unsupported:** math/LaTeX formula editing; pdfTeX structures outside
+the bounded single-line profile described above; universal font compatibility
 (complex font, shaping and Form cases outside the tested profile are refused
 without changing the document); universal paragraph editing; any platform other than macOS arm64.
 
